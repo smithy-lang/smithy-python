@@ -10,7 +10,7 @@ such as AWS config resolution, out of the core generator.
 
 from __future__ import annotations
 
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -94,6 +94,16 @@ class ClientIntegration:
         del service
         return names
 
+    def auth_schemes(
+        self, service: _model.ServiceShape
+    ) -> Mapping[_model.ShapeId, _auth.AuthContribution]:
+        """Auth schemes the integration supports, by auth trait ID.
+
+        They join the core auth schemes for the services the integration matches.
+        """
+        del service
+        return {}
+
     def config_fields(self, service: _model.ServiceShape) -> Collection[str]:
         """Config fields the integration declares, which a client context
         parameter's field must not take."""
@@ -108,14 +118,39 @@ class ClientIntegration:
         del writer, config
         return False
 
-    def new_config(self, mode: ClientMode, config: TypeReference) -> tuple[Part, ...]:
+    def new_config(
+        self, mode: ClientMode, config: TypeReference
+    ) -> tuple[Part, ...] | None:
         """The callable that creates a default config, called with keyword fields.
 
         A client calls it with no arguments when it has no config. An async mode
-        may begin the parts with ``"await "``.
+        may begin the parts with ``"await "``. None leaves the callable as the
+        config class or an earlier integration set it.
         """
-        del mode
-        return (config,)
+        del mode, config
+        return None
+
+    def endpoint_test_config(self, service: _model.ServiceShape) -> Mapping[str, str]:
+        """Config fields every generated endpoint test sets, as Python literals.
+
+        A config that resolves from the environment, for example, may need a
+        region and credentials. A test case's own fields replace these.
+        """
+        del service
+        return {}
+
+    def write_client_methods(
+        self,
+        writer: PythonWriter,
+        plan: ClientPlan,
+        mode: ClientMode,
+        config: TypeReference,
+    ) -> None:
+        """Write extra methods at the end of the mode's client class.
+
+        :param config: The mode's config class.
+        """
+        del writer, plan, mode, config
 
     def client_plugins(
         self, plan: ClientPlan, mode: ClientMode, package: str

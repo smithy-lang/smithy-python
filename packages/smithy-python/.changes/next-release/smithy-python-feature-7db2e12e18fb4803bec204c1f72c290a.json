@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Generate SigV4 auth for AWS clients. Configs default to the SigV4 auth scheme for the service's signing name, and clients fall back to the default AWS credentials chain. Treat aws.auth#sigv4 as an auth scheme even when the AST omits its definition. Generated endpoint tests take shared config fields from integrations."
+}

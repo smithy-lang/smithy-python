@@ -36,6 +36,7 @@ def write_endpoint_tests(
     client: TypeReference,
     config: TypeReference,
     new_config: tuple[str | TypeReference, ...] | None = None,
+    test_config: Mapping[str, str] | None = None,
 ) -> None:
     """Register ``tests/test_endpoints.py`` when the service has endpoint tests.
 
@@ -43,6 +44,8 @@ def write_endpoint_tests(
     :param config: The async config class.
     :param new_config: The callable that creates an async config from keyword
         fields. Defaults to the config class.
+    :param test_config: Config fields every test sets, as Python literals by
+        field name. A case's own fields replace them.
     :raises CodegenError: If a case names an operation the service doesn't
         contain, expects neither an endpoint nor an error, or gives an operation
         an input member it doesn't have.
@@ -68,6 +71,7 @@ def write_endpoint_tests(
         client,
         config,
         new_config or (config,),
+        test_config or {},
     ).write(service, tuple(_object(case, "test case") for case in cases))
 
 
@@ -142,9 +146,11 @@ class _Writer:
         client: TypeReference,
         config: TypeReference,
         new_config: tuple[str | TypeReference, ...],
+        test_config: Mapping[str, str],
     ) -> None:
         self._writer = writer
         self._new_config = new_config
+        self._test_config = test_config
         self._plan = plan
         self._client = client
         self._config = config
@@ -176,12 +182,24 @@ class _Writer:
         any_ = _ANY
         w.line()
         w.line()
+        w.line("_TEST_CONFIG: dict[str, ", any_, "] = {")
+        with w.indent():
+            for name, value in self._test_config.items():
+                w.line(_endpoints.literal(name), ": ", value, ",")
+        w.line("}")
+        w.line(
+            _endpoints.literal(
+                "Config fields every test sets. A case's own fields replace them."
+            )
+        )
+        w.line()
+        w.line()
         w.line("async def _config(**fields: ", any_, ") -> ", self._config, ":")
         with w.indent():
             w.line(
                 "return ",
                 *self._new_config,
-                "(**fields, retry_strategy=",
+                "(**(_TEST_CONFIG | fields), retry_strategy=",
                 _RETRY,
                 "(max_attempts=1))",
             )

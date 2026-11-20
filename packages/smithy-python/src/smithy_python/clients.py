@@ -66,7 +66,7 @@ class ClientGenerator:
             for integration in self._integrations
             if integration.matches(service)
         )
-        _client_emitter.check_supported(plan)
+        _client_emitter.check_supported(plan, integrations)
         endpoints = _client_emitter.plan_endpoints(plan, integrations)
         _schemas.SchemaGenerator().generate(context)
         _models.ModelGenerator().generate(context)
@@ -276,10 +276,22 @@ _AUTH = _model.ShapeId("smithy.api", "auth")
 _AUTH_DEFINITION = _model.ShapeId("smithy.api", "authDefinition")
 _OPTIONAL_AUTH = _model.ShapeId("smithy.api", "optionalAuth")
 _NO_AUTH = _model.ShapeId("smithy.api", "noAuth")
-# The embedded prelude omits trait definitions, so its auth traits are listed.
-_PRELUDE_AUTH_SCHEMES = frozenset(
-    _model.ShapeId("smithy.api", name)
-    for name in ("httpApiKeyAuth", "httpBasicAuth", "httpBearerAuth", "httpDigestAuth")
+# The embedded prelude omits trait definitions, and JSON ASTs usually leave out the
+# definitions of the AWS auth traits, so those auth traits are listed.
+_KNOWN_AUTH_SCHEMES = frozenset(
+    (
+        *(
+            _model.ShapeId("smithy.api", name)
+            for name in (
+                "httpApiKeyAuth",
+                "httpBasicAuth",
+                "httpBearerAuth",
+                "httpDigestAuth",
+            )
+        ),
+        _model.ShapeId("aws.auth", "sigv4"),
+        _model.ShapeId("aws.auth", "sigv4a"),
+    )
 )
 
 
@@ -298,7 +310,7 @@ def _effective_auth_schemes(
         (
             trait_id
             for trait_id in service.traits
-            if trait_id in _PRELUDE_AUTH_SCHEMES
+            if trait_id in _KNOWN_AUTH_SCHEMES
             or (
                 (definition := model.find_shape(trait_id)) is not None
                 and definition.has_trait(_AUTH_DEFINITION)

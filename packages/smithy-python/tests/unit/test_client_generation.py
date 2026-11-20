@@ -712,3 +712,43 @@ def test_aws_clients_with_dashed_package_names_import(
     assert package.AsyncGreeterClient._client_plugins[0].__module__ == (
         "aws_greeter_dashed.aio.user_agent"
     )
+
+
+def _add_sigv4(shapes: dict[str, Any]) -> None:
+    traits = shapes["example#Greeter"]["traits"]
+    traits["aws.api#service"] = {"sdkId": "Greeter"}
+    traits["aws.auth#sigv4"] = {"name": "greeter"}
+
+
+def test_sigv4_services_sign_with_the_signing_name(tmp_path: Path) -> None:
+    shapes = _shapes()
+    _add_sigv4(shapes)
+    _aws_generate(tmp_path, "greeter_sigv4", shapes)
+    source = tmp_path / "src/greeter_sigv4"
+    config = (source / "aio/config.py").read_text()
+    assert 'ShapeID("aws.auth#sigv4"): AsyncSigV4AuthScheme(service="greeter")' in (
+        config
+    )
+    client = (source / "aio/client.py").read_text()
+    assert "async def _post_setup(self, config: AsyncGreeterConfig) -> None:" in client
+    assert "await AsyncIdentityChain.create(" in client
+    assert "return await AsyncGreeterConfig.resolve()" in client
+    models = (source / "models.py").read_text()
+    assert '("aws.auth#sigv4",)' in models
+
+
+def test_sigv4_needs_the_aws_integrations(tmp_path: Path) -> None:
+    # Without its definition in the AST, sigv4 is still an auth scheme, so a
+    # client that can't sign it isn't generated as unsigned.
+    shapes = _shapes()
+    _add_sigv4(shapes)
+    with pytest.raises(CodegenError, match=r"requires auth \(aws\.auth#sigv4\)"):
+        _generate(tmp_path, "greeter_unsigned", shapes)
+
+
+def test_sigv4_trait_needs_a_signing_name(tmp_path: Path) -> None:
+    shapes = _shapes()
+    _add_sigv4(shapes)
+    shapes["example#Greeter"]["traits"]["aws.auth#sigv4"] = {}
+    with pytest.raises(CodegenError, match="needs a name"):
+        _aws_generate(tmp_path, "greeter_no_signing_name", shapes)
