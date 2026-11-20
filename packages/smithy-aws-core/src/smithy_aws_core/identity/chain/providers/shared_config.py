@@ -6,7 +6,6 @@ from typing import Any
 from smithy_core.interfaces.identity import Identity
 from smithy_core.program import Program
 
-from ...components import AWSCredentialsIdentity
 from ..ordering import Standard, StandardProvider
 from ..provider import _ChainSetupBase  # pyright: ignore[reportPrivateUsage]
 
@@ -27,15 +26,16 @@ class SharedConfigProvider:
         return Standard(slot=StandardProvider.SHARED_CONFIG)
 
     def setup(self, identity_type: type[Identity], setup: _ChainSetupBase) -> Any:
-        """Load and select the active profile for AWS credentials."""
-        return setup._run(self._setup(identity_type, setup))  # pyright: ignore[reportPrivateUsage]
+        """Load and select the active profile for every identity type.
 
-    def _setup(
-        self, identity_type: type[Identity], setup: _ChainSetupBase
-    ) -> Program[None]:
-        if identity_type is not AWSCredentialsIdentity:
-            return
+        This step registers no resolvers; it only makes the shared config and the
+        active profile name available to the profile-based providers that follow it,
+        whatever identity type the chain resolves (for example ``TokenIdentity``
+        chains read ``sso_session`` from the same profile).
+        """
+        return setup._run(self._setup(setup))  # pyright: ignore[reportPrivateUsage]
 
+    def _setup(self, setup: _ChainSetupBase) -> Program[None]:
         config_file = setup.config_file
         if config_file is None:
             config_file = yield setup._load_config  # pyright: ignore[reportPrivateUsage]

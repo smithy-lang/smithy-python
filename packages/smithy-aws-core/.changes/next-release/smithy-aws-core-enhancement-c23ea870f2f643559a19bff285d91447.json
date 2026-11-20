@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "The identity chain's shared config step now loads the config files and selects the active profile for every identity type, so `TokenIdentity` chains see the same profile as credentials chains."
+}

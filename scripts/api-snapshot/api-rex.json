@@ -415,7 +415,6 @@
     "StandardProvider": "rex-class"
   },
   "smithy_aws_core.identity.chain.providers.shared_config": {
-    "AWSCredentialsIdentity": "rex-class",
     "Identity": "rex-protocol",
     "Program": "rex-type_alias",
     "Standard": "rex-class",

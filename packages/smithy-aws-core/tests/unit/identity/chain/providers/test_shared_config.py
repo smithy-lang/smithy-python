@@ -14,18 +14,25 @@ from smithy_aws_core.identity.chain.providers.shared_config import (
 from .conftest import OtherIdentity
 
 
-async def test_ignores_non_aws_identity_type(
+# The shared config step is identity-type agnostic: a TokenIdentity chain needs the
+# same active profile (to find its sso_session) as a credentials chain does.
+async def test_selects_profile_for_non_aws_identity_type(
     setup_provider: Callable[..., Awaitable[AsyncChainSetup]],
+    merged_config: Callable[..., MergedConfig],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    load_config = AsyncMock()
+    loaded = merged_config({"default": {"name": "loaded"}})
+    load_config = AsyncMock(return_value=loaded)
     monkeypatch.setattr(shared_config_module, "load_config_async", load_config)
+    monkeypatch.setenv("AWS_PROFILE", "environment")
 
     setup = await setup_provider(SharedConfigProvider(), identity_type=OtherIdentity)
 
+    assert setup.config_file is loaded
+    assert setup.profile_name == "environment"
     assert setup.resolvers == ()
     assert not setup.terminal
-    load_config.assert_not_awaited()
+    load_config.assert_awaited_once_with()
 
 
 # Profile selection precedence: profile_name wins over the AWS_PROFILE
