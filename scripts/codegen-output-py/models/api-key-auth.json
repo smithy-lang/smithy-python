@@ -1,0 +1,89 @@
+{
+    "smithy": "2.0",
+    "shapes": {
+        "example.apikey#ApiKeyService": {
+            "type": "service",
+            "version": "2026-11-17",
+            "operations": [
+                {
+                    "target": "example.apikey#GetThing"
+                },
+                {
+                    "target": "example.apikey#Health"
+                },
+                {
+                    "target": "example.apikey#Ping"
+                }
+            ],
+            "traits": {
+                "smithy.api#documentation": "A service that authenticates with an API key.",
+                "smithy.api#httpApiKeyAuth": {
+                    "name": "Authorization",
+                    "in": "header",
+                    "scheme": "ApiKey"
+                },
+                "smithy.protocols#rpcv2Cbor": {}
+            }
+        },
+        "example.apikey#GetThing": {
+            "type": "operation",
+            "input": {
+                "target": "example.apikey#GetThingInput"
+            },
+            "output": {
+                "target": "example.apikey#GetThingOutput"
+            },
+            "traits": {
+                "smithy.api#documentation": "Uses the service's API key auth."
+            }
+        },
+        "example.apikey#GetThingInput": {
+            "type": "structure",
+            "members": {
+                "name": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#input": {}
+            }
+        },
+        "example.apikey#GetThingOutput": {
+            "type": "structure",
+            "members": {
+                "value": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#output": {}
+            }
+        },
+        "example.apikey#Health": {
+            "type": "operation",
+            "input": {
+                "target": "smithy.api#Unit"
+            },
+            "output": {
+                "target": "smithy.api#Unit"
+            },
+            "traits": {
+                "smithy.api#auth": [],
+                "smithy.api#documentation": "Needs no auth."
+            }
+        },
+        "example.apikey#Ping": {
+            "type": "operation",
+            "input": {
+                "target": "smithy.api#Unit"
+            },
+            "output": {
+                "target": "smithy.api#Unit"
+            },
+            "traits": {
+                "smithy.api#documentation": "Sends the API key when it has one.",
+                "smithy.api#optionalAuth": {}
+            }
+        }
+    }
+}

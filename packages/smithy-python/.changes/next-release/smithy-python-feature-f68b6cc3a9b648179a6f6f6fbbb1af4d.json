@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Generate clients for services with `httpApiKeyAuth`. Configs get `api_key` and `api_key_identity_resolver` fields, default to the API key auth scheme, and add `set_auth_scheme`."
+}

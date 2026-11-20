@@ -1,4 +1,11 @@
 {
+  "api-key-auth-client": {
+    "description": "Python client for the API key auth fixture",
+    "model": "models/api-key-auth.json",
+    "package": "api_key_auth_client",
+    "service": "example.apikey#ApiKeyService",
+    "version": "0.0.1"
+  },
   "endpoint-rules-client": {
     "description": "Python client for the endpoint rules fixture",
     "model": "models/endpoint-rules.json",
