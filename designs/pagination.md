@@ -36,10 +36,20 @@ customers to look up an operation by name.
 
 ## Proposal
 
+### Modeled pagination
+
+Operations opt into pagination through Smithy's `@paginated` trait. Operation
+settings override service-level defaults.
+
+The generator uses these settings to identify continuation tokens, the page-size
+parameter, and an optional item collection. Generation fails when configured
+members cannot be resolved or have unsupported types.
+
 ### Response pages
 
 Each paginated operation gets a method with a `paginate_` prefix. It accepts the
-same input parameters and per-call plugins as the ordinary operation:
+ordinary operation's input parameters and per-call plugins, along with the
+`stop_on_same_token` option described below:
 
 ```python
 async for page in client.paginate_scan(table_name="orders", limit=100):
@@ -94,8 +104,9 @@ for item in client.paginate_scan(table_name="orders").items():
 ### Iterator lifetime
 
 This proposal uses single-use iterators. Pages and `.items()` consume the same
-traversal; a second loop does not restart it. Customers create a new paginator
-for another pass. Responses are not cached.
+traversal. Once exhausted, further iteration yields nothing and sends no
+requests. Customers create a new paginator to start another traversal. Responses
+are not cached.
 
 Breaking out of a loop sends no further requests. The paginator does not own or
 close the client, which must remain open during iteration. Service errors and
@@ -103,18 +114,30 @@ cancellation propagate to the caller and end the traversal.
 
 ### Page size and continuation
 
-Page-size and starting-token parameters retain their modeled names. DynamoDB's
-`limit`, for example, is a per-request limit, not a total item limit. Customers
+Page-size parameters retain their modeled names, such as `limit` or `max_items`.
+They control individual requests, not the total number of items yielded across
+pages. Starting-token parameters also retain their modeled names, so customers
 can start from a saved service token using the ordinary input parameter. The
 paginator does not modify caller-owned inputs or yielded responses.
 
 An empty item collection does not end pagination while a continuation token
-remains. Pagination ends when the output token is absent or empty. Consecutive
-repeated output tokens raise `PaginationError` after yielding the repeated page.
+remains. An absent or empty output token always ends pagination. A map token is
+empty when it contains no entries.
 
 This proposal does not add total-item limits, combined results, or encoded SDK
-resume tokens. AWS-specific termination flags and other pagination rules not
-represented by the Smithy trait require separate customization.
+resume tokens. Other service-specific pagination rules, including termination
+flags not represented by the Smithy trait, require separate customization.
+
+### Paginator configuration
+
+Paginator methods accept SDK-specific options in addition to the operation's
+inputs. These options control iteration and are not sent to the service.
+
+* `stop_on_same_token` defaults to `True`. When a response returns the same
+  token used for that request, including a supplied starting token, the paginator
+  yields the page and ends normally. Tokens are compared by value. Set
+  `stop_on_same_token=False` to continue requesting pages when tokens repeat,
+  such as when polling for new results.
 
 ### Alternatives considered
 
