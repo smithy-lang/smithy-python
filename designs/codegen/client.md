@@ -258,6 +258,11 @@ default, a client parameter that is not a client context parameter, and a blob,
 timestamp, big decimal, or document value. An input that names an operation the
 service lacks, or a member its input lacks, fails generation.
 
+Every test sets `_TEST_CONFIG`, the config fields integrations supply through
+`endpoint_test_config`, and a case's own fields replace them. The AWS config
+integration sets a region and static credentials, so tests never reach the
+credentials chain.
+
 The module marks its tests with `pytest.mark.asyncio`. The package's `test`
 dependency group adds `pytest`, `pytest-asyncio`, and `smithy-test`.
 
@@ -300,6 +305,7 @@ defaults to no change:
 | `write_config` | The config class, written in place of the core one |
 | `new_config` | The callable that creates a default config |
 | `write_client_methods` | Extra client methods, such as `_post_setup` |
+| `endpoint_test_config` | Config fields every generated endpoint test sets |
 | `client_plugins` | Plugins every client applies, before the core ones |
 | `write_files` | Extra modules |
 
@@ -422,29 +428,27 @@ decoded CBOR payload, response models, and error types. An endpoint test
 resolves a host from a client context field, an input context parameter, and
 a static context parameter.
 
-Lowering tests port the Java generator's tests. The `endpoint-rules-client`
-snapshot is generated from a fixture whose endpoint rules read client context
-fields, `SDK::Endpoint`, an input context parameter, and static context
-parameters. `models/endpoint-rules.smithy` is its source, and
-`models/endpoint-rules.json` is that model assembled by Smithy with its ruleset
-compiled by `CompileBdd`. The snapshot tests run the snapshot's generated
-endpoint tests.
+Lowering tests port the Java generator's tests.
 
-The `api-key-auth-client` snapshot comes from `models/api-key-auth.smithy`,
-assembled by Smithy into `models/api-key-auth.json`. Its operations use the
-service's API key auth, `@auth([])`, and `@optionalAuth`. Tests check which
-requests carry the key and that a missing key fails the call.
+The `features-client` snapshot covers every client feature in one AWS service.
+`models/features.smithy` is its source, and `models/features.json` is that
+model assembled by Smithy with its ruleset compiled by `CompileBdd`:
 
-The `aws-config-client` snapshot comes from `models/aws-config.smithy`,
-assembled by Smithy into `models/aws-config.json` with its ruleset compiled by
-`CompileBdd`. Its tests resolve the endpoint from `AWS_ENDPOINT_URL_<SDK_ID>`
-and from a profile, check the AWS user agent, and check that unknown fields and
-direct construction fail.
+| Feature | Fixture |
+| --- | --- |
+| Endpoint rules | Client context fields, `SDK::Endpoint`, an input context parameter, and static context parameters |
+| Endpoint tests | Rules and client cases, run by the snapshot tests |
+| SigV4 | The service's default auth |
+| API key auth | Operations with `@auth([httpApiKeyAuth])`, one also `@optionalAuth` |
+| No auth | Operations with `@auth([])` |
+| AWS config | `aws.api#service`, with the SDK ID `Field Notes` |
 
-The `aws-sigv4-client` snapshot comes from `models/aws-sigv4.smithy`, built the
-same way. Its tests check that requests are signed for the signing name with
-configured credentials and with credentials from the default chain, and that an
-`@auth([])` operation is unsigned.
+Its tests check which requests carry the API key and that a missing key fails
+the call. They resolve the endpoint from `AWS_ENDPOINT_URL_<SDK_ID>` and from a
+profile, check the AWS user agent, check that unknown fields and direct
+construction fail, and check SigV4 signing with configured credentials and with
+credentials from the default chain. The core config is covered by the
+`rpcv2-cbor-client` and `rpcv2-json-client` snapshots and by unit tests.
 
 Client snapshots sit alongside the types snapshots and cover the
 provider-neutral RPCv2 CBOR and RPCv2 JSON projections. Checks cover deterministic

@@ -139,8 +139,23 @@ def test_snapshot_client_round_trips_through_the_runtime(
     assert loads(body) == {"stringValue": "in", "integerValue": 3}
 
 
-def test_generated_endpoint_tests_pass() -> None:
-    projection = _ROOT / "codegen-output-py/endpoint-rules-client"
+@pytest.fixture
+def aws_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> pytest.MonkeyPatch:
+    """An environment with only a region, credentials, and empty config files."""
+    for name in list(os.environ):
+        if name.startswith("AWS_"):
+            monkeypatch.delenv(name)
+    monkeypatch.setenv("AWS_CONFIG_FILE", str(tmp_path / "config"))
+    monkeypatch.setenv("AWS_SHARED_CREDENTIALS_FILE", str(tmp_path / "credentials"))
+    # The base AWS config requires a region, and SigV4 requires credentials.
+    monkeypatch.setenv("AWS_REGION", "us-west-2")
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "AKIDFROMENV")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret")
+    return monkeypatch
+
+
+def test_generated_endpoint_tests_pass(aws_env: pytest.MonkeyPatch) -> None:
+    projection = _ROOT / "codegen-output-py/features-client"
     result = subprocess.run(
         [
             sys.executable,
@@ -164,9 +179,9 @@ def test_generated_endpoint_tests_pass() -> None:
 
 
 @pytest.fixture(scope="module")
-def api_key_package() -> Iterator[ModuleType]:
-    source = _ROOT / "codegen-output-py/api-key-auth-client/src"
-    name = _PROJECTIONS["api-key-auth-client"]["package"]
+def features() -> Iterator[ModuleType]:
+    source = _ROOT / "codegen-output-py/features-client/src"
+    name = _PROJECTIONS["features-client"]["package"]
     sys.path.insert(0, str(source))
     try:
         yield importlib.import_module(name)
@@ -177,156 +192,11 @@ def api_key_package() -> Iterator[ModuleType]:
                 del sys.modules[module]
 
 
-def _api_key_client(package: ModuleType, aio: bool, **config: Any) -> Any:
-    transport = (_AsyncTransport if aio else _Transport)(b"\xa0")
-    client = (package.AsyncApiKeyService if aio else package.ApiKeyService)(
-        (package.AsyncConfig if aio else package.Config)(
-            endpoint_uri="https://example.com",
-            transport=transport,
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
-            **config,
-        )
-    )
-    return client, transport
-
-
-def _call(aio: bool, call: Any) -> Any:
-    return asyncio.run(call) if aio else call
-
-
-@pytest.mark.parametrize("aio", [False, True])
-def test_api_key_auth_signs_by_operation(
-    api_key_package: ModuleType, aio: bool
-) -> None:
-    client, transport = _api_key_client(api_key_package, aio, api_key="secret")
-    _call(aio, client.get_thing(name="a"))
-    _call(aio, client.ping())
-    _call(aio, client.health())
-    get_thing, ping, health = transport.requests
-    assert get_thing.fields["Authorization"].values == ["ApiKey secret"]
-    assert ping.fields["Authorization"].values == ["ApiKey secret"]
-    # @auth([]) leaves only noAuth, so the request is unsigned.
-    assert "Authorization" not in health.fields
-
-
-@pytest.mark.parametrize("aio", [False, True])
-def test_api_key_auth_requires_a_key(api_key_package: ModuleType, aio: bool) -> None:
-    client, transport = _api_key_client(api_key_package, aio)
-    with pytest.raises(SmithyIdentityError, match="api_key was not set"):
-        _call(aio, client.get_thing(name="a"))
-    _call(aio, client.health())
-    assert len(transport.requests) == 1
-
-
-@pytest.fixture
-def aws_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> pytest.MonkeyPatch:
-    """An environment with no AWS settings and empty shared config files."""
-    for name in list(os.environ):
-        if name.startswith("AWS_"):
-            monkeypatch.delenv(name)
-    monkeypatch.setenv("AWS_CONFIG_FILE", str(tmp_path / "config"))
-    monkeypatch.setenv("AWS_SHARED_CREDENTIALS_FILE", str(tmp_path / "credentials"))
-    # The base AWS config requires a region.
-    monkeypatch.setenv("AWS_REGION", "us-west-2")
-    return monkeypatch
-
-
-@pytest.fixture(scope="module")
-def aws_package() -> Iterator[ModuleType]:
-    source = _ROOT / "codegen-output-py/aws-config-client/src"
-    name = _PROJECTIONS["aws-config-client"]["package"]
-    sys.path.insert(0, str(source))
-    try:
-        yield importlib.import_module(name)
-    finally:
-        sys.path.remove(str(source))
-        for module in tuple(sys.modules):
-            if module == name or module.startswith(name + "."):
-                del sys.modules[module]
-
-
-def _aws_client(package: ModuleType, aio: bool, **overrides: Any) -> Any:
-    transport = (_AsyncTransport if aio else _Transport)(b"\xa1\x67summary\x63sun")
-    config_class = (
-        package.AsyncWeatherStationConfig if aio else package.WeatherStationConfig
-    )
-    config = config_class.resolve(
-        transport=transport,
-        retry_strategy=SimpleRetryStrategy(max_attempts=1),
-        **overrides,
-    )
-    if aio:
-        config = asyncio.run(config)
-    client = package.AsyncWeatherStationClient if aio else package.WeatherStationClient
-    return client(config), transport
-
-
-@pytest.mark.parametrize("aio", [False, True])
-def test_aws_config_resolves_the_endpoint_from_the_environment(
-    aws_package: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
-) -> None:
-    aws_env.setenv("AWS_ENDPOINT_URL_WEATHER_STATION", "https://weather.example.com")
-    client, transport = _aws_client(aws_package, aio, sdk_ua_app_id="forecaster")
-    output = _call(aio, client.get_forecast(city="Lisbon"))
-    assert output.summary == "sun"
-    (request,) = transport.requests
-    assert request.destination.host == "weather.example.com"
-    user_agent = request.fields["User-Agent"].as_string()
-    assert "api/Weather_Station#0.0.1" in user_agent
-    assert "app/forecaster" in user_agent
-
-
-@pytest.mark.parametrize("aio", [False, True])
-def test_aws_config_rejects_unknown_fields(
-    aws_package: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
-) -> None:
-    config_class = (
-        aws_package.AsyncWeatherStationConfig
-        if aio
-        else aws_package.WeatherStationConfig
-    )
-    with pytest.raises(Exception, match="nope"):
-        _call(aio, config_class.resolve(nope=1))
-    with pytest.raises(ConfigError, match="cannot be constructed directly"):
-        config_class()
-
-
-def test_aws_client_resolves_its_own_config(
-    aws_package: ModuleType, aws_env: pytest.MonkeyPatch
-) -> None:
-    (Path(os.environ["AWS_CONFIG_FILE"])).write_text(
-        "[default]\nendpoint_url = https://profile.example.com\n"
-    )
-    transport = _Transport(b"\xa0")
-
-    def use_transport(config: Any) -> None:
-        config.transport = transport
-
-    client = aws_package.WeatherStationClient(plugins=[use_transport])
-    client.get_forecast(city="Lisbon")
-    (request,) = transport.requests
-    assert request.destination.host == "profile.example.com"
-
-
-@pytest.fixture(scope="module")
-def sigv4_package() -> Iterator[ModuleType]:
-    source = _ROOT / "codegen-output-py/aws-sigv4-client/src"
-    name = _PROJECTIONS["aws-sigv4-client"]["package"]
-    sys.path.insert(0, str(source))
-    try:
-        yield importlib.import_module(name)
-    finally:
-        sys.path.remove(str(source))
-        for module in tuple(sys.modules):
-            if module == name or module.startswith(name + "."):
-                del sys.modules[module]
-
-
-def _sigv4_client(package: ModuleType, aio: bool, **overrides: Any) -> Any:
-    transport = (_AsyncTransport if aio else _Transport)(b"\xa0")
+def _client(package: ModuleType, aio: bool, **overrides: Any) -> Any:
+    # CBOR {"id": "n1"}.
+    transport = (_AsyncTransport if aio else _Transport)(b"\xa1\x62id\x62n1")
     config_class = package.AsyncFieldNotesConfig if aio else package.FieldNotesConfig
     config = config_class.resolve(
-        endpoint_uri="https://notes.example.com",
         transport=transport,
         retry_strategy=SimpleRetryStrategy(max_attempts=1),
         **overrides,
@@ -337,33 +207,106 @@ def _sigv4_client(package: ModuleType, aio: bool, **overrides: Any) -> Any:
     return client(config), transport
 
 
+def _call(aio: bool, call: Any) -> Any:
+    return asyncio.run(call) if aio else call
+
+
+_ENDPOINT = "https://notes.example.com"
+
+
+@pytest.mark.parametrize("aio", [False, True])
+def test_api_key_auth_signs_by_operation(
+    features: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
+) -> None:
+    client, transport = _client(features, aio, endpoint_uri=_ENDPOINT, api_key="key")
+    _call(aio, client.get_thing(name="a"))
+    _call(aio, client.echo())
+    _call(aio, client.ping())
+    get_thing, echo, ping = transport.requests
+    assert get_thing.fields["Authorization"].values == ["ApiKey key"]
+    # @optionalAuth signs with the first supported scheme.
+    assert echo.fields["Authorization"].values == ["ApiKey key"]
+    # @auth([]) leaves only noAuth, so the request is unsigned.
+    assert "Authorization" not in ping.fields
+
+
+@pytest.mark.parametrize("aio", [False, True])
+def test_api_key_auth_requires_a_key(
+    features: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
+) -> None:
+    client, transport = _client(features, aio, endpoint_uri=_ENDPOINT)
+    with pytest.raises(SmithyIdentityError, match="api_key was not set"):
+        _call(aio, client.get_thing(name="a"))
+    _call(aio, client.ping())
+    assert len(transport.requests) == 1
+
+
+@pytest.mark.parametrize("aio", [False, True])
+def test_aws_config_resolves_the_endpoint_from_the_environment(
+    features: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
+) -> None:
+    aws_env.setenv("AWS_ENDPOINT_URL_FIELD_NOTES", _ENDPOINT)
+    client, transport = _client(features, aio, sdk_ua_app_id="jotter")
+    output = _call(aio, client.put_note(text="hi"))
+    assert output.id == "n1"
+    (request,) = transport.requests
+    assert request.destination.host == "notes.example.com"
+    user_agent = request.fields["User-Agent"].as_string()
+    assert "api/Field_Notes#0.0.1" in user_agent
+    assert "app/jotter" in user_agent
+
+
+@pytest.mark.parametrize("aio", [False, True])
+def test_aws_config_rejects_unknown_fields(
+    features: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
+) -> None:
+    config_class = features.AsyncFieldNotesConfig if aio else features.FieldNotesConfig
+    with pytest.raises(Exception, match="nope"):
+        _call(aio, config_class.resolve(nope=1))
+    with pytest.raises(ConfigError, match="cannot be constructed directly"):
+        config_class()
+
+
+def test_aws_client_resolves_its_own_config(
+    features: ModuleType, aws_env: pytest.MonkeyPatch
+) -> None:
+    (Path(os.environ["AWS_CONFIG_FILE"])).write_text(
+        "[default]\nendpoint_url = https://profile.example.com\n"
+    )
+    transport = _Transport(b"\xa0")
+
+    def use_transport(config: Any) -> None:
+        config.transport = transport
+
+    client = features.FieldNotesClient(plugins=[use_transport])
+    client.put_note(text="hi")
+    (request,) = transport.requests
+    assert request.destination.host == "profile.example.com"
+
+
 @pytest.mark.parametrize("aio", [False, True])
 def test_sigv4_signs_with_configured_credentials(
-    sigv4_package: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
+    features: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
 ) -> None:
-    client, transport = _sigv4_client(
-        sigv4_package,
+    client, transport = _client(
+        features,
         aio,
+        endpoint_uri=_ENDPOINT,
         aws_access_key_id="AKIDEXAMPLE",
         aws_secret_access_key="secret",
     )
     _call(aio, client.put_note(text="hi"))
-    _call(aio, client.health())
-    put_note, health = transport.requests
-    authorization = put_note.fields["Authorization"].as_string()
+    (request,) = transport.requests
+    authorization = request.fields["Authorization"].as_string()
     assert authorization.startswith("AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/")
     assert "/us-west-2/fieldnotes/aws4_request" in authorization
-    # @auth([]) leaves only noAuth, so the request is unsigned.
-    assert "Authorization" not in health.fields
 
 
 @pytest.mark.parametrize("aio", [False, True])
 def test_sigv4_clients_default_to_the_credentials_chain(
-    sigv4_package: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
+    features: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
 ) -> None:
-    aws_env.setenv("AWS_ACCESS_KEY_ID", "AKIDFROMENV")
-    aws_env.setenv("AWS_SECRET_ACCESS_KEY", "secret")
-    client, transport = _sigv4_client(sigv4_package, aio)
+    client, transport = _client(features, aio, endpoint_uri=_ENDPOINT)
     _call(aio, client.put_note(text="hi"))
     (request,) = transport.requests
     authorization = request.fields["Authorization"].as_string()

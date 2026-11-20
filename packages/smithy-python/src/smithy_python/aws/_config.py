@@ -56,6 +56,16 @@ class AwsConfigIntegration(ClientIntegration):
         _write_config(writer, config)
         return True
 
+    def endpoint_test_config(self, service: _model.ServiceShape) -> Mapping[str, str]:
+        del service
+        # AwsConfig requires a region. Static credentials keep the tests from
+        # reaching the credentials chain.
+        return {
+            "region": _quote("us-east-1"),
+            "aws_access_key_id": _quote("AKIDTEST"),
+            "aws_secret_access_key": _quote("secret"),
+        }
+
     def new_config(
         self, mode: ClientMode, config: TypeReference
     ) -> tuple[Part, ...] | None:

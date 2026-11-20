@@ -130,6 +130,15 @@ class ClientIntegration:
         del mode, config
         return None
 
+    def endpoint_test_config(self, service: _model.ServiceShape) -> Mapping[str, str]:
+        """Config fields every generated endpoint test sets, as Python literals.
+
+        A config that resolves from the environment, for example, may need a
+        region and credentials. A test case's own fields replace these.
+        """
+        del service
+        return {}
+
     def write_client_methods(
         self,
         writer: PythonWriter,

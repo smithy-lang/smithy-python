@@ -8,14 +8,11 @@
     "tests/_typecheck.py"
   ],
   "extraPaths": [
-    "../../codegen-output-py/api-key-auth-client/src",
-    "../../codegen-output-py/aws-config-client/src",
     "../../codegen-output-py/aws-json-1-0/src",
     "../../codegen-output-py/aws-json-1-1/src",
     "../../codegen-output-py/aws-query/src",
-    "../../codegen-output-py/aws-sigv4-client/src",
     "../../codegen-output-py/ec2-query/src",
-    "../../codegen-output-py/endpoint-rules-client/src",
+    "../../codegen-output-py/features-client/src",
     "../../codegen-output-py/my-handwritten-json-model/src",
     "../../codegen-output-py/my-handwritten-model/src",
     "../../codegen-output-py/non-query-compatible-rpcv2-cbor/src",

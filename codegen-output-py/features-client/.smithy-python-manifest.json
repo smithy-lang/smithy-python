@@ -1,0 +1,22 @@
+{
+  "files": {
+    "README.md": "2806a5e5abe658301cad30030818d656fc9095fd3e510bc14744e2c053766c38",
+    "pyproject.toml": "3bf9e8ba4f2d5620cb43a34b5a05445485d96bbc71b79d568cfe10e92d3deef6",
+    "src/features_client/__init__.py": "32592f5725712e19c306d0c817040e64c67203ae420e3fac2a05301915b742aa",
+    "src/features_client/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/features_client/_private/endpoints.py": "f5bec5c0c17f9ec3fab86ea81c1472b1771118e6064f52cbb58cf85d89e09b20",
+    "src/features_client/_private/schemas.py": "7b2007610a0ec1e352198c77230810edaa6a2ec41cc4d3034b58fd36b278b613",
+    "src/features_client/aio/__init__.py": "2d6c204a7bbceeed5b175fe0df922722d341068027b29287cfdcbb9cb29403af",
+    "src/features_client/aio/client.py": "910b8914637d5e09218664a96792ca6727c941a52d4e678ba4c31fdbc81e360e",
+    "src/features_client/aio/config.py": "c341294cd16f4940fceb60c8513e29b5b81636a8ba4b999951e09c23efa9e093",
+    "src/features_client/aio/user_agent.py": "05cbb5932a96cb83d55ece172f9b9b5b8aeb625782140647e177d5d5cbd18dd5",
+    "src/features_client/client.py": "fb0acd7beabe576c39ba2f1f1067366d5ba63635ad66f4849280c546fe3d059d",
+    "src/features_client/config.py": "9ac6470542449161d0aa85f94eec11623e79cf5fbc5db6749b8ce462940e8fdb",
+    "src/features_client/models.py": "b326674510de3a4f6dd77a4d172cf4dfce08a6ed24f01fa162e99c31dfa13567",
+    "src/features_client/models.pyi": "26858d43ae4e5d88d0ef0db95bd332d12de4784e8b8bf9b0a0a71d54cec5b93a",
+    "src/features_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/features_client/user_agent.py": "6d7e1477fa0123330b26d750070dcb49afe76bd14baa8bbe4b66a3d28e7ad75f",
+    "tests/test_endpoints.py": "dd98319dec82644ab5f58d0793e0c2dcf877f358b60b96dcb26f2367c8c37f21"
+  },
+  "version": 1
+}

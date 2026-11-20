@@ -146,6 +146,11 @@ def write_client(
         TypeReference(aio.client, f"{import_name}.aio.client"),
         aio_config,
         _new_config(aio, aio_config, integrations),
+        {
+            name: value
+            for integration in integrations
+            for name, value in integration.endpoint_test_config(service).items()
+        },
     )
     aio_init = context.files.python_module(
         f"src/{directory}/aio/__init__.py", f"{import_name}.aio"
