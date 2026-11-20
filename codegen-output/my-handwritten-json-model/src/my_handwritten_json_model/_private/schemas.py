@@ -27,19 +27,20 @@ _s = "smithy.api#error"
 _se = "server"
 _TE = "ThrottlingEvent"
 _c = "client"
+_sm = "smithy.api#retryable"
 _TEr = "TradeEvents"
-_sm = "smithy.api#streaming"
+_smi = "smithy.api#streaming"
 _a = "alpha"
 _b = "beta"
 _g = "gamma"
 _d = "delta"
 _th = "throttle"
 _TESI = "TradeEventStreamInput"
-_smi = "smithy.api#input"
+_smit = "smithy.api#input"
 _sI = "sessionId"
 _e = "events"
 _TESO = "TradeEventStreamOutput"
-_smit = "smithy.api#output"
+_smith = "smithy.api#output"
 _gr = "greeting"
 _TES = "TradeEventStream"
 _MHJM = "MyHandwrittenJsonModel"
@@ -64,13 +65,20 @@ GAMMA: StaticSchema = (
 
 STREAM_SERVICE_ERROR: StaticSchema = (18, n0, _SSE, {_s: _se}, (_me,), ((3, 0),))
 
-THROTTLING_EVENT: StaticSchema = (18, n0, _TE, {_s: _c}, (_me,), ((3, 0),))
+THROTTLING_EVENT: StaticSchema = (
+    18,
+    n0,
+    _TE,
+    {_s: _c, _sm: MappingProxyType({"throttling": True})},
+    (_me,),
+    ((3, 0),),
+)
 
 TRADE_EVENTS: StaticSchema = (
     19,
     n0,
     _TEr,
-    {_sm: None},
+    {_smi: None},
     (_a, _b, _g, _d, _th),
     ((ALPHA, 0), (-1, 0), (GAMMA, 0), (DIFFERENT_SHAPE_NAME, 0), (THROTTLING_EVENT, 0)),
 )
@@ -79,7 +87,7 @@ TRADE_EVENT_STREAM_INPUT: StaticSchema = (
     18,
     n0,
     _TESI,
-    {_smi: None},
+    {_smit: None},
     (_sI, _e),
     ((3, 0), (TRADE_EVENTS, 0)),
 )
@@ -88,7 +96,7 @@ TRADE_EVENT_STREAM_OUTPUT: StaticSchema = (
     18,
     n0,
     _TESO,
-    {_smit: None},
+    {_smith: None},
     (_gr, _e),
     ((3, 0), (TRADE_EVENTS, 0)),
 )
