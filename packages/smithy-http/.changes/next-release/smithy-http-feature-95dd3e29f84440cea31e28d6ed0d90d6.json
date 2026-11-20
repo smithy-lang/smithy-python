@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `TokenIdentity`, `TokenIdentityProperties`, `StaticTokenResolver` and `AsyncStaticTokenResolver` for resolving bearer tokens."
+}
