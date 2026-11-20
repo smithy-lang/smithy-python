@@ -163,6 +163,15 @@ are ordered by shape ID unless an `auth` trait on the operation, or else the
 service, orders them. `smithy.api#noAuth` is appended when no scheme applies or
 the operation has `optionalAuth`.
 
+## Paginators
+
+An operation with its own `@paginated` trait also gets a `paginate_<method>`
+factory in both clients, as described in [modeled pagination](../pagination.md).
+`smithy_python._pagination` resolves the effective trait, maps its paths to
+generated member names, types the items, and allocates the factory names past
+operation names and inherited client members. Ordinary operation names never
+change.
+
 ## Protocols
 
 A protocol registry maps modeled protocol IDs to protocol contributions. A

@@ -767,6 +767,11 @@
   "smithy_core.aio.interfaces.identity": {
     "Identity": "rex-protocol"
   },
+  "smithy_core.aio.pagination": {
+    "PaginationError": "rex-exception",
+    "PaginationState": "rex-class",
+    "read_items": "rex-function"
+  },
   "smithy_core.aio.program": {
     "Program": "rex-type_alias"
   },
@@ -896,6 +901,10 @@
   },
   "smithy_core.interfaces.identity": {
     "ensure_utc": "rex-function"
+  },
+  "smithy_core.pagination": {
+    "PaginationState": "rex-class",
+    "read_items": "rex-function"
   },
   "smithy_core.prelude": {
     "DefaultTrait": "rex-class",

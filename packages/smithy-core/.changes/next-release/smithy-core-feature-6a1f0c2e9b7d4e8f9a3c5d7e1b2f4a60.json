@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Add `Paginator` and `ItemPaginator` in `smithy_core.pagination`, their async twins in `smithy_core.aio.pagination`, and `PaginationError`, which generated clients use to iterate the pages and items of paginated operations."
+}

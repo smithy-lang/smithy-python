@@ -67,7 +67,8 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     private static final Logger LOGGER = Logger.getLogger(PythonSymbolProvider.class.getName());
     private static final String SHAPES_FILE = "models";
     private static final String SCHEMAS_FILE = "_private/schemas";
-    private static final Set<String> CLIENT_RESERVED_METHOD_NAMES = Set.of("close");
+    // Public methods every client inherits, which operation methods are escaped past.
+    static final Set<String> CLIENT_RESERVED_METHOD_NAMES = Set.of("close");
     // The names every generated client method uses besides its input members: the
     // parameters it declares, and the models module alias its body references.
     private static final Set<String> OPERATION_PARAMETER_NAMES = Set.of("self", "plugins", "_models");

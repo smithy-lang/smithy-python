@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Generated clients have a `paginate_<operation>` method for each operation with the `@paginated` trait, which lazily iterates its pages and, when the trait names items, its items."
+}

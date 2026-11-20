@@ -117,6 +117,12 @@ public final class RuntimeTypes {
     public static final Symbol OUTPUT_EVENT_STREAM =
             createSymbol("aio.eventstream", "AsyncOutputEventStream", SmithyPythonDependency.SMITHY_CORE);
 
+    // smithy_core.aio.pagination; the sync variant maps these to smithy_core.pagination.
+    public static final Symbol ASYNC_PAGINATOR =
+            createSymbol("aio.pagination", "AsyncPaginator", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol ASYNC_ITEM_PAGINATOR =
+            createSymbol("aio.pagination", "AsyncItemPaginator", SmithyPythonDependency.SMITHY_CORE);
+
     // smithy_core.aio.interfaces
     public static final Symbol ASYNC_BYTE_STREAM =
             createSymbol("aio.interfaces", "AsyncByteStream", SmithyPythonDependency.SMITHY_CORE);
