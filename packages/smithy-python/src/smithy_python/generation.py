@@ -34,11 +34,20 @@ _UNIT = _model.ShapeId("smithy.api", "Unit")
 
 @dataclass(frozen=True, slots=True)
 class ArtifactSettings:
-    """Settings shared by generated artifacts."""
+    """Settings shared by generated artifacts.
+
+    ``package`` is the distribution name, used as given in ``pyproject.toml``.
+    ``import_name`` derives the name to import from it.
+    """
 
     package: str
     package_version: str
     package_description: str | None
+
+    @property
+    def import_name(self) -> str:
+        """The name to import: ``package`` with dashes replaced by underscores."""
+        return self.package.replace("-", "_")
 
 
 @dataclass(frozen=True, slots=True)

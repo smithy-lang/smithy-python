@@ -101,14 +101,14 @@ class SchemaGenerator:
 
     def generate(self, context: GenerationContext[ModelArtifactSettings]) -> None:
         """Register ``<package>._private.schemas`` with the file manifest."""
-        package = context.settings.package
-        directory = package.replace(".", "/")
+        import_name = context.settings.import_name
+        directory = import_name.replace(".", "/")
         plan = context.plan.schemas
         size = context.settings.schema_partition_size
         if size is None or len(plan.shapes) <= size:
             writer = context.files.python_module(
                 f"src/{directory}/_private/schemas.py",
-                f"{package}._private.schemas",
+                f"{import_name}._private.schemas",
             )
             _write_schema_module(writer, plan, plan.shapes)
             return
@@ -118,7 +118,7 @@ class SchemaGenerator:
         _write_schema_facade(
             context.files.python_module(
                 f"src/{directory}/_private/schemas.py",
-                f"{package}._private.schemas",
+                f"{import_name}._private.schemas",
             ),
             plan,
             partitions,
@@ -128,7 +128,7 @@ class SchemaGenerator:
             _write_schema_module(
                 context.files.python_module(
                     f"src/{directory}/_private/{module}.py",
-                    f"{package}._private.{module}",
+                    f"{import_name}._private.{module}",
                 ),
                 plan,
                 shapes,

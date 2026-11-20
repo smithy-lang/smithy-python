@@ -280,6 +280,27 @@ def test_types_generation_packages_dotted_modules_from_namespace_root(
     assert capsys.readouterr().err == ""
 
 
+def test_types_generation_keeps_dashes_in_the_distribution_name(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output = tmp_path / "output"
+    source = b'{"smithy": "2.0", "shapes": {"example#Data": {"type": "structure"}}}'
+
+    assert _run_types(output, source=source, package="dashed-types") == 0
+    project = tomllib.loads((output / "pyproject.toml").read_text())
+    assert project["project"]["name"] == "dashed-types"
+    assert project["project"]["keywords"] == ["smithy", "dashed-types"]
+    wheel = project["tool"]["hatch"]["build"]["targets"]["wheel"]
+    assert wheel["packages"] == ["src/dashed_types"]
+
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(output / "src")
+    )
+    models = importlib.import_module("dashed_types.models")
+    assert models.Data.__module__ == "dashed_types.models"
+
+
 @pytest.mark.parametrize(
     ("argv", "expected_usage"),
     [
@@ -382,11 +403,7 @@ def test_types_generation_requires_package_settings(
 @pytest.mark.parametrize(
     ("option", "value", "expected"),
     [
-        (
-            "--package",
-            "invalid-package",
-            "Invalid Python package or distribution name",
-        ),
+        ("--package", "example-", "Invalid Python package or distribution name"),
         ("--package", "_example", "Invalid Python package or distribution name"),
         ("--package", "example_", "Invalid Python package or distribution name"),
         ("--package", "café", "Invalid Python package or distribution name"),

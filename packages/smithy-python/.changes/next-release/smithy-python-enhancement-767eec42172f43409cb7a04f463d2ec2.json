@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Allow dashes in `--package`. The distribution name in `pyproject.toml` keeps the package name as given. The import name replaces dashes with underscores."
+}

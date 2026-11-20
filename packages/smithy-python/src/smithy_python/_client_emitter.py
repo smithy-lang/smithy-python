@@ -61,11 +61,11 @@ def write_client(
     endpoints: _endpoints.EndpointPlan,
 ) -> None:
     """Register client, config, endpoints, and package modules for both modes."""
-    package = context.settings.package
-    directory = package.replace(".", "/")
+    import_name = context.settings.import_name
+    directory = import_name.replace(".", "/")
     service = plan.selection.service
     assert service is not None  # noqa: S101 - ClientPlan requires a service
-    endpoints_module = f"{package}._private.endpoints"
+    endpoints_module = f"{import_name}._private.endpoints"
     _endpoints.write_endpoints(
         context.files.python_module(
             f"src/{directory}/_private/endpoints.py", endpoints_module
@@ -74,7 +74,7 @@ def write_client(
     )
     sync, aio = _modes(plan, protocol)
     for mode in (sync, aio):
-        module = f"{package}.{mode.directory.replace('/', '.')}"
+        module = f"{import_name}.{mode.directory.replace('/', '.')}"
         _write_config(
             context.files.python_module(
                 f"src/{directory}/{mode.directory}config.py", f"{module}config"
@@ -100,17 +100,18 @@ def write_client(
         context,
         plan,
         endpoints,
-        TypeReference(aio.client, f"{package}.aio.client"),
-        TypeReference(aio.config, f"{package}.aio.config"),
+        TypeReference(aio.client, f"{import_name}.aio.client"),
+        TypeReference(aio.config, f"{import_name}.aio.config"),
     )
     aio_init = context.files.python_module(
-        f"src/{directory}/aio/__init__.py", f"{package}.aio"
+        f"src/{directory}/aio/__init__.py", f"{import_name}.aio"
     )
     _write_exports(aio_init, {aio.client: ".client", aio.config: ".config"})
     init = _package.write_package(
         context,
-        title=f"{package} Client Package",
-        description=context.settings.package_description or f"{package} client package",
+        title=f"{context.settings.package} Client Package",
+        description=context.settings.package_description
+        or f"{context.settings.package} client package",
     )
     _write_exports(
         init,
@@ -277,7 +278,7 @@ def _write_config(
 ) -> None:
     client_protocol = _generic(_core("ClientProtocol", "interfaces"), _ANY, _ANY)
     interceptor = _generic(_core("Interceptor", "interceptors"), *_ANY4)
-    schemas = f"{plan.settings.package}._private.schemas"
+    schemas = f"{plan.settings.import_name}._private.schemas"
     writer.line("_PROTOCOL_SETTINGS = ", _PROTOCOL_SETTINGS, "(")
     with writer.indent():
         writer.line("namespace=", _models._quote(service.id.namespace), ",")  # pyright: ignore[reportPrivateUsage]
@@ -429,7 +430,7 @@ def _write_client(
 ) -> None:
     config = TypeReference(mode.config, config_module)
     plugin = TypeReference("Plugin", config_module)
-    models = TypeReference("models", plan.settings.package)
+    models = TypeReference("models", plan.settings.import_name)
     writer.line("class ", mode.client, "(", _generic(mode.client_base, config), "):")
     with writer.indent():
         _models._write_docstring(  # pyright: ignore[reportPrivateUsage]

@@ -43,8 +43,8 @@ def write_package(
     writer, which already declares ``__version__``.
     """
     settings = context.settings
-    package = settings.package
-    directory = package.replace(".", "/")
+    import_name = settings.import_name
+    directory = import_name.replace(".", "/")
 
     context.dependencies.add(_dependencies.HATCHLING)
     context.files.text_file(
@@ -56,10 +56,10 @@ def write_package(
         f"{_GENERATED_MARKDOWN_COMMENT}\n\n## {title}\n\n{description}\n",
     )
 
-    init = context.files.python_module(f"src/{directory}/__init__.py", package)
+    init = context.files.python_module(f"src/{directory}/__init__.py", import_name)
     init.line("__version__: str = ", repr(settings.package_version))
     context.files.python_module(
-        f"src/{directory}/_private/__init__.py", f"{package}._private"
+        f"src/{directory}/_private/__init__.py", f"{import_name}._private"
     )
     context.files.text_file(f"src/{directory}/py.typed", "")
     return init
@@ -70,7 +70,7 @@ def _render_pyproject(
     dependencies: _dependencies.DependencySet,
     description: str,
 ) -> str:
-    package_root = settings.package.split(".", 1)[0]
+    package_root = settings.import_name.split(".", 1)[0]
     groups = "\n".join(
         f"{group} = {_toml_array(map(_requirement, values))}"
         for group in ("test", "docs")

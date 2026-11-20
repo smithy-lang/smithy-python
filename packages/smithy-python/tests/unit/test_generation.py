@@ -25,6 +25,21 @@ def test_artifact_settings_are_immutable_values() -> None:
     assert settings.package_version == "1.2.3"
 
 
+@pytest.mark.parametrize(
+    ("package", "import_name"),
+    [
+        ("example_types", "example_types"),
+        ("example-types", "example_types"),
+        ("example.nested-types", "example.nested_types"),
+    ],
+)
+def test_import_name_replaces_dashes_with_underscores(
+    package: str, import_name: str
+) -> None:
+    settings = ArtifactSettings(package, "1.2.3", None)
+    assert settings.import_name == import_name
+
+
 def test_types_settings_default_to_identity_selection() -> None:
     settings = TypesSettings(
         package="example.types",
