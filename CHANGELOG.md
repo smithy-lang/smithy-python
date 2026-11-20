@@ -7,8 +7,9 @@
 * Generated clients support the `smithy.api#httpBearerAuth` trait. A service that
   models it gets `token` and `token_identity_resolver` configuration settings,
   and its requests carry an `Authorization: Bearer` header. AWS clients default
-  `token_identity_resolver` to a static resolver during setup, so a configured
-  `token` is used without wiring a resolver by hand.
+  `token_identity_resolver` during setup: a configured `token` is used through a
+  static resolver, otherwise the default token identity chain is consulted, so
+  neither needs a resolver wired by hand.
 
 ## v0.7.0
 

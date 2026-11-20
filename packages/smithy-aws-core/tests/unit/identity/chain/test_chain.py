@@ -265,7 +265,7 @@ async def test_empty_chain_reports_no_configured_provider() -> None:
 
     with pytest.raises(
         IdentityChainError,
-        match="No credential providers were configured to resolve an identity",
+        match="No identity providers were configured to resolve an identity",
     ):
         await chain.get_identity(properties={})
 

@@ -24,8 +24,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  *
  * <p>For services using SigV4 this wires the default AWS credentials identity chain.
  * For services using {@code smithy.api#httpBearerAuth} it wires a static token
- * resolver so a configured {@code token} is honored, matching the generic client
- * config. A default token provider chain is not yet wired here.
+ * resolver when a {@code token} is configured, matching the generic client config,
+ * and the default token identity chain otherwise.
  */
 @SmithyInternalApi
 public class AwsIdentityIntegration implements PythonIntegration {
@@ -48,6 +48,13 @@ public class AwsIdentityIntegration implements PythonIntegration {
      */
     private static final class IdentitySetupInterceptor
             implements CodeInterceptor<ClientSetupSection, PythonWriter> {
+
+        // The sync writer maps this to its sync twin.
+        private static final Symbol HTTP_CLIENT = Symbol.builder()
+                .name("AsyncHTTPClient")
+                .namespace("smithy_http.aio.interfaces", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_HTTP)
+                .build();
 
         private final boolean hasSigV4;
         private final boolean hasBearer;
@@ -79,19 +86,14 @@ public class AwsIdentityIntegration implements PythonIntegration {
                             writeBearerTokenSetup(writer, section);
                         }
                     });
+            writer.write("");
+            writeProfileOverrides(writer, section);
         }
 
         private void writeCredentialsSetup(PythonWriter writer, ClientSetupSection section) {
-            writer.addStdlibImport("typing", "cast");
             var template = """
                     if config.aws_credentials_identity_resolver is None:
-                        config_context = config.resolution_context()
-                        config_file = None
-                        profile_name = None
-                        if config_context is not None:
-                            config_file = await config_context.parsed_profiles()
-                            if config_context.profile_source is $4T.OVERRIDE:
-                                profile_name = config_context.profile_name
+                        config_file, profile_name = await self._profile_overrides(config)
                         config.aws_credentials_identity_resolver = await $1T.create(
                             $2T,
                             config_file=config_file,
@@ -100,29 +102,72 @@ public class AwsIdentityIntegration implements PythonIntegration {
                             http_client=cast($3T | None, config.transport),
                         )
                     """;
+            writer.addStdlibImport("typing", "cast");
             writer.write(section.sync() ? SyncVariant.toSyncCode(template) : template,
                     identityChain(section.sync()),
                     AwsRuntimeTypes.AWS_CREDENTIALS_IDENTITY,
+                    HTTP_CLIENT);
+        }
+
+        // A configured ``token`` gets the static resolver, which reads it from the
+        // identity properties the bearer auth scheme supplies. Otherwise the default
+        // token provider chain is consulted, as the token-providers SEP requires.
+        // The sync writer maps the async symbols to their twins.
+        private void writeBearerTokenSetup(PythonWriter writer, ClientSetupSection section) {
+            var template = """
+                    if config.token_identity_resolver is None:
+                        if config.token is not None:
+                            config.token_identity_resolver = $1T()
+                        else:
+                            config_file, profile_name = await self._profile_overrides(config)
+                            config.token_identity_resolver = await $2T.create(
+                                $3T,
+                                config_file=config_file,
+                                profile_name=profile_name,
+                                region_override=config.region,
+                                http_client=cast($4T | None, config.transport),
+                            )
+                    """;
+            writer.addStdlibImport("typing", "cast");
+            writer.write(section.sync() ? SyncVariant.toSyncCode(template) : template,
+                    RuntimeTypes.TOKEN_IDENTITY_RESOLVER,
+                    identityChain(section.sync()),
                     Symbol.builder()
-                            .name("AsyncHTTPClient")
-                            .namespace("smithy_http.aio.interfaces", ".")
+                            .name("TokenIdentity")
+                            .namespace("smithy_http.identity", ".")
                             .addDependency(SmithyPythonDependency.SMITHY_HTTP)
+                            .build(),
+                    HTTP_CLIENT);
+        }
+
+        // Shared by every identity chain the client builds: the parsed config file
+        // and the explicit profile override, if any.
+        private void writeProfileOverrides(PythonWriter writer, ClientSetupSection section) {
+            var template = """
+                    async def _profile_overrides(
+                        self, config: $1T
+                    ) -> tuple[$2T | None, str | None]:
+                        config_context = config.resolution_context()
+                        config_file = None
+                        profile_name = None
+                        if config_context is not None:
+                            config_file = await config_context.parsed_profiles()
+                            if config_context.profile_source is $3T.OVERRIDE:
+                                profile_name = config_context.profile_name
+                        return config_file, profile_name
+                    """;
+            writer.write(section.sync() ? SyncVariant.toSyncCode(template) : template,
+                    section.config(),
+                    Symbol.builder()
+                            .name("MergedConfig")
+                            .namespace("smithy_aws_core.config.merged_config", ".")
+                            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                             .build(),
                     Symbol.builder()
                             .name("ConfigSource")
                             .namespace("smithy_aws_core.config.types", ".")
                             .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                             .build());
-        }
-
-        // The static resolver reads the configured ``token`` from the identity
-        // properties the bearer auth scheme supplies, so ``token="..."`` works
-        // without an explicit resolver. The sync writer maps the symbol to its twin.
-        private void writeBearerTokenSetup(PythonWriter writer, ClientSetupSection section) {
-            writer.write("""
-                    if config.token_identity_resolver is None:
-                        config.token_identity_resolver = $T()
-                    """, RuntimeTypes.TOKEN_IDENTITY_RESOLVER);
         }
 
         // The sync twin is defined in a submodule the aio-stripping convention can't derive.
