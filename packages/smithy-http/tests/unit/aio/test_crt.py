@@ -2,9 +2,11 @@
 #  SPDX-License-Identifier: Apache-2.0
 #  pyright: reportPrivateUsage=false
 import asyncio
-from collections.abc import AsyncIterator
+import os
+from collections.abc import AsyncIterator, Iterator, Mapping
 from copy import deepcopy
 from io import BytesIO
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -15,8 +17,26 @@ from smithy_http import Field, Fields, HTTPRequest
 from smithy_http.aio.crt import (
     AsyncAWSCRTHTTPResponse,
     AWSCRTHTTPClient,
+    AWSCRTHTTPClientConfig,
 )
 from smithy_http.exceptions import SmithyHTTPError
+from smithy_http.interfaces import HTTPProxyConfig
+
+_PROXY_ENV_VARS = ("http_proxy", "https_proxy", "no_proxy")
+
+
+def _proxy_env(**values: str) -> Any:
+    """Replace the proxy variables in 'os.environ' with 'values'"""
+    names = {n for name in _PROXY_ENV_VARS for n in (name, name.upper())}
+    environ = {k: v for k, v in os.environ.items() if k not in names}
+    return patch.dict(os.environ, {**environ, **values}, clear=True)
+
+
+@pytest.fixture(autouse=True)
+def _clear_proxy_env() -> Iterator[None]:  # pyright: ignore[reportUnusedFunction]
+    """keep external proxy settings out of tests."""
+    with _proxy_env():
+        yield
 
 
 def test_deepcopy_client() -> None:
@@ -594,3 +614,110 @@ def test_response_properties() -> None:
     assert response.status == 404
     assert response.fields == fields
     assert response.reason is None
+
+
+async def _captured_connection_kwargs(
+    client: AWSCRTHTTPClient, url: URI, *, require_http2: bool = False
+) -> Mapping[str, Any]:
+    with patch(
+        "smithy_http.aio.crt.AIOHttpClientConnectionUnified.new", AsyncMock()
+    ) as mock_new:
+        await client._build_new_connection(url, require_http2=require_http2)
+    return mock_new.call_args.kwargs
+
+
+def _proxied_client(**proxy: str) -> AWSCRTHTTPClient:
+    return AWSCRTHTTPClient(AWSCRTHTTPClientConfig(proxy=HTTPProxyConfig(**proxy)))
+
+
+async def test_no_proxy_by_default() -> None:
+    kwargs = await _captured_connection_kwargs(
+        AWSCRTHTTPClient(), URI(scheme="https", host="example.com")
+    )
+    assert kwargs["proxy_options"] is None
+
+
+async def test_https_proxy_destination() -> None:
+    client = _proxied_client(https_proxy="http://proxy.local:3128")
+    url = URI(scheme="https", host="bedrock-runtime.us-west-2.amazonaws.com")
+
+    kwargs = await _captured_connection_kwargs(client, url, require_http2=True)
+
+    assert kwargs["host_name"] == "bedrock-runtime.us-west-2.amazonaws.com"
+    assert kwargs["port"] == 443
+    assert kwargs["tls_connection_options"] is not None
+    proxy_options = kwargs["proxy_options"]
+    assert isinstance(proxy_options, crt_http.HttpProxyOptions)
+    assert proxy_options.host_name == "proxy.local"
+    assert proxy_options.port == 3128
+    assert proxy_options.tls_connection_options is None
+    assert proxy_options.connection_type == crt_http.HttpProxyConnectionType.Tunneling
+    assert proxy_options.auth_type == crt_http.HttpProxyAuthenticationType.Nothing
+
+
+async def test_http_proxy_destination_forwarded() -> None:
+    client = _proxied_client(http_proxy="proxy.local:3128")
+
+    kwargs = await _captured_connection_kwargs(
+        client, URI(scheme="http", host="example.com")
+    )
+
+    proxy_options = kwargs["proxy_options"]
+    assert isinstance(proxy_options, crt_http.HttpProxyOptions)
+    assert proxy_options.connection_type == crt_http.HttpProxyConnectionType.Forwarding
+
+
+async def test_proxy_has_proper_scheme() -> None:
+    client = _proxied_client(http_proxy="http://proxy.local:3128")
+
+    kwargs = await _captured_connection_kwargs(
+        client, URI(scheme="https", host="example.com")
+    )
+
+    assert kwargs["proxy_options"] is None
+
+
+async def test_proxy_basic_auth() -> None:
+    client = _proxied_client(https_proxy="http://user:p%40ss@proxy.local:3128")
+
+    kwargs = await _captured_connection_kwargs(
+        client, URI(scheme="https", host="example.com")
+    )
+
+    proxy_options = kwargs["proxy_options"]
+    assert isinstance(proxy_options, crt_http.HttpProxyOptions)
+    assert proxy_options.auth_type == crt_http.HttpProxyAuthenticationType.Basic
+    assert proxy_options.auth_username == "user"
+    assert proxy_options.auth_password == "p@ss"
+
+
+async def test_no_proxy_bypass() -> None:
+    client = _proxied_client(
+        https_proxy="http://proxy.local:3128", no_proxy=".amazonaws.com"
+    )
+
+    kwargs = await _captured_connection_kwargs(
+        client, URI(scheme="https", host="sts.us-west-2.amazonaws.com")
+    )
+
+    assert kwargs["proxy_options"] is None
+
+
+async def test_proxy_from_environment() -> None:
+    with _proxy_env(HTTPS_PROXY="http://proxy.local:3128"):
+        client = AWSCRTHTTPClient()
+
+    kwargs = await _captured_connection_kwargs(
+        client, URI(scheme="https", host="example.com")
+    )
+
+    proxy_options = kwargs["proxy_options"]
+    assert isinstance(proxy_options, crt_http.HttpProxyOptions)
+    assert proxy_options.host_name == "proxy.local"
+
+
+def test_unusable_environment_proxy_does_not_stop_client() -> None:
+    with _proxy_env(HTTPS_PROXY="socks5h://127.0.0.1:1080"):
+        client = AWSCRTHTTPClient()
+
+    assert client._proxy == HTTPProxyConfig()

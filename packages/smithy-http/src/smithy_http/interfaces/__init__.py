@@ -1,13 +1,19 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import Iterator
-from dataclasses import dataclass
-from typing import Any, Literal, Protocol
+import logging
+import os
+from collections.abc import Iterator, Mapping
+from dataclasses import dataclass, field
+from typing import Any, Literal, Protocol, Self
+from urllib.parse import unquote, urlsplit
 
-from smithy_core.interfaces import Request, Response
+from smithy_core import URI as _URI
+from smithy_core.interfaces import Request, Response, URI
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
 from smithy_core.utils import read_streaming_blob
+
+from ..exceptions import SmithyHTTPError as _SmithyHTTPError
 
 __all__ = [
     "Field",
@@ -16,9 +22,11 @@ __all__ = [
     "HTTPClient",
     "HTTPClientConfiguration",
     "HTTPErrorIdentifier",
+    "HTTPProxyConfig",
     "HTTPRequest",
     "HTTPRequestConfiguration",
     "HTTPResponse",
+    "ProxyURI",
     "QueryParamsList",
 ]
 
@@ -182,6 +190,162 @@ class HTTPErrorIdentifier:
 
 
 QueryParamsList = list[tuple[str, str]]
+
+_LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(kw_only=True, frozen=True, eq=False)
+class ProxyURI(_URI):
+    """The port to connect to the proxy on.
+
+    Port is filled in from the scheme (80 for 'http', 443 for 'https')
+    field() makes port required: a bare annotation would inherit URI's None default
+    pyright flags a required override, but kw_only=True makes it valid
+    """
+
+    port: int = field()  # pyright: ignore[reportGeneralTypeIssues]
+
+
+@dataclass(kw_only=True, frozen=True, repr=False)
+class HTTPProxyConfig:
+    """Client-level HTTP proxy configuration.
+
+    Proxy URLs parsed as 'scheme://[user[:password]@]host[:port]'.
+    Proxying disabled when URLs are not set,
+
+    :param http_proxy: Proxy URL for requests to 'http' destinations
+    :param https_proxy: Proxy URL for requests to 'https' destinations
+    :param no_proxy: Comma-separated hosts that bypass the proxy
+        '*' bypass every host.
+        Entry with a port like 'example.com:8443' matches only that port.
+        IPv6 entries need brackets '[::1]'.
+    """
+
+    http_proxy: str | None = None
+    https_proxy: str | None = None
+    no_proxy: str | None = None
+
+    _http_proxy_uri: ProxyURI | None = field(
+        default=None, init=False, repr=False, compare=False
+    )
+    _https_proxy_uri: ProxyURI | None = field(
+        default=None, init=False, repr=False, compare=False
+    )
+
+    def __post_init__(self) -> None:
+        """Parses URL and sets proxy once so proxy_for doesn't parse again on each call"""
+        if self.http_proxy:
+            object.__setattr__(
+                self, "_http_proxy_uri", self._parse_url(self.http_proxy)
+            )
+        if self.https_proxy:
+            object.__setattr__(
+                self, "_https_proxy_uri", self._parse_url(self.https_proxy)
+            )
+
+    def __repr__(self) -> str:
+        """Omit passwords in urls"""
+        return (
+            f"HTTPProxyConfig(http_proxy={self._http_proxy_uri!r}, "
+            f"https_proxy={self._https_proxy_uri!r}, "
+            f"no_proxy={self.no_proxy!r})"
+        )
+
+    @classmethod
+    def from_environment(cls, environ: Mapping[str, str] | None = None) -> Self:
+        """Build a configuration from the HTTP_PROXY, HTTPS_PROXY and
+        NO_PROXY environment variables.
+
+        :param environ: The variables to read. Defaults to os.environ.
+        """
+        envvars = os.environ if environ is None else environ
+
+        def get(name: str) -> str | None:
+            return envvars.get(name.lower()) or envvars.get(name.upper()) or None
+
+        def get_proxy_url(name: str) -> str | None:
+            if (value := get(name.upper())) is None:
+                return None
+            try:
+                cls._parse_url(value)
+            except _SmithyHTTPError as e:
+                _LOGGER.warning("Ignoring the %s environment variable: %s", name, e)
+                return None
+            return value
+
+        return cls(
+            http_proxy=get_proxy_url("http_proxy"),
+            https_proxy=get_proxy_url("https_proxy"),
+            no_proxy=get("no_proxy"),
+        )
+
+    def proxy_for(self, destination: URI) -> ProxyURI | None:
+        """Return the proxy to use for 'destination', or None to connect directly.
+
+        :param destination: The URI a request is sent to.
+        """
+        match destination.scheme:
+            case "http":
+                proxy = self._http_proxy_uri
+            case "https":
+                proxy = self._https_proxy_uri
+            case _:
+                return None
+        if proxy is None or self._bypass_addresses(destination):
+            return None
+        return proxy
+
+    def _bypass_addresses(self, destination: URI) -> bool:
+        """Bypasses addresses listed in NO_PROXY
+        Leading dot is ignored: '.example.com' matches example.com
+        Entry without "port" matches the host on any port
+        Entry with port like "example.com:8443", matches only that port.
+        """
+        if not self.no_proxy:
+            return False
+        if self.no_proxy.strip() == "*":
+            return True
+        host = destination.host.lower()
+        if ":" in host:
+            host = f"[{host}]"
+        port = destination.port or (443 if destination.scheme == "https" else 80)
+        host_port = f"{host}:{port}"
+        for raw_entry in self.no_proxy.split(","):
+            if not (entry := raw_entry.strip().lstrip(".").lower()):
+                continue
+            for candidate in (host, host_port):
+                if candidate == entry or candidate.endswith(f".{entry}"):
+                    return True
+        return False
+
+    @staticmethod
+    def _parse_url(value: str) -> ProxyURI:
+        url = value.strip()
+        if "://" not in url:
+            url = f"http://{url}"
+        parts = urlsplit(url)
+        scheme = parts.scheme.lower()
+        if scheme not in ("http", "https"):
+            raise _SmithyHTTPError(
+                f"Unsupported proxy URL scheme {scheme!r}: expected 'http' or 'https'."
+            )
+        try:
+            port = parts.port
+        except ValueError as e:
+            raise _SmithyHTTPError("Proxy URL has an invalid port.") from e
+        if not parts.hostname:
+            raise _SmithyHTTPError("Proxy URL has no host.")
+        return ProxyURI(
+            scheme=scheme,
+            host=parts.hostname,
+            port=port if port is not None else (443 if scheme == "https" else 80),
+            username=(
+                unquote(parts.username or "")
+                if parts.username or parts.password is not None
+                else None
+            ),
+            password=unquote(parts.password) if parts.password is not None else None,
+        )
 
 
 @dataclass(kw_only=True)
