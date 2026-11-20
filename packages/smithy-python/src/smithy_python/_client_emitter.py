@@ -22,15 +22,18 @@ if TYPE_CHECKING:
     from .writer import PythonWriter
 
 
-def check_supported(plan: ClientPlan) -> None:
+def check_supported(
+    plan: ClientPlan, integrations: Sequence[ClientIntegration] = ()
+) -> None:
     """Reject models that need features generated clients do not support yet.
 
+    :param integrations: The integrations that match the service.
     :raises CodegenError: Naming the first unsupported operation and feature.
     """
     service = plan.selection.service
     assert service is not None  # noqa: S101 - ClientPlan requires a service
     supported = {_NO_AUTH} | {
-        scheme.scheme_id for scheme in _auth.supported_schemes(service)
+        scheme.scheme_id for scheme in _auth_schemes(service, integrations)
     }
     for operation, exports in zip(plan.operations, plan.models.operations, strict=True):
         shape = operation.operation
@@ -65,7 +68,7 @@ def plan_endpoints(
     reserved = set(_CONFIG_FIELDS)
     reserved.update(
         field.name
-        for scheme in _auth.supported_schemes(service)
+        for scheme in _auth_schemes(service, integrations)
         for field in scheme.fields
     )
     for integration in integrations:
@@ -116,7 +119,7 @@ def write_client(
                 mode=mode,
                 endpoints=endpoints,
                 bdd=TypeReference("BDD", endpoints_module),
-                auth_schemes=_auth.supported_schemes(service),
+                auth_schemes=_auth_schemes(service, integrations),
                 protocol_settings="_PROTOCOL_SETTINGS",
             ),
             integrations,
@@ -209,6 +212,15 @@ def _generic(reference: TypeReference, *arguments: TypeReference) -> TypeReferen
     )
 
 
+def _auth_schemes(
+    service: _model.ServiceShape, integrations: Sequence[ClientIntegration]
+) -> tuple[_auth.AuthContribution, ...]:
+    contributions = dict(_auth.DEFAULT_AUTH_SCHEMES)
+    for integration in integrations:
+        contributions.update(integration.auth_schemes(service))
+    return _auth.supported_schemes(service, contributions)
+
+
 def _new_config(
     mode: ClientMode,
     config: TypeReference,
@@ -216,7 +228,8 @@ def _new_config(
 ) -> tuple[str | TypeReference, ...]:
     parts: tuple[str | TypeReference, ...] = (config,)
     for integration in integrations:
-        parts = integration.new_config(mode, config)
+        if (changed := integration.new_config(mode, config)) is not None:
+            parts = changed
     return parts
 
 
@@ -571,6 +584,8 @@ def _write_client(
         writer.line(define, "_new_config(self) -> ", config, ":")
         with writer.indent():
             writer.line("return ", *create, "()")
+        for integration in integrations:
+            integration.write_client_methods(writer, plan, mode, config)
 
 
 def _write_operation(

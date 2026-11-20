@@ -306,3 +306,65 @@ def test_aws_client_resolves_its_own_config(
     client.get_forecast(city="Lisbon")
     (request,) = transport.requests
     assert request.destination.host == "profile.example.com"
+
+
+@pytest.fixture(scope="module")
+def sigv4_package() -> Iterator[ModuleType]:
+    source = _ROOT / "codegen-output-py/aws-sigv4-client/src"
+    name = _PROJECTIONS["aws-sigv4-client"]["package"]
+    sys.path.insert(0, str(source))
+    try:
+        yield importlib.import_module(name)
+    finally:
+        sys.path.remove(str(source))
+        for module in tuple(sys.modules):
+            if module == name or module.startswith(name + "."):
+                del sys.modules[module]
+
+
+def _sigv4_client(package: ModuleType, aio: bool, **overrides: Any) -> Any:
+    transport = (_AsyncTransport if aio else _Transport)(b"\xa0")
+    config_class = package.AsyncFieldNotesConfig if aio else package.FieldNotesConfig
+    config = config_class.resolve(
+        endpoint_uri="https://notes.example.com",
+        transport=transport,
+        retry_strategy=SimpleRetryStrategy(max_attempts=1),
+        **overrides,
+    )
+    if aio:
+        config = asyncio.run(config)
+    client = package.AsyncFieldNotesClient if aio else package.FieldNotesClient
+    return client(config), transport
+
+
+@pytest.mark.parametrize("aio", [False, True])
+def test_sigv4_signs_with_configured_credentials(
+    sigv4_package: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
+) -> None:
+    client, transport = _sigv4_client(
+        sigv4_package,
+        aio,
+        aws_access_key_id="AKIDEXAMPLE",
+        aws_secret_access_key="secret",
+    )
+    _call(aio, client.put_note(text="hi"))
+    _call(aio, client.health())
+    put_note, health = transport.requests
+    authorization = put_note.fields["Authorization"].as_string()
+    assert authorization.startswith("AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/")
+    assert "/us-west-2/fieldnotes/aws4_request" in authorization
+    # @auth([]) leaves only noAuth, so the request is unsigned.
+    assert "Authorization" not in health.fields
+
+
+@pytest.mark.parametrize("aio", [False, True])
+def test_sigv4_clients_default_to_the_credentials_chain(
+    sigv4_package: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
+) -> None:
+    aws_env.setenv("AWS_ACCESS_KEY_ID", "AKIDFROMENV")
+    aws_env.setenv("AWS_SECRET_ACCESS_KEY", "secret")
+    client, transport = _sigv4_client(sigv4_package, aio)
+    _call(aio, client.put_note(text="hi"))
+    (request,) = transport.requests
+    authorization = request.fields["Authorization"].as_string()
+    assert "Credential=AKIDFROMENV/" in authorization

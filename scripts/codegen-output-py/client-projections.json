@@ -13,6 +13,13 @@
     "service": "example.awsconfig#WeatherStation",
     "version": "0.0.1"
   },
+  "aws-sigv4-client": {
+    "description": "Python client for the SigV4 fixture",
+    "model": "models/aws-sigv4.json",
+    "package": "aws_sigv4_client",
+    "service": "example.sigv4#FieldNotes",
+    "version": "0.0.1"
+  },
   "endpoint-rules-client": {
     "description": "Python client for the endpoint rules fixture",
     "model": "models/endpoint-rules.json",

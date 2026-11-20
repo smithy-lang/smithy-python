@@ -162,7 +162,10 @@ two shapes with the same name.
 Effective auth scheme IDs follow Smithy's `NO_AUTH_AWARE` mode. Service schemes
 are ordered by shape ID unless an `auth` trait on the operation, or else the
 service, orders them. `smithy.api#noAuth` is appended when no scheme applies or
-the operation has `optionalAuth`.
+the operation has `optionalAuth`. A service trait is an auth scheme when its
+definition has `authDefinition`. The prelude HTTP auth traits, `aws.auth#sigv4`,
+and `aws.auth#sigv4a` count without a definition, since JSON ASTs usually leave
+those definitions out.
 
 ## Protocols
 
@@ -292,9 +295,11 @@ defaults to no change:
 | Hook | Changes |
 | --- | --- |
 | `client_names` | The client and config class names |
+| `auth_schemes` | Auth schemes added to the core ones |
 | `config_fields` | Config fields a client context field must not take |
 | `write_config` | The config class, written in place of the core one |
 | `new_config` | The callable that creates a default config |
+| `write_client_methods` | Extra client methods, such as `_post_setup` |
 | `client_plugins` | Plugins every client applies, before the core ones |
 | `write_files` | Extra modules |
 
@@ -327,6 +332,20 @@ config:
 
 The generated package depends on `smithy-aws-core`. A client context field may
 not take an `AwsConfig` field name.
+
+`AwsSigV4Integration` matches a service with both `aws.api#service` and
+`aws.auth#sigv4`, and follows the Java generator:
+
+* Both configs default `auth_schemes` to `SigV4AuthScheme` or
+  `AsyncSigV4AuthScheme` for the trait's signing name. `AwsConfig` already
+  declares the credential fields and `aws_credentials_identity_resolver`.
+* A client's `_post_setup` sets the default AWS credentials chain when the
+  config has no credentials resolver. The chain reads the config's profile,
+  region, and transport.
+* A service with `aws.auth#sigv4` but not `aws.api#service` fails generation,
+  because SigV4 needs the AWS config.
+
+S3 signing properties come later with S3 support.
 
 ## Clients and Configuration
 
@@ -386,13 +405,13 @@ runtime metadata. It covers `self`, `plugins`, defaults, and idempotency tokens.
 ## Supported Features
 
 The generator supports non-streaming RPCv2 CBOR and RPCv2 JSON operations that
-are unsigned or use API key auth, and whose endpoint rules use the standard
-library. Models that require other auth schemes or event or data streams fail
-generation with a diagnostic naming the operation and feature.
+are unsigned or use API key auth or SigV4, and whose endpoint rules use the
+standard library. Models that require other auth schemes or event or data
+streams fail generation with a diagnostic naming the operation and feature.
 
 Authentication and endpoint extension points are provider-neutral. AWS config
-resolution and the AWS user agent are AWS integrations. SigV4, AWS endpoint
-functions, and AWS protocols are not supported yet.
+resolution, the AWS user agent, and SigV4 are AWS integrations. AWS endpoint
+functions and AWS protocols are not supported yet.
 
 ## Validation
 
@@ -421,6 +440,11 @@ assembled by Smithy into `models/aws-config.json` with its ruleset compiled by
 `CompileBdd`. Its tests resolve the endpoint from `AWS_ENDPOINT_URL_<SDK_ID>`
 and from a profile, check the AWS user agent, and check that unknown fields and
 direct construction fail.
+
+The `aws-sigv4-client` snapshot comes from `models/aws-sigv4.smithy`, built the
+same way. Its tests check that requests are signed for the signing name with
+configured credentials and with credentials from the default chain, and that an
+`@auth([])` operation is unsigned.
 
 Client snapshots sit alongside the types snapshots and cover the
 provider-neutral RPCv2 CBOR and RPCv2 JSON projections. Checks cover deterministic

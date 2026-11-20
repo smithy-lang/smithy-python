@@ -56,7 +56,9 @@ class AwsConfigIntegration(ClientIntegration):
         _write_config(writer, config)
         return True
 
-    def new_config(self, mode: ClientMode, config: TypeReference) -> tuple[Part, ...]:
+    def new_config(
+        self, mode: ClientMode, config: TypeReference
+    ) -> tuple[Part, ...] | None:
         return ("await ", config, ".resolve") if mode.is_async else (config, ".resolve")
 
     def client_plugins(
