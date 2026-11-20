@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `HTTPBearerAuthTrait` for the `smithy.api#httpBearerAuth` trait."
+}

@@ -82,6 +82,9 @@ Dual-mode symbols (async in aio, sync twin outside):
         apikey.py
           AsyncAPIKeyAuthScheme      APIKeyAuthScheme
           AsyncAPIKeyResolverConfig  APIKeyResolverConfig
+        bearer.py
+          AsyncBearerAuthScheme     BearerAuthScheme
+          AsyncTokenResolverConfig  TokenResolverConfig
       identity/
         apikey.py
           AsyncAPIKeyIdentityResolver  APIKeyIdentityResolver
@@ -102,4 +105,4 @@ Dual-mode symbols (async in aio, sync twin outside):
       http_mock.py
         AsyncHTTPMockController  HTTPMockController
         mock_async               mock
-51 dual-mode symbol(s).
+53 dual-mode symbol(s).

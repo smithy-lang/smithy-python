@@ -1,4 +1,4 @@
 {
   "type": "feature",
-  "description": "Added `TokenIdentity`, `TokenIdentityProperties`, `StaticTokenResolver` and `AsyncStaticTokenResolver` for resolving bearer tokens."
+  "description": "Added support for `smithy.api#httpBearerAuth`: `TokenIdentity`, `TokenIdentityProperties`, `StaticTokenResolver`/`AsyncStaticTokenResolver`, `BearerAuthScheme`/`AsyncBearerAuthScheme` and `BearerSigner`. The signer only signs requests bound for `https` endpoints and rejects an empty token."
 }

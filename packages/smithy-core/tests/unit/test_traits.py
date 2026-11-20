@@ -12,6 +12,7 @@ from smithy_core.traits import (
     DynamicTrait,
     ErrorFault,
     ErrorTrait,
+    HTTPBearerAuthTrait,
     JSONNameTrait,
     OperationContextParamsTrait,
     RpcV2CborTrait,
@@ -58,6 +59,12 @@ def test_trait_factory_constructs_default_trait():
 def test_unit_schema_uses_canonical_trait_id():
     trait = UNIT.get_trait(ShapeID("smithy.api#unitType"))
     assert isinstance(trait, UnitTypeTrait)
+
+
+def test_trait_factory_constructs_http_bearer_auth_trait():
+    trait = Trait.new(ShapeID("smithy.api#httpBearerAuth"))
+    assert isinstance(trait, HTTPBearerAuthTrait)
+    assert trait.document_value is None
 
 
 def test_cant_construct_base_trait():
