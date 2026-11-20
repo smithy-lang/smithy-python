@@ -69,9 +69,38 @@ public class AwsCodegenTest {
         assertFalse(client.contains("def _ensure_setup("));
         assertFalse(client.contains("def _prepare_call["));
 
+        // Bearer auth: the config gets the token fields and the AWS setup hook defaults
+        // the resolver so a configured ``token`` is honored. No SigV4 on this service,
+        // so no credentials chain is wired.
+        assertTrue(config.contains("token: str | None = None"));
+        // The formatter wraps the long annotation, so match its parts.
+        assertInOrder(config,
+                "token_identity_resolver: (",
+                "AsyncIdentityResolver[TokenIdentity, TokenIdentityProperties] | None",
+                ") = None");
+        assertTrue(config.contains("\"token_identity_resolver\": FieldSpec(default=None)"));
+        assertTrue(config.contains("ShapeID(\"smithy.api#httpBearerAuth\"): AsyncBearerAuthScheme()"));
+        assertInOrder(
+                client,
+                "async def _post_setup(self, config: AsyncRESTJSONConfig) -> None:",
+                "if config.token_identity_resolver is None:",
+                "config.token_identity_resolver = AsyncStaticTokenResolver()");
+        assertTrue(client.contains("from smithy_http.aio.identity.token import AsyncStaticTokenResolver"));
+        assertFalse(client.contains("aws_credentials_identity_resolver"));
+
+        var syncClient = Files.readString(tempDir.resolve("src/restjson/client.py"));
+        assertInOrder(
+                syncClient,
+                "def _post_setup(self, config: RESTJSONConfig) -> None:",
+                "if config.token_identity_resolver is None:",
+                "config.token_identity_resolver = StaticTokenResolver()");
+        assertTrue(syncClient.contains("from smithy_http.identity.token import StaticTokenResolver"));
+        assertFalse(syncClient.contains("async def _post_setup"));
+
         var schemas = Files.readString(tempDir.resolve("src/restjson/_private/schemas.py"));
         assertTrue(schemas.contains("aws.protocols#restJson1"));
         assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
+        assertTrue(schemas.contains("smithy.api#httpBearerAuth"));
         assertTrue(schemas.contains("\"name\": \"weather-auth\""));
         assertTrue(schemas.contains("aws.api#service"));
         assertTrue(schemas.contains("\"sdkId\": \"REST JSON\""));
