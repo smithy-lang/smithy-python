@@ -1069,6 +1069,47 @@ async def test_rest_xml_output_without_the_trait_reads_a_child_element() -> None
     assert bare.location_constraint is None
 
 
+@dataclass(kw_only=True)
+class _NotRetrySafeError(ModeledError):
+    is_retry_safe: bool | None = False
+
+    @classmethod
+    def deserialize(cls, deserializer: Any) -> "_NotRetrySafeError":
+        return cls("not retry safe")
+
+
+@pytest.mark.parametrize(
+    "status, error_shape, expected",
+    [
+        (500, _NoSuchBucket, True),
+        (404, _NoSuchBucket, None),
+        (503, _NotRetrySafeError, False),
+    ],
+)
+async def test_rest_xml_modeled_error_retry_safety(
+    status: int,
+    error_shape: type[_NoSuchBucket | _NotRetrySafeError],
+    expected: bool | None,
+) -> None:
+    with pytest.raises(error_shape) as exc_info:
+        await _deserialize_response(
+            _rest_xml_protocol(),
+            operation=_rest_xml_operation(),
+            request=cast(HTTPRequest, Mock()),
+            response=HTTPResponse(
+                status=status,
+                fields=tuples_to_fields([]),
+                body=b"<Error><Code>NoSuchBucket</Code></Error>",
+            ),
+            error_registry=TypeRegistry(
+                {ShapeID("com.test#NoSuchBucket"): error_shape}
+            ),
+            context=TypedProperties(),
+        )
+
+    assert exc_info.value.is_retry_safe is expected
+
+
 _STATS_SCHEMA = Schema.collection(
     id=ShapeID("com.test#Stats"),
     members={"BytesScanned": {"target": INTEGER}},

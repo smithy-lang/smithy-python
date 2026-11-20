@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
+from dataclasses import dataclass
 from typing import Any, Self
 
 import pytest
@@ -9,6 +10,7 @@ from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.endpoints import Endpoint
+from smithy_core.exceptions import CallError, ModeledError
 from smithy_core.interfaces import TypedProperties as TypedPropertiesInterface
 from smithy_core.interfaces import URI as URIInterface
 from smithy_core.program import Program, run_program
@@ -20,6 +22,7 @@ from smithy_core.types import TypedProperties
 from smithy_http import Field, Fields, HTTPRequest, HTTPResponse
 from smithy_http.interfaces import HTTPErrorIdentifier
 from smithy_http.interfaces import HTTPRequest as HTTPRequestInterface
+from smithy_http.interfaces import HTTPResponse as HTTPResponseInterface
 from smithy_http.protocols import HttpBindingClientProtocol, HttpClientProtocol
 from smithy_json import JSONCodec
 
@@ -362,3 +365,90 @@ def test_extract_response_metadata_reports_only_the_status_code() -> None:
     assert metadata.http_status_code == 429
     assert metadata.request_id is None
     assert metadata.extended_request_id is None
+
+
+_MODELED_ERROR_ID = ShapeID("ns.foo#ModeledError")
+
+
+class _ModeledErrorIdentifier(HTTPErrorIdentifier):
+    def identify(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        response: HTTPResponseInterface,
+    ) -> ShapeID | None:
+        return _MODELED_ERROR_ID
+
+
+class _ModeledErrorProtocol(MockBindingProtocol):
+    _error_identifier = _ModeledErrorIdentifier()
+
+
+class _ModeledError(ModeledError):
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+        return cls("modeled error")
+
+
+@dataclass(kw_only=True)
+class _NotRetrySafeError(ModeledError):
+    is_retry_safe: bool | None = False
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+        return cls("not retry safe")
+
+
+def _deserialize_error(
+    protocol: HttpBindingClientProtocol, status: int, error_registry: TypeRegistry
+) -> CallError:
+    operation: APIOperation[Any, Any] = APIOperation(
+        static_schema=(
+            ShapeType.OPERATION.value,
+            "ns.foo",
+            "FailingOperation",
+            {"smithy.api#http": {"method": "GET", "code": 200, "uri": "/"}},
+            LegacyInput.SCHEMA,
+            MockOutput.SCHEMA,
+            (),
+        ),
+        model_registry=_STUB_REGISTRY,
+        effective_auth_schemes=[],
+    )
+    with pytest.raises(CallError) as exc_info:
+        run_program(
+            protocol.deserialize_response_program(
+                operation=operation,
+                request=HTTPRequest(
+                    destination=URI(host="example.com"),
+                    method="GET",
+                    fields=Fields(),
+                ),
+                response=HTTPResponse(body=b"", status=status, fields=Fields()),
+                error_registry=error_registry,
+                context=TypedProperties(),
+                read_body=lambda body: body,
+            )
+        )
+    return exc_info.value
+
+
+@pytest.mark.parametrize(
+    "status, error_shape, expected",
+    [
+        (500, _ModeledError, True),
+        (400, _ModeledError, None),
+        (503, _NotRetrySafeError, False),
+    ],
+)
+def test_http_binding_modeled_error_retry_safety(
+    status: int,
+    error_shape: type[_ModeledError | _NotRetrySafeError],
+    expected: bool | None,
+) -> None:
+    error = _deserialize_error(
+        _ModeledErrorProtocol(), status, TypeRegistry({_MODELED_ERROR_ID: error_shape})
+    )
+
+    assert isinstance(error, error_shape)
+    assert error.is_retry_safe is expected
