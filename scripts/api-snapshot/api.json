@@ -701,6 +701,9 @@
   "smithy_http.aio.identity.apikey": {
     "AsyncAPIKeyIdentityResolver": "class[async]"
   },
+  "smithy_http.aio.identity.token": {
+    "AsyncStaticTokenResolver": "class[async]"
+  },
   "smithy_http.aio.interfaces": {
     "AsyncHTTPClient": "protocol[async]"
   },
@@ -744,10 +747,15 @@
   },
   "smithy_http.identity": {
     "APIKeyIdentity": "class",
-    "APIKeyIdentityProperties": "class"
+    "APIKeyIdentityProperties": "class",
+    "TokenIdentity": "class",
+    "TokenIdentityProperties": "class"
   },
   "smithy_http.identity.apikey": {
     "APIKeyIdentityResolver": "class"
+  },
+  "smithy_http.identity.token": {
+    "StaticTokenResolver": "class"
   },
   "smithy_http.interceptors": {},
   "smithy_http.interceptors.user_agent": {

@@ -1018,6 +1018,12 @@
     "APIKeyIdentityResolver": "rex-class",
     "AsyncIdentityResolver": "rex-protocol[async]"
   },
+  "smithy_http.aio.identity.token": {
+    "AsyncIdentityResolver": "rex-protocol[async]",
+    "StaticTokenResolver": "rex-class",
+    "TokenIdentity": "rex-class",
+    "TokenIdentityProperties": "rex-class"
+  },
   "smithy_http.aio.interfaces": {
     "AsyncClientTransport": "rex-protocol[async]",
     "HTTPClientConfiguration": "rex-class",
@@ -1139,13 +1145,20 @@
   },
   "smithy_http.identity": {
     "Identity": "rex-protocol",
-    "apikey": "rex-module"
+    "apikey": "rex-module",
+    "token": "rex-module"
   },
   "smithy_http.identity.apikey": {
     "APIKeyIdentity": "rex-class",
     "APIKeyIdentityProperties": "rex-class",
     "IdentityResolver": "rex-protocol",
     "SmithyIdentityError": "rex-exception"
+  },
+  "smithy_http.identity.token": {
+    "IdentityResolver": "rex-protocol",
+    "SmithyIdentityError": "rex-exception",
+    "TokenIdentity": "rex-class",
+    "TokenIdentityProperties": "rex-class"
   },
   "smithy_http.interceptors": {
     "user_agent": "rex-module"
