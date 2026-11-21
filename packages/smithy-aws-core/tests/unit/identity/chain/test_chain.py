@@ -27,6 +27,7 @@ from smithy_aws_core.identity.chain.ordering import (
 )
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
+from smithy_http.identity import TokenIdentity
 
 
 class _StubProvider:
@@ -109,6 +110,30 @@ async def test_create_records_identity_type(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert chain.identity_type is AWSCredentialsIdentity
     assert_type(chain, AsyncIdentityChain[AWSCredentialsIdentity])
+
+
+async def test_only_credentials_chains_report_unclaimed_sources(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    # A detected credential source with no installed provider is reported by a
+    # credentials chain, but a token chain neither warns about it nor suggests
+    # a package that cannot supply a token.
+    def no_providers(group: str) -> tuple[Any, ...]:
+        return ()
+
+    monkeypatch.setattr(chain_module, "_discover_providers", no_providers)
+    monkeypatch.setenv("AWS_CONTAINER_CREDENTIALS_FULL_URI", "http://localhost/creds")
+
+    with caplog.at_level("WARNING"):
+        credentials_chain = await AsyncIdentityChain.create(AWSCredentialsIdentity)
+        token_chain = await AsyncIdentityChain.create(TokenIdentity)
+
+    assert len(credentials_chain._unclaimed_sources) == 1
+    assert token_chain._unclaimed_sources == ()
+    assert sum("aws-credentials-http" in r.message for r in caplog.records) == 1
+    with pytest.raises(IdentityChainError) as excinfo:
+        await token_chain.get_identity(properties={})
+    assert "install" not in str(excinfo.value)
 
 
 def test_discovers_and_constructs_entry_point_providers(
@@ -202,7 +227,7 @@ def test_validate_rejects_duplicate_names() -> None:
 
     with pytest.raises(
         IdentityChainConfigurationError,
-        match="Credential providers _StubProvider and _StubProvider use the "
+        match="Identity providers _StubProvider and _StubProvider use the "
         "same name: dup",
     ):
         resolver_module._validate_providers((first, second))
@@ -214,7 +239,7 @@ def test_validate_rejects_case_insensitive_duplicate_names() -> None:
 
     with pytest.raises(
         IdentityChainConfigurationError,
-        match="Credential providers _StubProvider and _StubProvider use the "
+        match="Identity providers _StubProvider and _StubProvider use the "
         "same name: duplicate",
     ):
         resolver_module._validate_providers((first, second))
@@ -226,7 +251,7 @@ def test_validate_rejects_duplicate_standard_slots() -> None:
 
     with pytest.raises(
         IdentityChainConfigurationError,
-        match="Credential providers _StubProvider and _StubProvider both claim "
+        match="Identity providers _StubProvider and _StubProvider both claim "
         "standard slot: ENVIRONMENT",
     ):
         resolver_module._validate_providers((first, second))
@@ -265,7 +290,7 @@ async def test_empty_chain_reports_no_configured_provider() -> None:
 
     with pytest.raises(
         IdentityChainError,
-        match="No credential providers were configured to resolve an identity",
+        match="No identity providers were configured to resolve an identity",
     ):
         await chain.get_identity(properties={})
 

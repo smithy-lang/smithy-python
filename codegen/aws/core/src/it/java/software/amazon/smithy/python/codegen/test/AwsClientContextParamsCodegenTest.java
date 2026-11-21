@@ -64,6 +64,8 @@ public class AwsClientContextParamsCodegenTest {
         assertFalse(config.contains("use_fips_endpoint"));
         assertFalse(config.contains("use_dualstack_endpoint"));
         assertFalse(config.contains("account_id_endpoint_mode"));
+        // SigV4-only: the base class already shares the credentials resolver.
+        assertFalse(config.contains("_SHARED_FIELDS"));
     }
 
     @Test

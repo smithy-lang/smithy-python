@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "AWS configs now treat the generated `token` and `api_key` fields as secrets: they are hidden from `repr` and cannot be changed after resolution. Deep copies share the identity resolvers a generated config lists in `_SHARED_FIELDS`, like the credentials resolver. A `TokenIdentity` chain no longer logs or reports detected-but-unclaimed credential sources, and chain errors say \"identity providers\"."
+}

@@ -80,6 +80,20 @@ public class AwsCodegenTest {
                 ") = None");
         assertTrue(config.contains("\"token_identity_resolver\": FieldSpec(default=None)"));
         assertTrue(config.contains("ShapeID(\"smithy.api#httpBearerAuth\"): AsyncBearerAuthScheme()"));
+        // Deep copies of the config share the auth schemes' identity resolvers.
+        assertInOrder(config,
+                "_SHARED_FIELDS: ClassVar[tuple[str, ...]] = (",
+                "*AsyncAwsConfig._SHARED_FIELDS,",
+                "\"api_key_identity_resolver\",",
+                "\"token_identity_resolver\",",
+                ")");
+        var syncConfig = Files.readString(tempDir.resolve("src/restjson/config.py"));
+        assertInOrder(syncConfig,
+                "_SHARED_FIELDS: ClassVar[tuple[str, ...]] = (",
+                "*AwsConfig._SHARED_FIELDS,",
+                "\"api_key_identity_resolver\",",
+                "\"token_identity_resolver\",",
+                ")");
         assertInOrder(
                 client,
                 "async def _post_setup(self, config: AsyncRESTJSONConfig) -> None:",

@@ -50,6 +50,20 @@ __all__ = [
 ]
 
 _CREDENTIAL_FIELDS = ("aws_access_key_id", "aws_secret_access_key", "aws_session_token")
+"""The SigV4 credential fields, which must be overridden together."""
+
+_SECRET_FIELDS = (*_CREDENTIAL_FIELDS, "token", "api_key")
+"""Fields holding secrets: hidden from ``repr`` and frozen after resolution.
+
+``token`` and ``api_key`` are generated onto the configs of services with
+``httpBearerAuth`` and ``httpApiKeyAuth``.
+"""
+
+_SECRET_RESOLVERS = {
+    "token": "token_identity_resolver",
+    "api_key": "api_key_identity_resolver",
+}
+"""The identity resolver field that supplies each non-SigV4 secret dynamically."""
 
 
 _BASE_FIELDS: dict[str, FieldSpec] = {
@@ -112,6 +126,16 @@ class _AwsConfigBase:
 
     _FIELDS: ClassVar[dict[str, FieldSpec]]
     _RESOLVE_PREFIX: ClassVar[str] = ""
+    _SHARED_FIELDS: ClassVar[tuple[str, ...]] = (
+        "aws_credentials_identity_resolver",
+        "transport",
+        "retry_strategy",
+    )
+    """Fields a deep copy shares by identity instead of copying.
+
+    These hold network clients, locks and shared caches. Generated configs
+    extend the tuple with the identity resolvers their auth schemes add.
+    """
 
     _ctx: Any
     _sources: dict[str, ConfigSource]
@@ -131,7 +155,7 @@ class _AwsConfigBase:
         rendered = ", ".join(
             f"{f.name}={getattr(self, f.name)!r}"
             for f in fields(cast(Any, self))
-            if f.repr and f.name not in _CREDENTIAL_FIELDS
+            if f.repr and f.name not in _SECRET_FIELDS
         )
         return f"{type(self).__name__}({rendered})"
 
@@ -161,17 +185,17 @@ class _AwsConfigBase:
         if spec is not None and spec.converter is not None and value is not UNSET:
             value = spec.converter(value)
 
-        # Block override for credentials after resolution
+        # Block override for secrets after resolution
         if (
-            name in _CREDENTIAL_FIELDS
+            name in _SECRET_FIELDS
             and hasattr(self, "_sources")
             and name in self._sources
         ):
+            resolver = _SECRET_RESOLVERS.get(name, "aws_credentials_identity_resolver")
             raise AttributeError(
-                f"'{name}' cannot be modified after resolution. Pass credentials "
-                f"to `{self._RESOLVE_PREFIX}{type(self).__name__}.resolve(...)`, or set "
-                "'aws_credentials_identity_resolver' to supply credentials "
-                "dynamically."
+                f"'{name}' cannot be modified after resolution. Pass it to "
+                f"`{self._RESOLVE_PREFIX}{type(self).__name__}.resolve(...)`, or set "
+                f"'{resolver}' to supply it dynamically."
             )
 
         # Mark as override only if the field is in _FIELDS and was already resolved
@@ -183,12 +207,8 @@ class _AwsConfigBase:
 
     def __deepcopy__(self, memo: dict[int, Any]) -> Self:
         """Deep-copy the config while sharing resources that must not be duplicated."""
-        for shared in (
-            self.aws_credentials_identity_resolver,
-            self.transport,
-            self.retry_strategy,
-        ):
-            if shared is not None:
+        for name in self._SHARED_FIELDS:
+            if (shared := getattr(self, name, None)) is not None:
                 memo[id(shared)] = shared
         new = self._create_instance()
         memo[id(self)] = new

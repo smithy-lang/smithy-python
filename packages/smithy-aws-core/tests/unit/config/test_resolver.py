@@ -52,7 +52,9 @@ from smithy_aws_core.config.validators import (
 )
 from smithy_core.aio.program import run_program_async
 from smithy_core.retries import StandardRetryStrategy
+from smithy_http.aio.identity.token import AsyncStaticTokenResolver
 from smithy_http.aio.testing import AsyncMockHTTPClient
+from smithy_http.identity import TokenIdentity
 from smithy_http.interfaces import HTTPRequestConfiguration
 
 
@@ -525,12 +527,14 @@ class TestSharedConfigContext:
 
 
 class TestConfigDeepCopy:
-    """Generated clients deep-copy the config on every operation call.
+    """``copy.deepcopy(config)`` must keep shared components by identity.
 
-    The copy exists to keep plugin mutations scoped to a single call, so the
-    fields plugins write must be independent per copy. The resolution context
-    is read-only afterwards and is shared instead, which keeps the per-request
-    cost from scaling with the size of the caller's shared config files.
+    Clients copy the config per call with a shallow copy (``_copy_config``),
+    but user code and test mocks may deep-copy it. A deep copy keeps the
+    fields plugins write independent per copy, while components that hold
+    network clients, locks, or shared caches are shared instead. The
+    resolution context is read-only afterwards and is shared too, which keeps
+    the copy cost from scaling with the size of the caller's config files.
     """
 
     @pytest.mark.asyncio
@@ -589,6 +593,20 @@ class TestConfigDeepCopy:
         assert copy.transport is transport
         assert copy.aws_credentials_identity_resolver is resolver
         assert copy.retry_strategy is retry_strategy
+
+    @pytest.mark.asyncio
+    async def test_token_identity_resolver_is_shared_by_identity(self):
+        # Services with httpBearerAuth generate this field; a token resolver may
+        # hold a lock and a refresh state, so a copy must point at the same one.
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await _BearerServiceConfig.resolve(fs=NullFileSystem())
+        resolver = AsyncStaticTokenResolver(TokenIdentity(token="t"))
+        config.token_identity_resolver = resolver
+
+        copy = deepcopy(config)
+
+        assert copy is not config
+        assert copy.token_identity_resolver is resolver
 
     @pytest.mark.asyncio
     async def test_deepcopy_with_no_shared_resources(self):
@@ -990,6 +1008,35 @@ class TestReprDoesNotLeakSecrets:
             assert "AKIAIOSFODNN7EXAMPLE" not in config_repr
             assert "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" not in config_repr
 
+    @pytest.mark.asyncio
+    async def test_repr_does_not_leak_bearer_token(self):
+        # The generated `token` field is a reusable secret like an access key.
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await _resolve_bearer_config(token="mF_9.B5f-4.1JqM")
+            assert config.token == "mF_9.B5f-4.1JqM"
+            assert "mF_9.B5f-4.1JqM" not in repr(config)
+
+    @pytest.mark.asyncio
+    async def test_bearer_token_cannot_be_overridden_after_resolution(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await _resolve_bearer_config(token="mF_9.B5f-4.1JqM")
+            with pytest.raises(AttributeError, match="token_identity_resolver"):
+                config.token = "other"
+
+    @pytest.mark.asyncio
+    async def test_repr_does_not_leak_api_key(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await _resolve_api_key_config(api_key="abcdef-123456")
+            assert config.api_key == "abcdef-123456"
+            assert "abcdef-123456" not in repr(config)
+
+    @pytest.mark.asyncio
+    async def test_api_key_cannot_be_overridden_after_resolution(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await _resolve_api_key_config(api_key="abcdef-123456")
+            with pytest.raises(AttributeError, match="api_key_identity_resolver"):
+                config.api_key = "other"
+
 
 class TestIncodeStaticCredentialResolution:
     """Credentials must be resolved from a single source — never mixed."""
@@ -1103,6 +1150,54 @@ class TestResolveSdkUaAppId:
             ctx = AsyncSharedConfigContext(fs=NullFileSystem())
             result = await resolve_sdk_ua_app_id(ctx)
             assert result.value is UNSET
+
+
+@dataclass(kw_only=True, repr=False, init=False)
+class _BearerServiceConfig(AsyncAwsConfig):
+    """Mirrors the config codegen emits for services with the httpBearerAuth trait."""
+
+    token: str | None = None
+    token_identity_resolver: Any = None
+
+    _FIELDS: ClassVar[dict[str, FieldSpec]] = {
+        "token": FieldSpec(default=None),
+        "token_identity_resolver": FieldSpec(default=None),
+        **AsyncAwsConfig._FIELDS,
+    }
+    _SHARED_FIELDS: ClassVar[tuple[str, ...]] = (
+        *AsyncAwsConfig._SHARED_FIELDS,
+        "token_identity_resolver",
+    )
+
+
+async def _resolve_bearer_config(**overrides: Any) -> _BearerServiceConfig:
+    # Generated configs widen resolve()'s overrides for their own fields; this
+    # stand-in only widens the type.
+    widened: Any = overrides
+    return await _BearerServiceConfig.resolve(fs=NullFileSystem(), **widened)
+
+
+@dataclass(kw_only=True, repr=False, init=False)
+class _ApiKeyServiceConfig(AsyncAwsConfig):
+    """Mirrors the config codegen emits for services with the httpApiKeyAuth trait."""
+
+    api_key: str | None = None
+    api_key_identity_resolver: Any = None
+
+    _FIELDS: ClassVar[dict[str, FieldSpec]] = {
+        "api_key": FieldSpec(default=None),
+        "api_key_identity_resolver": FieldSpec(default=None),
+        **AsyncAwsConfig._FIELDS,
+    }
+    _SHARED_FIELDS: ClassVar[tuple[str, ...]] = (
+        *AsyncAwsConfig._SHARED_FIELDS,
+        "api_key_identity_resolver",
+    )
+
+
+async def _resolve_api_key_config(**overrides: Any) -> _ApiKeyServiceConfig:
+    widened: Any = overrides
+    return await _ApiKeyServiceConfig.resolve(fs=NullFileSystem(), **widened)
 
 
 @dataclass(kw_only=True, repr=False, init=False)
