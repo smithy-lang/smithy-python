@@ -4,7 +4,7 @@ import json
 import os
 from collections.abc import Callable, Mapping, Sequence
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from smithy_core import URI as _URI
 from smithy_core.codecs import Codec
@@ -70,6 +70,11 @@ __all__ = [
     "RpcV2CborClientProtocol",
     "RpcV2JsonClientProtocol",
 ]
+
+_OperationInput = TypeVar("_OperationInput", bound=SerializeableShape)
+_OperationOutput = TypeVar("_OperationOutput", bound=DeserializeableShape)
+_CallErrorT = TypeVar("_CallErrorT", bound=CallError)
+
 
 _EVENT_STREAM_CONTENT_TYPE = "application/vnd.amazon.eventstream"
 
@@ -195,9 +200,9 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         except DiscriminatorError:
             return None
 
-    def _classify_error_for_retry[E: CallError](
-        self, error: E, response: HTTPResponse, code: str | None
-    ) -> E:
+    def _classify_error_for_retry(
+        self, error: _CallErrorT, response: HTTPResponse, code: str | None
+    ) -> _CallErrorT:
         """Mark the error as retryable if it's a throttling, timeout or transient error."""
         if error.is_retry_safe is False:
             return error
@@ -233,14 +238,11 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         response information."""
         raise NotImplementedError()
 
-    def serialize_request[
-        OperationInput: "SerializeableShape",
-        OperationOutput: "DeserializeableShape",
-    ](
+    def serialize_request(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
-        input: OperationInput,
+        operation: APIOperation[_OperationInput, _OperationOutput],
+        input: _OperationInput,
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
@@ -274,19 +276,16 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             )
         return serializer.result
 
-    def deserialize_response_program[
-        OperationInput: "SerializeableShape",
-        OperationOutput: "DeserializeableShape",
-    ](
+    def deserialize_response_program(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
+        operation: APIOperation[_OperationInput, _OperationOutput],
         request: HTTPRequest,
         response: HTTPResponse,
         error_registry: TypeRegistry,
         context: TypedProperties,
         read_body: Callable[[AnyStreamingBlob], Any],
-    ) -> Program[OperationOutput]:
+    ) -> Program[_OperationOutput]:
         if not self._is_success(operation, context, response):
             body = yield lambda: read_body(response.body)
             raise self._create_error(
@@ -314,15 +313,12 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         ).response
         return response_metadata.streaming_member is not None
 
-    def _deserialize_output[
-        OperationInput: "SerializeableShape",
-        OperationOutput: "DeserializeableShape",
-    ](
+    def _deserialize_output(
         self,
-        operation: APIOperation[OperationInput, OperationOutput],
+        operation: APIOperation[_OperationInput, _OperationOutput],
         response: HTTPResponse,
         body: SyncStreamingBlob | None,
-    ) -> OperationOutput:
+    ) -> _OperationOutput:
         deserializer = HTTPResponseDeserializer(
             payload_codec=self.payload_codec,
             response=response,
@@ -451,19 +447,16 @@ class RpcClientProtocol(HttpClientProtocol):
     # Whether the service carries @awsQueryCompatible.
     _query_compatible: bool = False
 
-    def deserialize_response_program[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def deserialize_response_program(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
+        operation: APIOperation[_OperationInput, _OperationOutput],
         request: HTTPRequest,
         response: HTTPResponse,
         error_registry: TypeRegistry,
         context: TypedProperties,
         read_body: Callable[[AnyStreamingBlob], Any],
-    ) -> Program[OperationOutput]:
+    ) -> Program[_OperationOutput]:
         if (
             self._is_event_stream_member(operation.output_stream_member)
             and response.status == 200
@@ -482,41 +475,32 @@ class RpcClientProtocol(HttpClientProtocol):
             context=context,
         )
 
-    def _deserialize_body[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def _deserialize_body(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
+        operation: APIOperation[_OperationInput, _OperationOutput],
         response: HTTPResponse,
         body: bytes,
         error_registry: TypeRegistry,
         context: TypedProperties,
-    ) -> OperationOutput:
+    ) -> _OperationOutput:
         raise NotImplementedError
 
-    def _deserialize_event_stream_response[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def _deserialize_event_stream_response(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
+        operation: APIOperation[_OperationInput, _OperationOutput],
         response: HTTPResponse,
         context: TypedProperties,
-    ) -> Program[OperationOutput]:
+    ) -> Program[_OperationOutput]:
         raise UnsupportedStreamError(
             "Event streams are not supported by synchronous clients."
         )
         yield  # pyright: ignore[reportUnreachable]
 
-    def _default_output[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
-        self, operation: APIOperation[OperationInput, OperationOutput]
-    ) -> OperationOutput:
+    def _default_output(
+        self, operation: APIOperation[_OperationInput, _OperationOutput]
+    ) -> _OperationOutput:
         """Build the output when no ``initial-response`` precedes the event stream.
 
         :raises MissingInitialResponse: when the output has a required member without
@@ -680,14 +664,11 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
     def content_type(self) -> str:
         return self._content_type
 
-    def serialize_request[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def serialize_request(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
-        input: OperationInput,
+        operation: APIOperation[_OperationInput, _OperationOutput],
+        input: _OperationInput,
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
@@ -745,19 +726,16 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
             http2_required=http2_required,
         )
 
-    def deserialize_response_program[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def deserialize_response_program(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
+        operation: APIOperation[_OperationInput, _OperationOutput],
         request: HTTPRequest,
         response: HTTPResponse,
         error_registry: TypeRegistry,
         context: TypedProperties,
         read_body: Callable[[AnyStreamingBlob], Any],
-    ) -> Program[OperationOutput]:
+    ) -> Program[_OperationOutput]:
         # A response whose Smithy-Protocol header differs from the request's is
         # malformed: the spec requires handling it on the status code alone, without
         # interpreting the body or other headers. Checked first, for every status
@@ -813,18 +791,15 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
         """
         raise NotImplementedError
 
-    def _deserialize_body[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def _deserialize_body(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
+        operation: APIOperation[_OperationInput, _OperationOutput],
         response: HTTPResponse,
         body: bytes,
         error_registry: TypeRegistry,
         context: TypedProperties,
-    ) -> OperationOutput:
+    ) -> _OperationOutput:
         if response.status != 200:
             raise self._create_error(
                 operation=operation,

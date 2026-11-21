@@ -1,11 +1,15 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from typing import TypeVar
+
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID
 from smithy_core.traits import ORIGINAL_SHAPE_ID, Trait, XMLNameTrait
 
+_T = TypeVar("_T", bound=Trait)
 
-def direct_trait[T: Trait](schema: Schema, trait: type[T]) -> T | None:
+
+def direct_trait(schema: Schema, trait: type[_T]) -> _T | None:
     """Get a trait applied to the member itself rather than inherited from its target.
 
     Member schemas carry their target's traits, but a structure's ``@xmlName`` or

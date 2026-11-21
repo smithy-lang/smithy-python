@@ -68,11 +68,14 @@ symbol provider ensures that declaration and field names are unique.
   change aliases in the next render.
 
 Raw text is trusted Python, not a template. To find names, `render()` parses
-the written lines with the Python 3.12 grammar, with a unique placeholder
-standing in for each type reference. Lines that are not valid Python 3.12 raise
-`CodegenError`, including syntax added in later versions. So do lines that raise
-`SyntaxWarning`, such as an invalid escape sequence in `"""Match \d+."""`;
-later Python versions will reject them. Callers supply blank lines between
+the written lines with the Python 3.11 grammar, with a unique placeholder
+standing in for each type reference. Lines that are not valid Python 3.11 raise
+`CodegenError`, including syntax added in later versions such as PEP 695 type
+parameters and `type` statements. On a Python 3.12+ host this check does not
+reject PEP 701 f-strings; generating on Python 3.11, as CI does, does. Lines that
+raise `SyntaxWarning` (`DeprecationWarning` under the 3.11 grammar), such as an
+invalid escape sequence in `"""Match \d+."""`, also raise `CodegenError`; later
+Python versions will reject them. Callers supply blank lines between
 declarations.
 
 The analysis reads the syntax tree rather than `symtable`, whose results change
@@ -110,7 +113,7 @@ level: `list[str | None]` differs from `list[str] | None`. The `None` literal
 stays `None`, including when marked nullable. Only that literal can omit its
 module. Other module-less references raise `CodegenError`.
 
-Generated source targets Python 3.12+. References in runtime annotations must
+Generated source targets Python 3.11+. References in runtime annotations must
 name classes that have already been defined. Stub annotations can refer to
 classes defined later.
 
@@ -155,7 +158,7 @@ A field named `list` makes builtin list references in that class use
 `_builtins.list[T]`, with `import builtins as _builtins`. An alias that still
 collides raises `CodegenError`. The writer never adds numbered suffixes or
 renames declarations.
-The builtin-name list combines Python 3.12 through 3.15, including
+The builtin-name list combines Python 3.11 through 3.15, including
 platform-specific names, so imports do not depend on the generator host.
 Update the list when adding support for another Python version.
 

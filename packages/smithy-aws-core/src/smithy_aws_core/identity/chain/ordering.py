@@ -1,10 +1,17 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import os
+import sys
 from dataclasses import dataclass
 from enum import Enum
 
 from ...config.context import shared_config_files_exist
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 __all__ = [
     "After",
@@ -79,5 +86,5 @@ class After:
     slot: StandardProvider
 
 
-type OrderingConstraint = Standard | Before | After
+OrderingConstraint = TypeAliasType("OrderingConstraint", Standard | Before | After)
 """Positions a provider at, before, or after a standard provider slot."""

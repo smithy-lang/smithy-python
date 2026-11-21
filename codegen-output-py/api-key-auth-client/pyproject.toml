@@ -5,7 +5,7 @@ name = "api_key_auth_client"
 version = "0.0.1"
 description = "Python client for the API key auth fixture"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 keywords = ["smithy", "api_key_auth_client"]
 license = {text = "Apache-2.0"}
 dependencies = [
@@ -28,7 +28,7 @@ packages = [
 typeCheckingMode = "strict"
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 
 [tool.ruff.lint]
 ignore = ["F841"]

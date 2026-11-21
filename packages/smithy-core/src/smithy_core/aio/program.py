@@ -1,14 +1,16 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from inspect import isawaitable
-from typing import Any
+from typing import Any, TypeVar
 
 from ..program import Program
 
 __all__ = ["run_program_async"]
 
+_T = TypeVar("_T")
 
-async def run_program_async[T](program: Program[T]) -> T:
+
+async def run_program_async(program: Program[_T]) -> _T:
     """Drive a program to completion, awaiting each effect that returns an awaitable."""
     value: Any = None
     error: BaseException | None = None

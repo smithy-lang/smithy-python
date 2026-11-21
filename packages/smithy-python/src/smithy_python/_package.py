@@ -20,7 +20,7 @@ _PYPROJECT_SUFFIX = """
 typeCheckingMode = "strict"
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 
 [tool.ruff.lint]
 ignore = ["F841"]
@@ -86,7 +86,7 @@ name = {_toml_string(settings.package)}
 version = {_toml_string(settings.package_version)}
 description = {_toml_string(description)}
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 keywords = ["smithy", {_toml_string(settings.package)}]
 license = {{text = "Apache-2.0"}}
 dependencies = {_toml_array(map(_requirement, dependencies.for_group("runtime")))}{groups}

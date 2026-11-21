@@ -9,6 +9,7 @@ manner.
 
 import datetime
 import struct
+import sys
 import uuid
 from binascii import crc32
 from collections.abc import Callable, Iterator, Mapping
@@ -32,6 +33,12 @@ from .exceptions import (
     InvalidIntegerValue,
     InvalidPayloadLength,
 )
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 __all__ = [
     "HEADERS_DICT",
@@ -99,7 +106,7 @@ class Long(int):
     """
 
 
-type SizedInt = Byte | Short | Long | int
+SizedInt = TypeAliasType("SizedInt", Byte | Short | Long | int)
 """A union of integer types that indicate their size.
 
 Each member of the union is a Python int or empty subclass of it, so they can be used
@@ -117,11 +124,13 @@ Sizes are not preserved in this way during deserialization.
 """
 
 
-type HEADER_VALUE = bool | int | bytes | str | datetime.datetime | uuid.UUID
+HEADER_VALUE = TypeAliasType(
+    "HEADER_VALUE", bool | int | bytes | str | datetime.datetime | uuid.UUID
+)
 """A union of valid value types for event headers."""
 
 
-type HEADERS_DICT = Mapping[str, HEADER_VALUE]
+HEADERS_DICT = TypeAliasType("HEADERS_DICT", Mapping[str, HEADER_VALUE])
 """A dictionary of event headers."""
 
 

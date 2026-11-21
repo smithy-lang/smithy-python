@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from collections.abc import Callable
 from inspect import iscoroutinefunction
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from smithy_core.aio.interfaces import (
     AsyncByteStream,
@@ -45,6 +45,12 @@ __all__ = [
     "AsyncRpcV2CborClientProtocol",
     "AsyncRpcV2JsonClientProtocol",
 ]
+
+_IE = TypeVar("_IE", bound=SerializeableShape)
+_OE = TypeVar("_OE", bound=DeserializeableShape)
+_OperationInput = TypeVar("_OperationInput", bound=SerializeableShape)
+_OperationOutput = TypeVar("_OperationOutput", bound=DeserializeableShape)
+
 
 try:
     from smithy_aws_event_stream._private.deserializers import (
@@ -126,19 +132,15 @@ class AsyncHttpEventStreamMixin(
     ``class AsyncRestJson(AsyncHttpEventStreamMixin, RestJsonClientProtocol)``.
     """
 
-    async def create_event_publisher[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-        Event: SerializeableShape,
-    ](
+    async def create_event_publisher(
         self,
         *,
-        operation: "APIOperation[OperationInput, OperationOutput]",
+        operation: "APIOperation[_OperationInput, _OperationOutput]",
         request: HTTPRequest,
-        event_type: "TypeForm[Event]",
+        event_type: "TypeForm[_IE]",
         context: TypedProperties,
         auth_scheme: AsyncAuthScheme[Any, Any, Any, Any] | None = None,
-    ) -> AsyncEventPublisher[Event]:
+    ) -> AsyncEventPublisher[_IE]:
         _assert_event_stream()
         signing_config: SigningConfig[Any, Any, Any, Any] | None = None
         if auth_scheme is not None:
@@ -165,7 +167,7 @@ class AsyncHttpEventStreamMixin(
         initial_message = cast(
             "_EventMessage | None", context.get(_INITIAL_REQUEST_EVENT)
         )
-        publisher = AsyncAWSEventPublisher[Event](
+        publisher = AsyncAWSEventPublisher[_IE](
             payload_codec=self.payload_codec,
             async_writer=body,
             signing_config=signing_config,
@@ -176,20 +178,16 @@ class AsyncHttpEventStreamMixin(
         await publisher.prepare()
         return publisher
 
-    def create_event_receiver[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-        Event: DeserializeableShape,
-    ](
+    def create_event_receiver(
         self,
         *,
-        operation: "APIOperation[OperationInput, OperationOutput]",
+        operation: "APIOperation[_OperationInput, _OperationOutput]",
         request: HTTPRequest,
         response: HTTPResponse,
-        event_type: "TypeForm[Event]",
-        event_deserializer: Callable[[ShapeDeserializer], Event],
+        event_type: "TypeForm[_OE]",
+        event_deserializer: Callable[[ShapeDeserializer], _OE],
         context: TypedProperties,
-    ) -> AsyncEventReceiver[Event]:
+    ) -> AsyncEventReceiver[_OE]:
         _assert_event_stream()
         return AsyncAWSEventReceiver(
             payload_codec=self.payload_codec,
@@ -209,20 +207,16 @@ class AsyncRpcEventStreamMixin(AsyncHttpEventStreamMixin, RpcClientProtocol):
     and ``initial-response`` events at the head of the stream.
     """
 
-    def create_event_receiver[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-        Event: DeserializeableShape,
-    ](
+    def create_event_receiver(
         self,
         *,
-        operation: "APIOperation[OperationInput, OperationOutput]",
+        operation: "APIOperation[_OperationInput, _OperationOutput]",
         request: HTTPRequest,
         response: HTTPResponse,
-        event_type: "TypeForm[Event]",
-        event_deserializer: Callable[[ShapeDeserializer], Event],
+        event_type: "TypeForm[_OE]",
+        event_deserializer: Callable[[ShapeDeserializer], _OE],
         context: TypedProperties,
-    ) -> AsyncEventReceiver[Event]:
+    ) -> AsyncEventReceiver[_OE]:
         _assert_event_stream()
         # Continue from the reader that already consumed the initial-response frame in
         # deserialization, so subsequent events stay in order.
@@ -259,16 +253,13 @@ class AsyncRpcEventStreamMixin(AsyncHttpEventStreamMixin, RpcClientProtocol):
         context[_INITIAL_REQUEST_EVENT] = initial
         return AsyncBytesProvider()
 
-    def _deserialize_event_stream_response[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def _deserialize_event_stream_response(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
+        operation: APIOperation[_OperationInput, _OperationOutput],
         response: HTTPResponse,
         context: TypedProperties,
-    ) -> Program[OperationOutput]:
+    ) -> Program[_OperationOutput]:
         # initial-response is optional: the spec omits it when every non-stream output
         # member is optional. Peek the first frame's :event-type -- consume it as the
         # output only when it IS the initial-response; otherwise synthesize the default

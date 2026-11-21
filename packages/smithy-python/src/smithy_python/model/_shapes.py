@@ -4,21 +4,44 @@
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Final
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 from ._shape_id import PRELUDE_NAMESPACE, ShapeId, as_shape_id
 
-type Node = None | bool | int | float | str | tuple[Node, ...] | Mapping[str, Node]
-"""A deeply immutable JSON value: arrays are tuples, objects read-only mappings."""
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
 
-type JsonValue = (
-    None | bool | int | float | str | list[JsonValue] | dict[str, JsonValue]
-)
-"""A mutable JSON value, as produced by :func:`to_json`."""
+# Type checkers read the recursive TypeAliases; at runtime each alias is a named
+# TypeAliasType, so annotations that use it resolve without the caller's globals.
+# Keep both values of each alias identical.
+if TYPE_CHECKING:
+    Node: TypeAlias = (
+        None | bool | int | float | str | tuple["Node", ...] | Mapping[str, "Node"]
+    )
+    """A deeply immutable JSON value: arrays are tuples, objects read-only mappings."""
+else:
+    Node = TypeAliasType(
+        "Node",
+        None | bool | int | float | str | tuple["Node", ...] | Mapping[str, "Node"],
+    )
+
+if TYPE_CHECKING:
+    JsonValue: TypeAlias = (
+        None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
+    )
+    """A mutable JSON value, as produced by :func:`to_json`."""
+else:
+    JsonValue = TypeAliasType(
+        "JsonValue",
+        None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"],
+    )
 
 
 def to_json(node: Node) -> JsonValue:
@@ -87,6 +110,8 @@ DECLARATION_TYPES: Final = frozenset(
 MIXIN_TRAIT: Final = ShapeId(PRELUDE_NAMESPACE, "mixin")
 UNIT: Final = ShapeId(PRELUDE_NAMESPACE, "Unit")
 
+# Shared empty defaults. Python 3.11 rejects an unhashable mappingproxy as a
+# dataclass default, so fields return these from a default factory instead.
 _EMPTY_TRAITS: Final[Mapping[ShapeId, Node]] = MappingProxyType({})
 _EMPTY_MEMBERS: Final[Mapping[str, MemberShape]] = MappingProxyType({})
 
@@ -103,7 +128,7 @@ class Shape:
 
     id: ShapeId
     type: ShapeType
-    traits: Mapping[ShapeId, Node] = _EMPTY_TRAITS
+    traits: Mapping[ShapeId, Node] = field(default_factory=lambda: _EMPTY_TRAITS)
     """Trait ID to JSON node value, in merge order (see the loader docs)."""
     mixins: tuple[ShapeId, ...] = ()
     """The mixins this shape declared, in declaration order.
@@ -111,7 +136,7 @@ class Shape:
     Informational only: members, traits, and properties already include
     everything inherited from these mixins.
     """
-    members: Mapping[str, MemberShape] = _EMPTY_MEMBERS
+    members: Mapping[str, MemberShape] = field(default_factory=lambda: _EMPTY_MEMBERS)
     """Members by name, in order: inherited mixin members, then local ones."""
 
     def has_trait(self, trait: ShapeId | str) -> bool:

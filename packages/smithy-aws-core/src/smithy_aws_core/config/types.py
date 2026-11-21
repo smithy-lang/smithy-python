@@ -2,10 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Any, Generic, Literal, TypeVar
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 __all__ = [
     "UNSET",
@@ -15,6 +22,8 @@ __all__ = [
     "Resolved",
     "ResponseChecksumValidation",
 ]
+
+_T_co = TypeVar("_T_co", covariant=True)
 
 
 class _UnsetType:
@@ -39,10 +48,10 @@ class ConfigSource(StrEnum):
 
 
 @dataclass(frozen=True, kw_only=True)
-class Resolved[T]:
+class Resolved(Generic[_T_co]):
     """A resolved config value paired with its provenance source."""
 
-    value: T
+    value: _T_co
     source: ConfigSource
 
 
@@ -91,7 +100,9 @@ class FieldSpec:
             )
 
 
-type RequestChecksumCalculation = Literal["when_supported", "when_required"]
+RequestChecksumCalculation = TypeAliasType(
+    "RequestChecksumCalculation", Literal["when_supported", "when_required"]
+)
 """When to calculate checksums of request payloads.
 
 * ``when_supported``: calculate a checksum for the request payload of every
@@ -103,7 +114,9 @@ Values from the environment and shared config files are case-insensitive.
 """
 
 
-type ResponseChecksumValidation = Literal["when_supported", "when_required"]
+ResponseChecksumValidation = TypeAliasType(
+    "ResponseChecksumValidation", Literal["when_supported", "when_required"]
+)
 """When to validate the checksums of response payloads.
 
 * ``when_supported``: validate the response payload of every operation that models

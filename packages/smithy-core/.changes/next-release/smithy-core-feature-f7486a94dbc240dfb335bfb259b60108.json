@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added support for Python 3.11 while retaining named recursive aliases and customer type-checker compatibility."
+}

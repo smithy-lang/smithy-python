@@ -8,6 +8,7 @@ engine.
 """
 
 import re
+import sys
 from collections.abc import Callable, Mapping, Sequence
 from functools import lru_cache, partial
 from operator import itemgetter
@@ -29,11 +30,17 @@ from ._types import (
     Tag,
 )
 
-type _Values = list[Any]
-type _Closure = Callable[[_Values], Any]
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
+
+_Values = TypeAliasType("_Values", list[Any])
+_Closure = TypeAliasType("_Closure", Callable[[_Values], Any])
 """A compiled condition, expression or result, called with the values."""
 
-type _Steps = tuple[str | int, ...]
+_Steps = TypeAliasType("_Steps", tuple[str | int, ...])
 """A parsed getAttr path: its keys and indexes, in order."""
 
 _RESULT_OFFSET = 100_000_000

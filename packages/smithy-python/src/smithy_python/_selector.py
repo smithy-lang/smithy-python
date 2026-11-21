@@ -5,12 +5,13 @@
 from __future__ import annotations
 
 import re
+import sys
 from collections import deque
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from types import MappingProxyType
-from typing import Final, NoReturn, Self, cast
+from typing import Final, NoReturn, Self, TypeAlias, cast
 
 from .exceptions import SelectorSyntaxError
 from .model import (
@@ -27,8 +28,14 @@ from .model import (
     ShapeType,
 )
 
-type _Receiver = Callable[[Shape], bool]
-type _ValueData = (
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
+
+_Receiver = TypeAliasType("_Receiver", Callable[[Shape], bool])
+_ValueData: TypeAlias = (
     None
     | bool
     | int
@@ -37,7 +44,7 @@ type _ValueData = (
     | Shape
     | ShapeId
     | tuple[Node, ...]
-    | tuple[_Value, ...]
+    | tuple["_Value", ...]
     | Mapping[str, Node]
 )
 

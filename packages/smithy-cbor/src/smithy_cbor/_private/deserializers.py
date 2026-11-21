@@ -4,9 +4,9 @@
 
 import datetime
 import struct as _struct
+import sys
 from collections.abc import Callable
 from decimal import Decimal
-from typing import override
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
@@ -15,6 +15,11 @@ from smithy_core.interfaces import BytesReader
 from smithy_core.schemas import Schema
 
 from ..settings import CBORSettings
+
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+    from typing_extensions import override
 
 # Major type occupies the high 3 bits; the low 5 bits are the "additional information".
 _MAJOR_UINT = 0

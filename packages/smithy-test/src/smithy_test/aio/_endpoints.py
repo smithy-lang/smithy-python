@@ -8,7 +8,7 @@ is ``{"endpoint": {"url": ..., "headers": ..., "properties": ...}}`` or
 """
 
 from collections.abc import Awaitable, Callable, Mapping, Sequence
-from typing import Any, Concatenate
+from typing import Any, Concatenate, TypeVar
 
 from smithy_core.endpoints import RulesExtension
 from smithy_core.exceptions import EndpointResolutionError
@@ -22,10 +22,12 @@ from .._private.endpoints import (
     check_error,
 )
 
+_C = TypeVar("_C")
 
-async def check_client_case_async[C](
-    client: Callable[[Interceptor[Any, Any, Any, Any]], Awaitable[C]],
-    operation: Callable[Concatenate[C, ...], Awaitable[Any]],
+
+async def check_client_case_async(
+    client: Callable[[Interceptor[Any, Any, Any, Any]], Awaitable[_C]],
+    operation: Callable[Concatenate[_C, ...], Awaitable[Any]],
     input: Mapping[str, Any],
     expect: Mapping[str, Any],
     *,

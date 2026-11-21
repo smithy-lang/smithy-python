@@ -2,8 +2,14 @@
 #  SPDX-License-Identifier: Apache-2.0
 """Selects the native checksum implementations, or the pure-Python ones if unavailable."""
 
+import sys
 from collections.abc import Callable, Mapping
 from typing import Protocol, Self
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
 
 
 class ChecksumImpl(Protocol):
@@ -19,7 +25,7 @@ class ChecksumImpl(Protocol):
     def copy(self) -> Self: ...
 
 
-type ImplFactory = Callable[[], ChecksumImpl]
+ImplFactory = TypeAliasType("ImplFactory", Callable[[], ChecksumImpl])
 
 
 def _load() -> tuple[bool, Mapping[str, ImplFactory]]:

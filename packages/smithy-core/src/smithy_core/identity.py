@@ -4,7 +4,7 @@ import logging
 import threading
 from collections.abc import Callable, Mapping, Sequence
 from functools import partial
-from typing import Any, Final
+from typing import Any, Final, Generic, TypeVar
 
 from .exceptions import SmithyIdentityError
 from .interfaces.identity import Identity, IdentityResolver
@@ -12,16 +12,22 @@ from .program import Program, run_program
 
 __all__ = ["CachingIdentityResolver", "ChainedIdentityResolver"]
 
+_I = TypeVar("_I", bound=Identity)
+_I_co = TypeVar("_I_co", bound=Identity, covariant=True)
+_ChainIdentity = TypeVar("_ChainIdentity")
+_IP_contra = TypeVar("_IP_contra", bound=Mapping[str, Any], contravariant=True)
+
+
 logger: Final = logging.getLogger(__name__)
 
 
-class CachingIdentityResolver[I: Identity, IP: Mapping[str, Any]](
-    IdentityResolver[I, IP]
+class CachingIdentityResolver(
+    IdentityResolver[_I_co, _IP_contra], Generic[_I_co, _IP_contra]
 ):
     """An identity resolver that caches an identity until it expires."""
 
     def __init__(self) -> None:
-        self._cached: I | None = None
+        self._cached: _I_co | None = None
         self._lock = threading.Lock()
 
     def __getstate__(self) -> dict[str, Any]:
@@ -34,7 +40,7 @@ class CachingIdentityResolver[I: Identity, IP: Mapping[str, Any]](
         self.__dict__.update(state)
         self._lock = threading.Lock()
 
-    def get_identity(self, *, properties: IP) -> I:
+    def get_identity(self, *, properties: _IP_contra) -> _I_co:
         cached = self._cached
         if cached is not None and not cached.is_expired:
             return cached
@@ -50,12 +56,12 @@ class CachingIdentityResolver[I: Identity, IP: Mapping[str, Any]](
         """Discard the cached identity so the next resolution re-reads its source."""
         self._cached = None
 
-    def _get_identity(self, *, properties: IP) -> I:
+    def _get_identity(self, *, properties: _IP_contra) -> _I_co:
         raise NotImplementedError
 
 
-class ChainedIdentityResolver[I: Identity, IP: Mapping[str, Any]](
-    CachingIdentityResolver[I, IP]
+class ChainedIdentityResolver(
+    CachingIdentityResolver[_I_co, _IP_contra], Generic[_I_co, _IP_contra]
 ):
     """Attempts to resolve an identity by checking a sequence of sub-resolvers.
 
@@ -63,7 +69,9 @@ class ChainedIdentityResolver[I: Identity, IP: Mapping[str, Any]](
     the chain will be attempted.
     """
 
-    def __init__(self, resolvers: Sequence[IdentityResolver[I, IP]]) -> None:
+    def __init__(
+        self, resolvers: Sequence[IdentityResolver[_I_co, _IP_contra]]
+    ) -> None:
         """Construct a ChainedIdentityResolver.
 
         :param resolvers: The sequence of resolvers to resolve identity from.
@@ -76,22 +84,20 @@ class ChainedIdentityResolver[I: Identity, IP: Mapping[str, Any]](
         super().invalidate()
         run_program(_invalidate_all(self._resolvers))
 
-    def _get_identity(self, *, properties: IP) -> I:
+    def _get_identity(self, *, properties: _IP_contra) -> _I_co:
         return run_program(_resolve_from_chain(self._resolvers, properties))
 
 
-def _cached_identity[I: Identity](
-    resolver: Any, fetch: Callable[[], Any]
-) -> Program[I]:
+def _cached_identity(resolver: Any, fetch: Callable[[], Any]) -> Program[_I]:
     """Return the resolver's cached identity, refreshing it if missing or expired."""
     if resolver._cached is None or resolver._cached.is_expired:
         resolver._cached = yield fetch
     return resolver._cached
 
 
-def _resolve_from_chain[I](
+def _resolve_from_chain(
     resolvers: Sequence[object], properties: Mapping[str, Any]
-) -> Program[I]:
+) -> Program[_ChainIdentity]:
     """Resolve an identity from the first resolver in a chain that can provide one."""
     logger.debug("Attempting to resolve identity from resolver chain.")
     for resolver in resolvers:

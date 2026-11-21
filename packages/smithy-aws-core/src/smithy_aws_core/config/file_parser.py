@@ -3,6 +3,7 @@
 
 import logging
 import re
+import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Any
@@ -10,6 +11,12 @@ from typing import TYPE_CHECKING, Any
 from smithy_core.program import Program, run_program
 
 from .exceptions import ConfigParseError
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 if TYPE_CHECKING:
     from .filesystem import FileSystem
@@ -28,7 +35,9 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 # Type aliases
-type RawParsedSections = dict[str, dict[str, str | dict[str, str]]]
+RawParsedSections = TypeAliasType(
+    "RawParsedSections", dict[str, dict[str, str | dict[str, str]]]
+)
 
 _VALID_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9_\-/.%@:+]+$")
 
@@ -47,7 +56,7 @@ class Section:
     properties: dict[str, str | dict[str, str]] = field(default_factory=dict)  # type: ignore[assignment]
 
 
-type SectionMap = dict[str, Section]
+SectionMap = TypeAliasType("SectionMap", dict[str, Section])
 
 
 @dataclass

@@ -9,12 +9,13 @@ actual present-member count into it on close.
 
 import datetime
 import struct as _struct
+import sys
 from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
 from decimal import Decimal
 from io import BytesIO
 from types import TracebackType
-from typing import Self, override
+from typing import Self
 
 from smithy_core.documents import Document
 from smithy_core.interfaces import BytesWriter
@@ -24,6 +25,11 @@ from smithy_core.shapes import ShapeType
 from smithy_core.utils import ensure_utc
 
 from ..settings import CBORSettings
+
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+    from typing_extensions import override
 
 # CBOR major types, shifted into the high 3 bits of the initial byte.
 _MAJOR_UINT = 0 << 5

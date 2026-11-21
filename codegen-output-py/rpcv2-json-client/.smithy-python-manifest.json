@@ -1,16 +1,16 @@
 {
   "files": {
     "README.md": "45e418df185f3c97645bb27cde96c23d25862660c4efb7e07daa6f2f4e541833",
-    "pyproject.toml": "1e092d69b0fb9a1dc14899c713abb013b2a5580725aebcf3c945fc3121baecf7",
+    "pyproject.toml": "04b79c8408e7a150de568d57b4b959fd2a76a24c3c66f39416f14900ca2c9158",
     "src/rpcv2json_client/__init__.py": "fa3fa16a23aaa1ad8d7a87a8c5475ac6b82cfeeabb83625ab4d28d3c3f6a0fbe",
     "src/rpcv2json_client/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/rpcv2json_client/_private/endpoints.py": "7d515fe771678e82ddbe07798d6b7e48c25c6c9bec19cec9318deb0bc5064ead",
     "src/rpcv2json_client/_private/schemas.py": "b52400dc7e9af25614f09ee4efe1e3ac3fe344436901b62109c94724ee0f0fa2",
     "src/rpcv2json_client/aio/__init__.py": "a24a4208d8da09d3b8662a439db4ae9838585fc27fe431b42aa8dd05ec93c78c",
     "src/rpcv2json_client/aio/client.py": "d6f1faa50990e24e578d737acce46a7a9ec525f3e3c1e7ce9d2f656ab443b7ef",
-    "src/rpcv2json_client/aio/config.py": "9a690c07e6d87a5c43e3a139dc7aafd6483a8be111954e096f80d0af37fc73b2",
+    "src/rpcv2json_client/aio/config.py": "735007101ea15f9582bd0346f892d625d3f93b86bf27f4691fe9d89cf54ef018",
     "src/rpcv2json_client/client.py": "64460ff50e711ab7d110b482a4c5d14ae4aa82b3e4938e4909a6b711462ee6bb",
-    "src/rpcv2json_client/config.py": "427d621c929be7cadc23d8a5b2530e39ec5c8b05b04a2403d8e02a2b17efb7c8",
+    "src/rpcv2json_client/config.py": "0f0a6548ecee41e885a7bacf5004db1ebbe2dd93712353207ad3dee2855ba149",
     "src/rpcv2json_client/models.py": "94050bb13fbc2a62b3299790c28b270e6f42fb038f77fdd72f54077269a9c9a0",
     "src/rpcv2json_client/models.pyi": "5f129d34dd7fd48915deb1396753bcd848eda16d5f1c043e988c605216cb4a8f",
     "src/rpcv2json_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"

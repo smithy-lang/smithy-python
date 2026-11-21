@@ -3,7 +3,7 @@
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, Self, Unpack
+from typing import TYPE_CHECKING, Any, ClassVar, Self, TypeAlias, Unpack
 
 from smithy_core.aio.program import run_program_async
 
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
         AWSIdentityProperties,
     )
 
-    type _AsyncTransport = AsyncClientTransport[Any, Any]
-    type _AsyncCredentialsResolver = AsyncIdentityResolver[
+    _AsyncTransport: TypeAlias = AsyncClientTransport[Any, Any]
+    _AsyncCredentialsResolver: TypeAlias = AsyncIdentityResolver[
         AWSCredentialsIdentity, AWSIdentityProperties
     ]
 

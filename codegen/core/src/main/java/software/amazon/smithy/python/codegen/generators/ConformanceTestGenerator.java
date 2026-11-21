@@ -186,9 +186,13 @@ public final class ConformanceTestGenerator implements Runnable {
         }
         writer.addImport(asyncClient.getNamespace(), asyncClient.getName());
         writer.addImport(syncClient.getNamespace(), syncClient.getName());
+        writer.addStdlibImport("typing", "TypeVar");
         writer.write("""
 
-                def _request[T](form: type[T]) -> T:
+                _T = TypeVar("_T")
+
+
+                def _request(form: type[_T]) -> _T:
                     raise NotImplementedError
                 """);
         writer.openBlock("async def check_async_calls(client: $L) -> None:", "", asyncClient.getName(), () -> {

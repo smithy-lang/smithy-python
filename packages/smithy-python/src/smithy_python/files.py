@@ -8,6 +8,7 @@ import hashlib
 import itertools
 import json
 import os
+import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -16,6 +17,12 @@ from typing import Final, cast
 from . import dependencies as _dependencies
 from . import exceptions as _exceptions
 from . import writer as _writer
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 __all__ = ["FileManifest"]
 
@@ -282,7 +289,7 @@ class _TextFile:
     content: str
 
 
-type _GeneratedFile = _PythonFile | _TextFile
+_GeneratedFile = TypeAliasType("_GeneratedFile", _PythonFile | _TextFile)
 
 
 def _normalize_path(path: str) -> str:

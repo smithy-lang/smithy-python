@@ -26,9 +26,10 @@ import sys
 import tomllib
 from importlib import import_module
 from pathlib import Path
+from typing import TypeAlias
 
-type _ConfigSettings = dict[str, str | list[str]] | None
-type _Version = tuple[int, ...]
+_ConfigSettings: TypeAlias = dict[str, str | list[str]] | None
+_Version: TypeAlias = tuple[int, ...]
 
 _ENV_VAR = "SMITHY_PYTHON_NATIVE_BUILD"
 _MATURIN = "maturin>=1.10,<2"

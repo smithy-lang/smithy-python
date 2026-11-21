@@ -423,7 +423,7 @@ _CLIENT_METHOD_NAMES = frozenset(
 )
 
 
-# Union of Python 3.12-3.15 hard keywords, independent of the host interpreter.
+# Union of Python 3.11-3.15 hard keywords, independent of the host interpreter.
 # Soft keywords (match, case, type, lazy, _) remain ordinary identifiers here.
 # Update this when adding support for another Python version.
 _KEYWORDS = frozenset(

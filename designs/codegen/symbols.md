@@ -89,7 +89,7 @@ A field or constant that starts with `__` but does not end with `__` gets `___`
 appended so Python does not mangle it. Enum constants that would be dunder or
 sunder names get a trailing `_`, because `Enum` does not treat those as members.
 Append `_` if the result is a reserved Python word. The reserved-word list combines
-Python 3.12 through 3.15 so results do not depend on the Python version running
+Python 3.11 through 3.15 so results do not depend on the Python version running
 codegen. Update it when adding support for another Python version. Names such as
 `match`, `case`, `type` and `lazy` are valid Python field names and do not need a
 trailing underscore.

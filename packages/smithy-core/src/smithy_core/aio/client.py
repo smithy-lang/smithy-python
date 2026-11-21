@@ -5,7 +5,7 @@ import contextlib
 import logging
 from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Self, TypeVar
 
 from smithy_core.interfaces import ClientProtocol, Request, Response
 
@@ -41,24 +41,33 @@ if TYPE_CHECKING:
 
     from .interfaces.eventstream import AsyncEventPublisher
 
+_C = TypeVar("_C")
+_I = TypeVar("_I", bound=SerializeableShape)
+_IE = TypeVar("_IE", bound=SerializeableShape)
+_O = TypeVar("_O", bound=DeserializeableShape)
+_OE = TypeVar("_OE", bound=DeserializeableShape)
+_TRequest = TypeVar("_TRequest", bound=Request)
+_TResponse = TypeVar("_TResponse", bound=Response)
+
+
 AUTH_SCHEME = PropertyKey(
     key="auth_scheme", value_type=AsyncAuthScheme[Any, Any, Any, Any]
 )
 """Property key for the auth scheme selected for the call."""
 
 
-class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
-    RequestPipelineBase[TRequest, TResponse]
+class AsyncRequestPipeline(
+    RequestPipelineBase[_TRequest, _TResponse], Generic[_TRequest, _TResponse]
 ):
     """Invokes client operations asynchronously."""
 
-    protocol: ClientProtocol[TRequest, TResponse]
+    protocol: ClientProtocol[_TRequest, _TResponse]
     """The protocol to use to serialize the request and deserialize the response.
 
     Event stream operations need an :py:class:`AsyncClientProtocol`.
     """
 
-    transport: AsyncClientTransport[TRequest, TResponse]
+    transport: AsyncClientTransport[_TRequest, _TResponse]
     """The transport to use to send the request and receive the response (e.g. an HTTP
     Client)."""
 
@@ -66,15 +75,13 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
 
     def __init__(
         self,
-        protocol: ClientProtocol[TRequest, TResponse],
-        transport: AsyncClientTransport[TRequest, TResponse],
+        protocol: ClientProtocol[_TRequest, _TResponse],
+        transport: AsyncClientTransport[_TRequest, _TResponse],
     ) -> None:
         self.protocol = protocol
         self.transport = transport
 
-    async def __call__[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[I, O], /
-    ) -> O:
+    async def __call__(self, call: ClientCall[_I, _O], /) -> _O:
         """Invoke an operation asynchronously.
 
         :param call: The operation to invoke and associated context.
@@ -82,19 +89,15 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
         output, _ = await self._execute_request(call, None)
         return output
 
-    async def input_stream[
-        I: SerializeableShape,
-        O: DeserializeableShape,
-        E: SerializeableShape,
-    ](
-        self, call: ClientCall[I, O], event_type: "TypeForm[E]", /
-    ) -> AsyncInputEventStream[E, O]:
+    async def input_stream(
+        self, call: ClientCall[_I, _O], event_type: "TypeForm[_IE]", /
+    ) -> AsyncInputEventStream[_IE, _O]:
         """Invoke an input stream operation asynchronously.
 
         :param call: The operation to invoke and associated context.
         :param event_type: The event type to send in the input stream.
         """
-        request_future = Future[RequestContext[I, TRequest]]()
+        request_future = Future[RequestContext[_I, _TRequest]]()
         output_future = asyncio.create_task(
             self._await_output(self._execute_request(call, request_future))
         )
@@ -105,17 +108,13 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
             input_stream=input_stream, output_future=output_future
         )
 
-    async def output_stream[
-        I: SerializeableShape,
-        O: DeserializeableShape,
-        E: DeserializeableShape,
-    ](
+    async def output_stream(
         self,
-        call: ClientCall[I, O],
-        event_type: "TypeForm[E]",
-        event_deserializer: Callable[[ShapeDeserializer], E],
+        call: ClientCall[_I, _O],
+        event_type: "TypeForm[_OE]",
+        event_deserializer: Callable[[ShapeDeserializer], _OE],
         /,
-    ) -> AsyncOutputEventStream[E, O]:
+    ) -> AsyncOutputEventStream[_OE, _O]:
         """Invoke an input stream operation asynchronously.
 
         :param call: The operation to invoke and associated context.
@@ -133,19 +132,14 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
         )
         return AsyncOutputEventStream(output_stream=output_stream, output=output)
 
-    async def duplex_stream[
-        I: SerializeableShape,
-        O: DeserializeableShape,
-        IE: SerializeableShape,
-        OE: DeserializeableShape,
-    ](
+    async def duplex_stream(
         self,
-        call: ClientCall[I, O],
-        input_event_type: "TypeForm[IE]",
-        output_event_type: "TypeForm[OE]",
-        event_deserializer: Callable[[ShapeDeserializer], OE],
+        call: ClientCall[_I, _O],
+        input_event_type: "TypeForm[_IE]",
+        output_event_type: "TypeForm[_OE]",
+        event_deserializer: Callable[[ShapeDeserializer], _OE],
         /,
-    ) -> AsyncDuplexEventStream[IE, OE, O]:
+    ) -> AsyncDuplexEventStream[_IE, _OE, _O]:
         """Invoke an input stream operation asynchronously.
 
         :param call: The operation to invoke and associated context.
@@ -165,7 +159,7 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
                 f"support duplex streaming can implement AsyncDuplexClientTransport "
                 f"by setting SUPPORTS_DUPLEX_STREAMING to True."
             )
-        request_future = Future[RequestContext[I, TRequest]]()
+        request_future = Future[RequestContext[_I, _TRequest]]()
         execute_task = asyncio.create_task(self._execute_request(call, request_future))
         input_stream = await self._start_publisher(
             call, input_event_type, request_future, execute_task
@@ -182,13 +176,13 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
             input_stream=input_stream, output_future=output_future
         )
 
-    async def _start_publisher[I: SerializeableShape, E: SerializeableShape](
+    async def _start_publisher(
         self,
-        call: ClientCall[I, Any],
-        event_type: "TypeForm[E]",
-        request_future: Future[RequestContext[I, TRequest]],
+        call: ClientCall[_I, Any],
+        event_type: "TypeForm[_IE]",
+        request_future: Future[RequestContext[_I, _TRequest]],
         execute_task: "asyncio.Task[Any]",
-    ) -> "AsyncEventPublisher[E]":
+    ) -> "AsyncEventPublisher[_IE]":
         request_context = await request_future
         try:
             return await self._event_stream_protocol().create_event_publisher(
@@ -206,24 +200,24 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
                 await execute_task
             raise
 
-    async def _await_output[I: SerializeableShape, O: DeserializeableShape](
+    async def _await_output(
         self,
-        execute_task: Awaitable[tuple[O, OutputContext[I, O, TRequest, TResponse]]],
-    ) -> O:
+        execute_task: Awaitable[
+            tuple[_O, OutputContext[_I, _O, _TRequest, _TResponse]]
+        ],
+    ) -> _O:
         output, _ = await execute_task
         return output
 
-    async def _await_output_stream[
-        I: SerializeableShape,
-        O: DeserializeableShape,
-        OE: DeserializeableShape,
-    ](
+    async def _await_output_stream(
         self,
-        call: ClientCall[I, O],
-        execute_task: Awaitable[tuple[O, OutputContext[I, O, TRequest, TResponse]]],
-        output_event_type: "TypeForm[OE]",
-        event_deserializer: Callable[[ShapeDeserializer], OE],
-    ) -> tuple[O, AsyncEventReceiver[OE]]:
+        call: ClientCall[_I, _O],
+        execute_task: Awaitable[
+            tuple[_O, OutputContext[_I, _O, _TRequest, _TResponse]]
+        ],
+        output_event_type: "TypeForm[_OE]",
+        event_deserializer: Callable[[ShapeDeserializer], _OE],
+    ) -> tuple[_O, AsyncEventReceiver[_OE]]:
         output, output_context = await execute_task
         output_stream = self._event_stream_protocol().create_event_receiver(
             operation=call.operation,
@@ -235,14 +229,14 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
         )
         return output, output_stream
 
-    async def _execute_request[I: SerializeableShape, O: DeserializeableShape](
+    async def _execute_request(
         self,
-        call: ClientCall[I, O],
-        request_future: Future[RequestContext[I, TRequest]] | None,
-    ) -> tuple[O, OutputContext[I, O, TRequest, TResponse]]:
+        call: ClientCall[_I, _O],
+        request_future: Future[RequestContext[_I, _TRequest]] | None,
+    ) -> tuple[_O, OutputContext[_I, _O, _TRequest, _TResponse]]:
         return await run_program_async(self._execute(call, request_future))
 
-    def _event_stream_protocol(self) -> AsyncClientProtocol[TRequest, TResponse]:
+    def _event_stream_protocol(self) -> AsyncClientProtocol[_TRequest, _TResponse]:
         if not isinstance(self.protocol, AsyncClientProtocol):
             raise UnsupportedStreamError(
                 f"The configured protocol ({type(self.protocol).__name__}) does not "
@@ -258,9 +252,9 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
 
     async def _transmit(
         self,
-        request_context: RequestContext[Any, TRequest],
-        request_future: Future[RequestContext[Any, TRequest]] | None,
-    ) -> TResponse:
+        request_context: RequestContext[Any, _TRequest],
+        request_future: Future[RequestContext[Any, _TRequest]] | None,
+    ) -> _TResponse:
         if request_future is None:
             # If we don't have an input stream, there's no point in creating a
             # task, so we just immediately await the coroutine.
@@ -278,14 +272,14 @@ class AsyncRequestPipeline[TRequest: Request, TResponse: Response](
 
     def _fail_request_future(
         self,
-        request_future: Future[RequestContext[Any, TRequest]] | None,
+        request_future: Future[RequestContext[Any, _TRequest]] | None,
         error: Exception,
     ) -> None:
         if request_future is not None and not request_future.done():
             request_future.set_exception(error)
 
 
-class AsyncClient[C](_ClientBase[C]):
+class AsyncClient(_ClientBase[_C], Generic[_C]):
     """Shared async client machinery: lifecycle, setup gating, and call dispatch.
 
     Generated clients subclass this with their config type and supply
@@ -297,8 +291,8 @@ class AsyncClient[C](_ClientBase[C]):
 
     def __init__(
         self,
-        config: C | None = None,
-        plugins: list[Callable[[C], None]] | None = None,
+        config: _C | None = None,
+        plugins: list[Callable[[_C], None]] | None = None,
     ) -> None:
         super().__init__(config, plugins)
         self._derive_lock = asyncio.Lock()
@@ -318,31 +312,31 @@ class AsyncClient[C](_ClientBase[C]):
         async with self._derive_lock:
             await run_program_async(self._close())
 
-    async def _ensure_setup(self) -> C:
+    async def _ensure_setup(self) -> _C:
         if not self._setup_done:
             async with self._derive_lock:
                 return await run_program_async(self._setup())
         return self._config
 
-    async def _invoke[I: SerializeableShape, O: DeserializeableShape](
+    async def _invoke(
         self,
-        input: I | dict[str, Any] | None,
-        operation: APIOperation[I, O],
-        default_plugins: list[Callable[[C], None]],
-        plugins: list[Callable[[C], None]] | None,
-    ) -> O:
+        input: _I | dict[str, Any] | None,
+        operation: APIOperation[_I, _O],
+        default_plugins: list[Callable[[_C], None]],
+        plugins: list[Callable[[_C], None]] | None,
+    ) -> _O:
         pipeline, call = await self._prepare_call(
             input, operation, default_plugins, plugins
         )
         return await pipeline(call)
 
-    async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
+    async def _prepare_call(
         self,
-        input: I | dict[str, Any] | None,
-        operation: APIOperation[I, O],
-        default_plugins: list[Callable[[C], None]],
-        plugins: list[Callable[[C], None]] | None,
-    ) -> tuple[AsyncRequestPipeline[Any, Any], ClientCall[I, O]]:
+        input: _I | dict[str, Any] | None,
+        operation: APIOperation[_I, _O],
+        default_plugins: list[Callable[[_C], None]],
+        plugins: list[Callable[[_C], None]] | None,
+    ) -> tuple[AsyncRequestPipeline[Any, Any], ClientCall[_I, _O]]:
         model = self._build_input(input, operation)
         self._raise_if_closed()
         config = await self._ensure_setup()

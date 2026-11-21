@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, TypeAlias, cast
 
 from smithy_core.aio.interfaces import AsyncClientTransport, AsyncEndpointResolver
 from smithy_core.aio.interfaces.auth import AsyncAuthScheme
@@ -98,5 +98,5 @@ class AsyncConfig:
         self.force_path_style = force_path_style
 
 
-type Plugin = Callable[[AsyncConfig], None]
+Plugin: TypeAlias = Callable[[AsyncConfig], None]
 "A callable that customizes the client configuration."

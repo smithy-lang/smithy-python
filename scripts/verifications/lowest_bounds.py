@@ -40,7 +40,9 @@ def check() -> list[Finding]:
         targets.append(f"{package.dir}[{extras}]" if extras else str(package.dir))
     with tempfile.TemporaryDirectory(prefix="lowest-bounds-") as tmp:
         venv = Path(tmp) / "venv"
-        created = run(["uv", "venv", "--quiet", "--python", "3.12", str(venv)])
+        # The oldest supported Python, where Python-version-gated dependencies
+        # such as typing-extensions apply.
+        created = run(["uv", "venv", "--quiet", "--python", "3.11", str(venv)])
         if created.returncode != 0:
             return [*findings, Finding(f"uv venv failed: {created.stderr[-500:]}")]
         python = str(venv / "bin" / "python")

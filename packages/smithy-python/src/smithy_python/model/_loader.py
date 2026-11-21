@@ -25,6 +25,7 @@ first introduced and takes the value from the last writer.
 from __future__ import annotations
 
 import json
+import sys
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from types import MappingProxyType
@@ -48,11 +49,17 @@ from ._shapes import (
     SimpleShape,
 )
 
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
+
 # Smithy 1.0 differs semantically (set shapes, boxing), so only 2.x is loaded.
 SUPPORTED_MAJOR_VERSION: Final = "2"
 
-type _Json = dict[str, object]
-type _Traits = dict[ShapeId, Node]
+_Json = TypeAliasType("_Json", dict[str, object])
+_Traits = TypeAliasType("_Traits", dict[ShapeId, Node])
 
 _LIFECYCLE: Final = ("create", "put", "read", "update", "delete", "list")
 

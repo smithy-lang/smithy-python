@@ -1,10 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 # pyright: reportPrivateUsage=false
+import sys
 from collections.abc import Callable, Mapping
 from copy import copy
 from types import TracebackType
-from typing import Any, Self
+from typing import Any, Self, TypeVar
 
 from smithy_core.client import Client
 from smithy_core.exceptions import SmithyError
@@ -16,6 +17,12 @@ from smithy_http.testing.mockhttp import MockHTTPClient, MockHTTPClientBase
 
 from ._private.http_mock import NoResponse, mismatches, take_over
 
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
+
 __all__ = [
     "HTTPMockController",
     "HTTPMockError",
@@ -24,17 +31,24 @@ __all__ = [
     "mock",
 ]
 
-type _Matcher[T] = str | Callable[[T], bool | None]
+_C = TypeVar("_C")
+_T = TypeVar("_T")
+
+
+_Matcher = TypeAliasType(
+    "_Matcher", str | Callable[[_T], bool | None], type_params=(_T,)
+)
 """An exact string, a ``"/regex/"`` string, or a callable returning True or None."""
 
-type _EntriesMatcher = (
-    Mapping[str, _Matcher[str]] | Callable[[dict[str, str]], bool | None]
+_EntriesMatcher = TypeAliasType(
+    "_EntriesMatcher",
+    (Mapping[str, _Matcher[str]] | Callable[[dict[str, str]], bool | None]),
 )
 
-type _ResponseBody = str | AnyStreamingBlob
+_ResponseBody = TypeAliasType("_ResponseBody", str | AnyStreamingBlob)
 
 
-def mock[C](client: Client[C]) -> "HTTPMockController":
+def mock(client: Client[_C]) -> "HTTPMockController":
     """Take over a client so its requests are matched and answered, never sent.
 
     :raises TypeError: If the client isn't a sync client this mock can take over.
