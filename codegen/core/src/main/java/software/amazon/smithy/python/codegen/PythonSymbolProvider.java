@@ -67,10 +67,17 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     private static final Logger LOGGER = Logger.getLogger(PythonSymbolProvider.class.getName());
     private static final String SHAPES_FILE = "models";
     private static final String SCHEMAS_FILE = "_private/schemas";
-    private static final Set<String> CLIENT_RESERVED_METHOD_NAMES = Set.of("close");
+    // Public methods every client inherits, which operation methods are escaped past.
+    static final Set<String> CLIENT_RESERVED_METHOD_NAMES = Set.of("close");
     // The names every generated client method uses besides its input members: the
     // parameters it declares, and the models module alias its body references.
-    private static final Set<String> OPERATION_PARAMETER_NAMES = Set.of("self", "plugins", "_models");
+    // Paginators also take stop_on_same_token. It is reserved on every operation's
+    // input, so a member is named the same whether or not its operation paginates.
+    private static final Set<String> OPERATION_PARAMETER_NAMES = Set.of(
+            "self",
+            "plugins",
+            "_models",
+            "stop_on_same_token");
 
     private final Model model;
     private final ReservedWordSymbolProvider.Escaper escaper;
@@ -153,15 +160,15 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         var container = model.expectShape(shape.getContainer());
 
         // An operation's input members are the keyword parameters of its client
-        // method, so a member named like one of the method's own parameters, or
-        // like a module alias its body uses, is escaped. Members of nested
+        // methods, so a member named like one of the methods' own parameters, or
+        // like a module alias their bodies use, is escaped. Members of nested
         // structures are not parameters and keep their names.
         if (OPERATION_PARAMETER_NAMES.contains(memberName)
                 && operationIndex.isInputStructure(container)) {
             var reserved = memberName;
             var escaped = escapeOperationParameter(container, memberName);
             LOGGER.warning(() -> format(
-                    "Escaped generated Python name for Smithy member %s from \"%s\" to \"%s\" because every client operation method already uses the name \"%s\".",
+                    "Escaped generated Python name for Smithy member %s from \"%s\" to \"%s\" because client operation methods reserve the name \"%s\".",
                     shape.getId(),
                     reserved,
                     escaped,

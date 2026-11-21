@@ -15,6 +15,7 @@ __all__ = [
     "Fault",
     "MissingDependencyError",
     "ModeledError",
+    "PaginationError",
     "ResourceLifecycleError",
     "RetryError",
     "SerializationError",
@@ -174,3 +175,11 @@ class UnsupportedAuthSchemeError(SmithyError):
 
 class EndpointResolutionError(SmithyError):
     """Exception type for all exceptions raised by endpoint resolution."""
+
+
+class PaginationError(SmithyError):
+    """A paginator could not request the next page.
+
+    Raised when an async paginator is advanced before its previous advance
+    finished, which neither ends pagination nor affects that advance.
+    """

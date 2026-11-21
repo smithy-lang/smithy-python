@@ -684,6 +684,7 @@ def test_operation_parameter_names_are_escaped_on_inputs_in_stub_and_runtime(
         "plugins": {"target": "smithy.api#String"},
         "self": {"target": "smithy.api#String"},
         "_models": {"target": "smithy.api#String"},
+        "stopOnSameToken": {"target": "smithy.api#String"},
     }
     source_root = _generate_custom(
         tmp_path,
@@ -705,10 +706,12 @@ def test_operation_parameter_names_are_escaped_on_inputs_in_stub_and_runtime(
     assert "plugins_: str | None = ..." in input_stub
     assert "self_: str | None = ..." in input_stub
     assert "_models_: str | None = ..." in input_stub
+    assert "stop_on_same_token_: str | None = ..." in input_stub
     # Members of other structures are not parameters and keep their names.
     assert "plugins: str | None = ..." in nested_stub
     assert "self: str | None = ..." in nested_stub
     assert "_models: str | None = ..." in nested_stub
+    assert "stop_on_same_token: str | None = ..." in nested_stub
 
     monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
         str(source_root)
@@ -718,10 +721,13 @@ def test_operation_parameter_names_are_escaped_on_inputs_in_stub_and_runtime(
         plugins_="p",
         self_="s",
         _models_="m",
-        nested=models.Nested(plugins="n", _models="nm"),
+        stop_on_same_token_="t",
+        nested=models.Nested(plugins="n", _models="nm", stop_on_same_token="nt"),
     )
     assert (built.plugins_, built.self_, built._models_) == ("p", "s", "m")
+    assert built.stop_on_same_token_ == "t"
     assert (built.nested.plugins, built.nested._models) == ("n", "nm")
+    assert built.nested.stop_on_same_token == "nt"
 
 
 def test_stub_and_runtime_use_the_same_member_names(
