@@ -1,4 +1,4 @@
 {
   "type": "feature",
-  "description": "Added support for Python 3.11."
+  "description": "Added support for Python 3.11, including retry classification of protocol errors."
 }

@@ -73,6 +73,7 @@ __all__ = [
 
 _OperationInput = TypeVar("_OperationInput", bound=SerializeableShape)
 _OperationOutput = TypeVar("_OperationOutput", bound=DeserializeableShape)
+_CallErrorT = TypeVar("_CallErrorT", bound=CallError)
 
 
 _EVENT_STREAM_CONTENT_TYPE = "application/vnd.amazon.eventstream"
@@ -199,9 +200,9 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         except DiscriminatorError:
             return None
 
-    def _classify_error_for_retry[E: CallError](
-        self, error: E, response: HTTPResponse, code: str | None
-    ) -> E:
+    def _classify_error_for_retry(
+        self, error: _CallErrorT, response: HTTPResponse, code: str | None
+    ) -> _CallErrorT:
         """Mark the error as retryable if it's a throttling, timeout or transient error."""
         if error.is_retry_safe is False:
             return error

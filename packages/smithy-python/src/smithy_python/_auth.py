@@ -9,6 +9,7 @@ resolver reads.
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -20,7 +21,12 @@ from . import model as _model
 from . import models as _models
 from .symbols import TypeReference
 
-type Part = str | TypeReference
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
+Part = TypeAliasType("Part", str | TypeReference)
 """A piece of a generated line."""
 
 
