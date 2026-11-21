@@ -860,11 +860,15 @@ async def test_input_members_named_like_the_sdk_option_are_escaped(
     output["stopOnSameToken"] = {"target": "smithy.api#String"}
     name = f"greeter_pages_names_{style}" + ("_aio" if aio else "")
     _generate(tmp_path, name, shapes)
-    stub = (tmp_path / "src" / name / "models.pyi").read_text()
-    typed_dict = stub.split("class CountInputDict(")[1].split("\nclass ")[0]
-    assert "stop_on_same_token__: str | None" in typed_dict
-    assert "stop_on_same_token_: str | None" in typed_dict
-    assert "stop_on_same_token: " not in typed_dict
+    # Neither the generated model nor the ordinary call depends on the paginator's
+    # input style, so the model is checked once and the call once per mode.
+    keywords = style == "keywords"
+    if keywords and not aio:
+        stub = (tmp_path / "src" / name / "models.pyi").read_text()
+        typed_dict = stub.split("class CountInputDict(")[1].split("\nclass ")[0]
+        assert "stop_on_same_token__: str | None" in typed_dict
+        assert "stop_on_same_token_: str | None" in typed_dict
+        assert "stop_on_same_token: " not in typed_dict
 
     monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
         str(tmp_path / "src")
@@ -872,12 +876,13 @@ async def test_input_members_named_like_the_sdk_option_are_escaped(
     package = importlib.import_module(name)
     models: Any = importlib.import_module(f"{name}.models")
     # The first response repeats the starting token, which the SDK option allows.
-    bodies = (
+    bodies = [
         b'{"nextToken": "t1", "stopOnSameToken": "out"}',
         b'{"nextToken": "t2"}',
         b"{}",
-        b"{}",
-    )
+    ]
+    if keywords:
+        bodies.append(b"{}")
     transport = (_AsyncPagedTransport if aio else _PagedTransport)(*bodies)
     client = (package.AsyncGreeter if aio else package.Greeter)(
         _config(package, transport, aio=aio)
@@ -894,17 +899,19 @@ async def test_input_members_named_like_the_sdk_option_are_escaped(
     collected = [page async for page in pages] if aio else list(pages)
     assert [page.next_token for page in collected] == ["t1", "t2", None]
     assert collected[0].stop_on_same_token == "out"
-    # The ordinary operation method takes the same escaped field.
-    if aio:
-        await client.count(stop_on_same_token__="x")
-    else:
-        client.count(stop_on_same_token__="x")
-    assert [json.loads(_body(request)) for request in transport.requests] == [
+    expected: list[dict[str, str]] = [
         {"stopOnSameToken": "t1", "stop_on_same_token_": "s"},
         {"stopOnSameToken": "t1", "stop_on_same_token_": "s"},
         {"stopOnSameToken": "t2", "stop_on_same_token_": "s"},
-        {"stopOnSameToken": "x"},
     ]
+    if keywords:
+        # The ordinary operation method takes the same escaped field.
+        if aio:
+            await client.count(stop_on_same_token__="x")
+        else:
+            client.count(stop_on_same_token__="x")
+        expected.append({"stopOnSameToken": "x"})
+    assert [json.loads(_body(request)) for request in transport.requests] == expected
 
 
 @pytest.mark.parametrize("target", ["Byte", "Short", "Long"])

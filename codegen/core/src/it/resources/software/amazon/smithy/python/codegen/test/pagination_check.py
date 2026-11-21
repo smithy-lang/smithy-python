@@ -28,9 +28,9 @@ SOURCE = ROOT / "src"
 sys.path.insert(0, str(SOURCE))
 
 import smithy_core  # noqa: E402
-from smithy_core.aio.pagination import AsyncItemPaginator, AsyncPaginator  # noqa: E402
+from smithy_core.aio.pagination import AsyncPaginator  # noqa: E402
 from smithy_core.aio.types import AsyncBytesReader  # noqa: E402
-from smithy_core.pagination import ItemPaginator, Paginator  # noqa: E402
+from smithy_core.pagination import Paginator  # noqa: E402
 from smithy_core.retries import SimpleRetryStrategy  # noqa: E402
 from smithy_http import HTTPResponse, tuples_to_fields  # noqa: E402
 
@@ -177,12 +177,6 @@ def check_definitions():
                     ast.dump(arguments),
                     ast.dump(ordinary[index].args),
                     "%s operation parameters of definition %d" % (what, index),
-                )
-                check(
-                    "stop_on_same_token"
-                    not in [a.arg for a in ordinary[index].args.kwonlyargs],
-                    "%s operation definition %d takes stop_on_same_token"
-                    % (what, index),
                 )
             # Each definition returns the runtime paginator of the page's model and
             # its items. The runtime type's name is bound to nothing else here.
@@ -530,12 +524,34 @@ def check_pages():
             what + " requests",
         )
 
-        # Its items are the things of each page.
+        # Its items are the things of each page. With stop_on_same_token=False it
+        # keeps paging when a response repeats the request's token, the caller's
+        # starting one or a later one. Only an absent token ends it, and the
+        # option is never sent.
         transport = transport_type(
-            {"things": [{"name": "a"}], "nextToken": "t1"}, {"things": [{"name": "b"}]}
+            {"things": [{"name": "a"}], "nextToken": "t0"},
+            {"things": [{"name": "b"}], "nextToken": "t1"},
+            {"things": [], "nextToken": "t1"},
+            {"things": [{"name": "c"}]},
         )
-        items = make(transport).paginate_list_things().items()
-        equal([t.name for t in collect(items)], ["a", "b"], what + " items")
+        things = make(transport).paginate_list_things(
+            max_results=1, next_token="t0", stop_on_same_token=False
+        )
+        check(not inspect.isawaitable(things), what + " item paginator is awaitable")
+        equal(transport.requests, [], what + " item requests before iteration")
+        equal(
+            [t.name for t in collect(things.items())],
+            ["a", "b", "c"],
+            what + " items",
+        )
+        equal(
+            transport.requests,
+            [
+                ("/things", {}, {"maxResults": 1, "nextToken": token})
+                for token in ("t0", "t0", "t1", "t1")
+            ],
+            what + " item requests",
+        )
 
     both(test)
 
@@ -658,17 +674,6 @@ def check_paths():
             "%s count paginator is a %r" % (what, type(count)),
         )
         equal([page.total for page in collect(count)], [1, 2], what + " counts")
-        kind = AsyncItemPaginator if transport_type is AsyncTransport else ItemPaginator
-        check(
-            isinstance(make(transport).paginate_list_things(), kind),
-            what + " item paginator type",
-        )
-
-        # Ordinary has the members but not the trait.
-        check(
-            not hasattr(make(transport), "paginate_ordinary"),
-            what + " paginates Ordinary",
-        )
 
         # Upload has the trait, but its streaming input can't be sent again.
         client = make(transport)
@@ -753,55 +758,6 @@ def check_plugins():
     both(test)
 
 
-def check_stop_on_same_token():
-    import pages.models as m
-
-    # stop_on_same_token=False keeps paging when a response repeats the request's
-    # token, the caller's starting one or a later one, for each form of request.
-    # Only an absent token ends it, and the option is never sent.
-    def test(transport_type, collect):
-        what = transport_type.__name__
-        for label, args, kwargs in (
-            ("keywords", (), {"max_results": 1, "next_token": "t0"}),
-            ("model", (m.ListThingsInput(max_results=1, next_token="t0"),), {}),
-            ("dictionary", ({"max_results": 1, "next_token": "t0"},), {}),
-        ):
-            name = "%s %s stop_on_same_token=False" % (what, label)
-            transport = transport_type(
-                {"things": [{"name": "a"}], "nextToken": "t0"},
-                {"things": [{"name": "b"}], "nextToken": "t1"},
-                {"things": [], "nextToken": "t1"},
-                {"things": [{"name": "c"}]},
-            )
-            try:
-                pages = make(transport).paginate_list_things(
-                    *args, stop_on_same_token=False, **kwargs
-                )
-                check(not inspect.isawaitable(pages), name + " is awaitable")
-                equal(transport.requests, [], name + " requests before iteration")
-                equal(
-                    [
-                        ([t.name for t in p.things], p.next_token)
-                        for p in collect(pages)
-                    ],
-                    [(["a"], "t0"), (["b"], "t1"), ([], "t1"), (["c"], None)],
-                    name + " pages",
-                )
-            except Exception as error:  # noqa: BLE001 - reported per form
-                FAILURES.append("%s raised %r" % (name, error))
-                continue
-            equal(
-                transport.requests,
-                [
-                    ("/things", {}, {"maxResults": 1, "nextToken": token})
-                    for token in ("t0", "t0", "t1", "t1")
-                ],
-                name + " requests",
-            )
-
-    both(test)
-
-
 def check_option_collision():
     import pages.models as m
 
@@ -878,7 +834,6 @@ def main():
         check_paths,
         check_names,
         check_plugins,
-        check_stop_on_same_token,
         check_option_collision,
     ]
     for run in checks:

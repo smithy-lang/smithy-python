@@ -115,17 +115,22 @@ async def test_requests_pages_lazily_until_the_token_ends(aio: bool) -> None:
     assert len(service.calls) == 1
     assert await _pages(aio, paginator) == pages[1:]
     assert service.tokens == ["start", "a", "b"]
+    # Omitted plugins are passed as None, not as an empty list.
+    assert all(plugins is None for _, plugins in service.calls)
     await _assert_ended(aio, paginator)
     assert len(service.calls) == 3
 
 
 @AIO
-@pytest.mark.parametrize("end", [None, "", {}])
-async def test_missing_or_empty_tokens_and_wrappers_end(aio: bool, end: Any) -> None:
-    for last in (_page(end), _Page()):
-        service = _Service(_page({"k": "v"}), last)
-        assert await _pages(aio, _paginator(aio, service)) == [_page({"k": "v"}), last]
-        assert service.tokens == [None, {"k": "v"}]
+@pytest.mark.parametrize(
+    "last",
+    [_page(None), _page(""), _page({}), _Page()],
+    ids=["missing-token", "empty-string-token", "empty-map-token", "missing-wrapper"],
+)
+async def test_missing_or_empty_tokens_and_wrappers_end(aio: bool, last: _Page) -> None:
+    service = _Service(_page({"k": "v"}), last)
+    assert await _pages(aio, _paginator(aio, service)) == [_page({"k": "v"}), last]
+    assert service.tokens == [None, {"k": "v"}]
 
 
 @AIO
@@ -254,13 +259,6 @@ async def test_request_and_plugins_are_snapshots(aio: bool) -> None:
     assert first_plugins == second_plugins == [plugin]
     assert first_plugins is not second_plugins
     assert first_plugins is not plugins
-
-
-@AIO
-async def test_no_plugins_are_passed_as_none(aio: bool) -> None:
-    service = _Service(_page())
-    await _pages(aio, _paginator(aio, service))
-    assert service.calls[0][1] is None
 
 
 @AIO
