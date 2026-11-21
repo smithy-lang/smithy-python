@@ -11,6 +11,7 @@ from smithy_core.exceptions import SmithyError
 from smithy_core.interfaces import AnyStreamingBlob
 from smithy_core.utils import read_streaming_blob
 from smithy_http import HTTPResponse
+from smithy_http.identity.token import StaticTokenResolver
 from smithy_http.interfaces import HTTPClient, HTTPRequest, HTTPRequestConfiguration
 from smithy_http.testing.mockhttp import MockHTTPClient, MockHTTPClientBase
 
@@ -46,7 +47,7 @@ def mock[C](client: Client[C]) -> "HTTPMockController":
         )
     controller = HTTPMockController()
     controller._capture = _MockTransport(controller)
-    take_over(client, controller._capture, _none_without_response)
+    take_over(client, controller._capture, _none_without_response, StaticTokenResolver)
     return controller
 
 

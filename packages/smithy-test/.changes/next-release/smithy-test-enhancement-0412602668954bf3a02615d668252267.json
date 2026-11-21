@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "The HTTP mock now replaces the bearer token of AWS clients whose service uses bearer auth: `token` becomes `HTTP_MOCK` and `token_identity_resolver` a static resolver, so a mocked client never consults the default token identity chain."
+}

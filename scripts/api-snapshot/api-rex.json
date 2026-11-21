@@ -1464,6 +1464,7 @@
     "AsyncClient": "rex-class[async]",
     "AsyncHTTPClient": "rex-protocol[async]",
     "AsyncMockHTTPClient": "rex-class[async]",
+    "AsyncStaticTokenResolver": "rex-class[async]",
     "HTTPMockController": "rex-class",
     "HTTPMockError": "rex-exception",
     "HTTPRequest": "rex-protocol",
@@ -1484,6 +1485,7 @@
     "MockHTTPClientBase": "rex-class",
     "NoResponse": "rex-exception",
     "SmithyError": "rex-exception",
+    "StaticTokenResolver": "rex-class",
     "mismatches": "rex-function",
     "read_streaming_blob": "rex-function",
     "take_over": "rex-function"

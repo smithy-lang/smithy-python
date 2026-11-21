@@ -1,8 +1,9 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from dataclasses import dataclass
 from io import BytesIO
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 
@@ -16,7 +17,10 @@ from restjson.models import (
     SimpleScalarPropertiesInput,
     StreamingTraitsInput,
 )
+from smithy_aws_core.config.types import FieldSpec
 from smithy_core.utils import read_streaming_blob
+from smithy_http.identity import TokenIdentity
+from smithy_http.identity.token import StaticTokenResolver
 from smithy_http.urllib3 import Urllib3HTTPClient
 from smithy_test import HTTPMockError, HTTPMockMismatchError, mock
 
@@ -178,6 +182,35 @@ def test_replaces_credentials_from_the_environment(
     _call(client)
 
 
+def test_replaces_the_bearer_token() -> None:
+    @dataclass(kw_only=True, repr=False, init=False)
+    class BearerConfig(RestJsonProtocolConfig):
+        # The fields codegen adds to the config of a service with bearer auth.
+        token: str | None = None
+        token_identity_resolver: Any = None
+
+        _FIELDS: ClassVar[dict[str, FieldSpec]] = {
+            "token": FieldSpec(default=None),
+            "token_identity_resolver": FieldSpec(default=None),
+            **RestJsonProtocolConfig._FIELDS,
+        }
+
+    overrides: Any = {"token": "real"}
+    config = BearerConfig.resolve(region="us-west-2", **overrides)
+    client = RestJsonProtocolClient(config)
+    mock(client).expect_request()
+
+    _call(client)
+
+    assert config.token == "real"
+    mocked: Any = client._config  # pyright: ignore[reportPrivateUsage]
+    assert mocked.token == "HTTP_MOCK"
+    assert isinstance(mocked.token_identity_resolver, StaticTokenResolver)
+    assert (
+        mocked.token_identity_resolver.get_identity(properties={}).token == "HTTP_MOCK"
+    )
+
+
 def test_takes_over_a_client_after_setup() -> None:
     client = _client()
     client._ensure_setup()  # pyright: ignore[reportPrivateUsage]
@@ -252,6 +285,53 @@ def test_rejects_a_client_with_changed_internals() -> None:
 
     with pytest.raises(TypeError, match="_build_call takes"):
         mock(Changed(RestJsonProtocolConfig.resolve(region="us-west-2")))
+
+
+def test_leaves_the_token_of_a_client_without_aws_auth_alone() -> None:
+    # Only AWS clients resolve a token through a default chain; a generic
+    # bearer client's token is its own business.
+    resolver = StaticTokenResolver(identity=TokenIdentity(token="real"))
+    client = _client()
+    client._config = SimpleNamespace(  # pyright: ignore[reportPrivateUsage, reportAttributeAccessIssue]
+        transport=None, token="real", token_identity_resolver=resolver
+    )
+
+    mock(client)
+
+    # The mock copies the config, so compare what the resolver yields.
+    mocked: Any = client._config  # pyright: ignore[reportPrivateUsage]
+    assert mocked.token == "real"
+    assert mocked.token_identity_resolver.get_identity(properties={}).token == "real"
+
+
+def test_adds_no_token_to_a_client_without_bearer_auth() -> None:
+    client = _client()
+    mock(client).expect_request()
+
+    _call(client)
+
+    assert not hasattr(client._config, "token")  # pyright: ignore[reportPrivateUsage]
+
+
+def test_rejects_a_config_with_partial_bearer_fields() -> None:
+    client = _client()
+    client._config = SimpleNamespace(  # pyright: ignore[reportPrivateUsage, reportAttributeAccessIssue]
+        transport=None, token_identity_resolver=None
+    )
+
+    with pytest.raises(TypeError, match="bearer auth fields"):
+        mock(client)
+
+
+def test_accepts_a_config_whose_token_is_not_bearer_auth() -> None:
+    client = _client()
+    client._config = SimpleNamespace(  # pyright: ignore[reportPrivateUsage, reportAttributeAccessIssue]
+        transport=None, token="a context param"
+    )
+
+    mock(client)
+
+    assert client._config.token == "a context param"  # pyright: ignore[reportPrivateUsage]
 
 
 def test_rejects_a_config_with_partial_aws_credentials() -> None:
