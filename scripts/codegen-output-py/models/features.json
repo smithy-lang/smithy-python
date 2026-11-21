@@ -76,6 +76,13 @@
                             "documentation": "The region.",
                             "type": "string"
                         },
+                        "UseFIPS": {
+                            "builtIn": "AWS::UseFIPS",
+                            "required": true,
+                            "default": false,
+                            "documentation": "Whether to use a FIPS endpoint.",
+                            "type": "boolean"
+                        },
                         "Stage": {
                             "required": false,
                             "documentation": "The deployment stage.",
@@ -108,14 +115,6 @@
                             ]
                         },
                         {
-                            "fn": "isSet",
-                            "argv": [
-                                {
-                                    "ref": "Region"
-                                }
-                            ]
-                        },
-                        {
                             "fn": "booleanEquals",
                             "argv": [
                                 {
@@ -144,6 +143,32 @@
                             "fn": "isSet",
                             "argv": [
                                 {
+                                    "ref": "Region"
+                                }
+                            ]
+                        },
+                        {
+                            "fn": "aws.partition",
+                            "argv": [
+                                {
+                                    "ref": "Region"
+                                }
+                            ],
+                            "assign": "PartitionResult"
+                        },
+                        {
+                            "fn": "booleanEquals",
+                            "argv": [
+                                {
+                                    "ref": "UseFIPS"
+                                },
+                                true
+                            ]
+                        },
+                        {
+                            "fn": "isSet",
+                            "argv": [
+                                {
                                     "ref": "Name"
                                 }
                             ]
@@ -165,15 +190,6 @@
                                 "url": {
                                     "ref": "Endpoint"
                                 },
-                                "properties": {},
-                                "headers": {}
-                            },
-                            "type": "endpoint"
-                        },
-                        {
-                            "conditions": [],
-                            "endpoint": {
-                                "url": "https://{Region}.example.com",
                                 "properties": {},
                                 "headers": {}
                             },
@@ -214,13 +230,39 @@
                         },
                         {
                             "conditions": [],
-                            "error": "No stage",
+                            "endpoint": {
+                                "url": "https://fieldnotes-fips.{Region}.{PartitionResult#dnsSuffix}",
+                                "properties": {},
+                                "headers": {}
+                            },
+                            "type": "endpoint"
+                        },
+                        {
+                            "conditions": [],
+                            "endpoint": {
+                                "url": "https://fieldnotes.{Region}.{PartitionResult#dnsSuffix}",
+                                "properties": {
+                                    "authSchemes": [
+                                        {
+                                            "name": "sigv4",
+                                            "signingName": "fieldnotes",
+                                            "signingRegion": "{Region}"
+                                        }
+                                    ]
+                                },
+                                "headers": {}
+                            },
+                            "type": "endpoint"
+                        },
+                        {
+                            "conditions": [],
+                            "error": "No region or stage",
                             "type": "error"
                         }
                     ],
                     "root": 2,
-                    "nodeCount": 8,
-                    "nodes": "/////wAAAAH/////AAAAAAX14QEAAAADAAAAAQX14QIAAAAEAAAAAgX14QMAAAAFAAAAAwAAAAYF9eEGAAAABAAAAAcF9eEGAAAABQAAAAgF9eEFAAAABgX14QQF9eEF"
+                    "nodeCount": 10,
+                    "nodes": "/////wAAAAH/////AAAAAAX14QEAAAADAAAAAQX14QIAAAAEAAAAAgAAAAUAAAAGAAAAAwAAAAkAAAAGAAAABAAAAAcF9eEHAAAABQAAAAgF9eEHAAAABgX14QUF9eEGAAAABwAAAAoF9eEEAAAACAX14QMF9eEE"
                 },
                 "smithy.rules#endpointRuleSet": {
                     "version": "1.0",
@@ -234,6 +276,13 @@
                             "type": "string",
                             "builtIn": "AWS::Region",
                             "documentation": "The region."
+                        },
+                        "UseFIPS": {
+                            "type": "boolean",
+                            "builtIn": "AWS::UseFIPS",
+                            "required": true,
+                            "default": false,
+                            "documentation": "Whether to use a FIPS endpoint."
                         },
                         "Stage": {
                             "type": "string",
@@ -270,22 +319,6 @@
                                 "url": {
                                     "ref": "Endpoint"
                                 }
-                            },
-                            "type": "endpoint"
-                        },
-                        {
-                            "conditions": [
-                                {
-                                    "fn": "isSet",
-                                    "argv": [
-                                        {
-                                            "ref": "Region"
-                                        }
-                                    ]
-                                }
-                            ],
-                            "endpoint": {
-                                "url": "https://{Region}.example.com"
                             },
                             "type": "endpoint"
                         },
@@ -380,8 +413,65 @@
                             "type": "endpoint"
                         },
                         {
+                            "conditions": [
+                                {
+                                    "fn": "isSet",
+                                    "argv": [
+                                        {
+                                            "ref": "Region"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "fn": "aws.partition",
+                                    "argv": [
+                                        {
+                                            "ref": "Region"
+                                        }
+                                    ],
+                                    "assign": "PartitionResult"
+                                }
+                            ],
+                            "rules": [
+                                {
+                                    "conditions": [
+                                        {
+                                            "fn": "booleanEquals",
+                                            "argv": [
+                                                {
+                                                    "ref": "UseFIPS"
+                                                },
+                                                true
+                                            ]
+                                        }
+                                    ],
+                                    "endpoint": {
+                                        "url": "https://fieldnotes-fips.{Region}.{PartitionResult#dnsSuffix}"
+                                    },
+                                    "type": "endpoint"
+                                },
+                                {
+                                    "conditions": [],
+                                    "endpoint": {
+                                        "url": "https://fieldnotes.{Region}.{PartitionResult#dnsSuffix}",
+                                        "properties": {
+                                            "authSchemes": [
+                                                {
+                                                    "name": "sigv4",
+                                                    "signingName": "fieldnotes",
+                                                    "signingRegion": "{Region}"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "endpoint"
+                                }
+                            ],
+                            "type": "tree"
+                        },
+                        {
                             "conditions": [],
-                            "error": "No stage",
+                            "error": "No region or stage",
                             "type": "error"
                         }
                     ]
@@ -524,12 +614,21 @@
                             },
                             "expect": {
                                 "endpoint": {
-                                    "url": "https://us-west-2.example.com"
+                                    "url": "https://fieldnotes.us-west-2.amazonaws.com",
+                                    "properties": {
+                                        "authSchemes": [
+                                            {
+                                                "name": "sigv4",
+                                                "signingName": "fieldnotes",
+                                                "signingRegion": "us-west-2"
+                                            }
+                                        ]
+                                    }
                                 }
                             },
                             "operationInputs": [
                                 {
-                                    "operationName": "Ping",
+                                    "operationName": "PutNote",
                                     "builtInParams": {
                                         "AWS::Region": "us-west-2"
                                     }
@@ -537,24 +636,59 @@
                             ]
                         },
                         {
-                            "documentation": "Missing stage",
-                            "params": {},
+                            "documentation": "Partition from the region",
+                            "params": {
+                                "Region": "cn-north-1"
+                            },
                             "expect": {
-                                "error": "No stage"
+                                "endpoint": {
+                                    "url": "https://fieldnotes.cn-north-1.amazonaws.com.cn",
+                                    "properties": {
+                                        "authSchemes": [
+                                            {
+                                                "name": "sigv4",
+                                                "signingName": "fieldnotes",
+                                                "signingRegion": "cn-north-1"
+                                            }
+                                        ]
+                                    }
+                                }
                             },
                             "operationInputs": [
                                 {
-                                    "operationName": "Ping"
+                                    "operationName": "Ping",
+                                    "builtInParams": {
+                                        "AWS::Region": "cn-north-1"
+                                    }
                                 }
                             ]
                         },
                         {
-                            "documentation": "Missing stage",
+                            "documentation": "FIPS from the built-in",
                             "params": {
-                                "Kind": "put"
+                                "Region": "us-east-1",
+                                "UseFIPS": true
                             },
                             "expect": {
-                                "error": "No stage"
+                                "endpoint": {
+                                    "url": "https://fieldnotes-fips.us-east-1.amazonaws.com"
+                                }
+                            },
+                            "operationInputs": [
+                                {
+                                    "operationName": "Ping",
+                                    "builtInParams": {
+                                        "AWS::Region": "us-east-1",
+                                        "AWS::UseFIPS": true
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "documentation": "No region or stage",
+                            "params": {},
+                            "expect": {
+                                "error": "No region or stage"
                             }
                         }
                     ]

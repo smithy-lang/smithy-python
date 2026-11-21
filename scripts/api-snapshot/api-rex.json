@@ -1330,6 +1330,7 @@
   },
   "smithy_python.aws": {
     "AwsConfigIntegration": "rex-class",
+    "AwsEndpointsIntegration": "rex-class",
     "AwsSigV4Integration": "rex-class",
     "SMITHY_AWS_CORE": "rex-Dependency"
   },
@@ -1345,6 +1346,7 @@
   },
   "smithy_python.integrations": {
     "Part": "rex-type_alias",
+    "RulesExtension": "rex-class",
     "TypeReference": "rex-class"
   },
   "smithy_python.model": {

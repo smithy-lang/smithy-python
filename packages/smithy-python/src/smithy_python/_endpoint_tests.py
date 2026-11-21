@@ -14,7 +14,7 @@ generated as skipped, with the reason. Cases keep the trait's ``params`` and
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, Final
 
 from . import _endpoints
@@ -36,7 +36,8 @@ def write_endpoint_tests(
     client: TypeReference,
     config: TypeReference,
     new_config: tuple[str | TypeReference, ...] | None = None,
-    test_config: Mapping[str, str] | None = None,
+    test_config: Mapping[str, tuple[Part, ...]] | None = None,
+    builtin_entry: BuiltinEntry | None = None,
 ) -> None:
     """Register ``tests/test_endpoints.py`` when the service has endpoint tests.
 
@@ -44,8 +45,10 @@ def write_endpoint_tests(
     :param config: The async config class.
     :param new_config: The callable that creates an async config from keyword
         fields. Defaults to the config class.
-    :param test_config: Config fields every test sets, as Python literals by
-        field name. A case's own fields replace them.
+    :param test_config: Config fields every test sets, as expressions by field
+        name. A case's own fields replace them.
+    :param builtin_entry: The config field and expression that set a built-in to
+        a case's value, or None when no config field sets it.
     :raises CodegenError: If a case names an operation the service doesn't
         contain, expects neither an endpoint nor an error, or gives an operation
         an input member it doesn't have.
@@ -72,7 +75,15 @@ def write_endpoint_tests(
         config,
         new_config or (config,),
         test_config or {},
+        builtin_entry or (lambda builtin, value: None),
     ).write(service, tuple(_object(case, "test case") for case in cases))
+
+
+type Part = str | TypeReference
+"""A piece of a generated line."""
+
+type BuiltinEntry = Callable[[str, _model.Node], tuple[str, tuple[Part, ...]] | None]
+"""Finds the config field and expression that set a built-in in a test."""
 
 
 def literal(node: _model.Node) -> str:
@@ -146,11 +157,16 @@ class _Writer:
         client: TypeReference,
         config: TypeReference,
         new_config: tuple[str | TypeReference, ...],
-        test_config: Mapping[str, str],
+        test_config: Mapping[str, tuple[Part, ...]],
+        builtin_entry: BuiltinEntry,
     ) -> None:
         self._writer = writer
         self._new_config = new_config
         self._test_config = test_config
+        self._builtin_entry = builtin_entry
+        self._extensions = tuple(
+            extension.reference for extension in endpoints.extensions
+        )
         self._plan = plan
         self._client = client
         self._config = config
@@ -185,7 +201,7 @@ class _Writer:
         w.line("_TEST_CONFIG: dict[str, ", any_, "] = {")
         with w.indent():
             for name, value in self._test_config.items():
-                w.line(_endpoints.literal(name), ": ", value, ",")
+                w.line(_endpoints.literal(name), ": ", *value, ",")
         w.line("}")
         w.line(
             _endpoints.literal(
@@ -202,6 +218,16 @@ class _Writer:
                 "(**(_TEST_CONFIG | fields), retry_strategy=",
                 _RETRY,
                 "(max_attempts=1))",
+            )
+        if self._extensions:
+            w.line()
+            w.line()
+            w.line("_RULES_EXTENSIONS = [", *_join(self._extensions, ", "), "]")
+            w.line(
+                _endpoints.literal(
+                    "The extensions of the default resolver, which build the auth"
+                    " schemes a case expects."
+                )
             )
         w.line()
         w.line()
@@ -288,7 +314,12 @@ class _Writer:
             w.line("params: dict[str, ", _ANY, "], expect: dict[str, ", _ANY, "]")
         w.line(") -> None:")
         with w.indent():
-            w.line(_CHECK_RULES, "(await _endpoint_resolver(), params, expect)")
+            w.line(
+                _CHECK_RULES,
+                "(await _endpoint_resolver(), params, expect",
+                self._extensions_argument(),
+                ")",
+            )
 
     def _write_client_tests(self, cases: tuple[Mapping[str, _model.Node], ...]) -> None:
         inputs = [
@@ -337,7 +368,8 @@ class _Writer:
             w.line("await ", _CHECK_CLIENT, "(")
             with w.indent():
                 w.line(
-                    "lambda capture: _client(config, capture), operation, input, expect"
+                    "lambda capture: _client(config, capture), operation, input, expect",
+                    self._extensions_argument(),
                 )
             w.line(")")
 
@@ -358,7 +390,7 @@ class _Writer:
         )
         w.line(_PYTEST_PARAM, "(")
         with w.indent():
-            w.line("{", ", ".join(entries), "},")
+            w.line("{", *_join(entries, ", "), "},")
             w.line(self._client, ".", operation.method_name, ",")
             w.line("{", ", ".join(arguments), "},")
             w.line(_expectation(case), ",")
@@ -371,10 +403,13 @@ class _Writer:
     # The config entries an operation input's built-in and client parameters set. A
     # parameter the client has no config field for adds the reason the case is
     # skipped.
+    def _extensions_argument(self) -> str:
+        return ", extensions=_RULES_EXTENSIONS" if self._extensions else ""
+
     def _config_entries(
         self, operation_input: Mapping[str, _model.Node], skips: list[str]
-    ) -> list[str]:
-        entries: list[str] = []
+    ) -> list[tuple[Part, ...]]:
+        entries: list[tuple[Part, ...]] = []
         builtins = _object(operation_input.get("builtInParams", {}), "builtInParams")
         for builtin, value in builtins.items():
             parameter = self._builtins.get(builtin)
@@ -385,7 +420,9 @@ class _Writer:
             if field is None and builtin == "SDK::Endpoint":
                 field = "endpoint_uri"
             if field is not None:
-                entries.append(f"{_endpoints.literal(field)}: {literal(value)}")
+                entries.append((f"{_endpoints.literal(field)}: {literal(value)}",))
+            elif (entry := self._builtin_entry(builtin, value)) is not None:
+                entries.append((_endpoints.literal(entry[0]), ": ", *entry[1]))
             elif parameter is not None and parameter.get("default") != value:
                 skips.append(f"No config field sets the built-in {builtin}")
         clients = _object(operation_input.get("clientParams", {}), "clientParams")
@@ -394,7 +431,7 @@ class _Writer:
             if field is None:
                 skips.append(f"{name} is not a client context parameter")
             else:
-                entries.append(f"{_endpoints.literal(field)}: {literal(value)}")
+                entries.append((f"{_endpoints.literal(field)}: {literal(value)}",))
         return entries
 
     def _arguments(
@@ -470,6 +507,20 @@ class _Writer:
         raise _exceptions.CodegenError(
             f"Endpoint test operation {name} is not in service {service.id}"
         )
+
+
+def _join(
+    items: tuple[TypeReference, ...] | list[tuple[Part, ...]], separator: str
+) -> tuple[Part, ...]:
+    parts: list[Part] = []
+    for index, item in enumerate(items):
+        if index:
+            parts.append(separator)
+        if isinstance(item, tuple):
+            parts.extend(item)
+        else:
+            parts.append(item)
+    return tuple(parts)
 
 
 # The case's expect object as the trait models it.

@@ -4,6 +4,9 @@ from typing import Any, Concatenate
 from features_client.aio.client import AsyncFieldNotesClient
 from features_client.aio.config import AsyncFieldNotesConfig
 from pytest import mark, param
+from smithy_aws_core.aio.identity.static import AsyncStaticCredentialsResolver
+from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
+from smithy_aws_core.identity.components import AWSCredentialsIdentity
 from smithy_core.aio.utils import close_async
 from smithy_core.endpoints import BddEndpointResolver
 from smithy_core.interceptors import Interceptor
@@ -18,8 +21,14 @@ pytestmark = mark.asyncio
 
 _TEST_CONFIG: dict[str, Any] = {
     "region": "us-east-1",
-    "aws_access_key_id": "AKIDTEST",
-    "aws_secret_access_key": "secret",
+    "endpoint_uri": None,
+    "aws_credentials_identity_resolver": AsyncStaticCredentialsResolver(
+        AWSCredentialsIdentity(
+            access_key_id="test-access-key-id",
+            secret_access_key="test-secret-access-key",
+        )
+    ),
+    "use_fips_endpoint": None,
 }
 "Config fields every test sets. A case's own fields replace them."
 
@@ -28,6 +37,10 @@ async def _config(**fields: Any) -> AsyncFieldNotesConfig:
     return await AsyncFieldNotesConfig.resolve(
         **(_TEST_CONFIG | fields), retry_strategy=SimpleRetryStrategy(max_attempts=1)
     )
+
+
+_RULES_EXTENSIONS = [AWS_RULES_EXTENSION]
+"The extensions of the default resolver, which build the auth schemes a case expects."
 
 
 # Every rules test shares one resolver, so its caches see changing parameters.
@@ -99,25 +112,58 @@ RULES_CASES = [
     ),
     param(
         {"Region": "us-west-2"},
-        {"endpoint": {"url": "https://us-west-2.example.com"}},
+        {
+            "endpoint": {
+                "url": "https://fieldnotes.us-west-2.amazonaws.com",
+                "properties": {
+                    "authSchemes": [
+                        {
+                            "name": "sigv4",
+                            "signingName": "fieldnotes",
+                            "signingRegion": "us-west-2",
+                        }
+                    ]
+                },
+            }
+        },
         id="Region from the built-in",
     ),
     param(
-        {},
-        {"error": "No stage"},
-        id="Missing stage",
+        {"Region": "cn-north-1"},
+        {
+            "endpoint": {
+                "url": "https://fieldnotes.cn-north-1.amazonaws.com.cn",
+                "properties": {
+                    "authSchemes": [
+                        {
+                            "name": "sigv4",
+                            "signingName": "fieldnotes",
+                            "signingRegion": "cn-north-1",
+                        }
+                    ]
+                },
+            }
+        },
+        id="Partition from the region",
     ),
     param(
-        {"Kind": "put"},
-        {"error": "No stage"},
-        id="Missing stage (2)",
+        {"Region": "us-east-1", "UseFIPS": True},
+        {"endpoint": {"url": "https://fieldnotes-fips.us-east-1.amazonaws.com"}},
+        id="FIPS from the built-in",
+    ),
+    param(
+        {},
+        {"error": "No region or stage"},
+        id="No region or stage",
     ),
 ]
 
 
 @mark.parametrize(("params", "expect"), RULES_CASES)
 async def test_endpoint_rules(params: dict[str, Any], expect: dict[str, Any]) -> None:
-    check_rules_case(await _endpoint_resolver(), params, expect)
+    check_rules_case(
+        await _endpoint_resolver(), params, expect, extensions=_RULES_EXTENSIONS
+    )
 
 
 CLIENT_CASES = [
@@ -172,19 +218,51 @@ CLIENT_CASES = [
         id="Custom endpoint",
     ),
     param(
+        {"region": "us-west-2"},
+        AsyncFieldNotesClient.put_note,
         {},
-        AsyncFieldNotesClient.ping,
-        {},
-        {"endpoint": {"url": "https://us-west-2.example.com"}},
+        {
+            "endpoint": {
+                "url": "https://fieldnotes.us-west-2.amazonaws.com",
+                "properties": {
+                    "authSchemes": [
+                        {
+                            "name": "sigv4",
+                            "signingName": "fieldnotes",
+                            "signingRegion": "us-west-2",
+                        }
+                    ]
+                },
+            }
+        },
         id="Region from the built-in",
-        marks=mark.skip(reason="No config field sets the built-in AWS::Region"),
     ),
     param(
-        {},
+        {"region": "cn-north-1"},
         AsyncFieldNotesClient.ping,
         {},
-        {"error": "No stage"},
-        id="Missing stage",
+        {
+            "endpoint": {
+                "url": "https://fieldnotes.cn-north-1.amazonaws.com.cn",
+                "properties": {
+                    "authSchemes": [
+                        {
+                            "name": "sigv4",
+                            "signingName": "fieldnotes",
+                            "signingRegion": "cn-north-1",
+                        }
+                    ]
+                },
+            }
+        },
+        id="Partition from the region",
+    ),
+    param(
+        {"region": "us-east-1", "use_fips_endpoint": True},
+        AsyncFieldNotesClient.ping,
+        {},
+        {"endpoint": {"url": "https://fieldnotes-fips.us-east-1.amazonaws.com"}},
+        id="FIPS from the built-in",
     ),
 ]
 
@@ -197,5 +275,9 @@ async def test_endpoint_client(
     expect: dict[str, Any],
 ) -> None:
     await check_client_case_async(
-        lambda capture: _client(config, capture), operation, input, expect
+        lambda capture: _client(config, capture),
+        operation,
+        input,
+        expect,
+        extensions=_RULES_EXTENSIONS,
     )

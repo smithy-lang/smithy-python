@@ -220,8 +220,10 @@ BDD compiled from the default ruleset of smithy-typescript, which reads
 ruleset into a BDD is Smithy's `CompileBdd` transform.
 
 The generated client calls rules functions from the `smithy_core.endpoints`
-standard library only. Rules that call any other function fail generation with
-a diagnostic naming the functions.
+standard library and from the rules extensions integrations add. The default
+resolver is `BddEndpointResolver(BDD, extensions=[...])` when there are
+extensions. Rules that call any other function fail generation with a diagnostic
+naming the functions.
 
 Each `smithy.rules#clientContextParams` entry becomes a config field typed `bool
 | None` or `str | None` and defaulting to None. Its name is the snake-case form
@@ -305,7 +307,9 @@ defaults to no change:
 | `write_config` | The config class, written in place of the core one |
 | `new_config` | The callable that creates a default config |
 | `write_client_methods` | Extra client methods, such as `_post_setup` |
+| `rules_extensions` | Rules extensions the default endpoint resolver uses |
 | `endpoint_test_config` | Config fields every generated endpoint test sets |
+| `endpoint_test_builtin` | The config field that sets a built-in in an endpoint test |
 | `client_plugins` | Plugins every client applies, before the core ones |
 | `write_files` | Extra modules |
 
@@ -352,6 +356,26 @@ not take an `AwsConfig` field name.
   because SigV4 needs the AWS config.
 
 S3 signing properties come later with S3 support.
+
+`AwsEndpointsIntegration` matches an AWS service, and any service whose rules
+call `aws.*` functions or read `AWS::*` built-ins. It follows the Java
+generator's `AwsEndpointRulesIntegration`:
+
+* The default endpoint resolver uses `AWS_RULES_EXTENSION`, which adds
+  `aws.partition`, `aws.parseArn`, and `aws.isVirtualHostableS3Bucket`, binds
+  the AWS built-ins to config fields, and builds endpoint auth schemes.
+* An AWS config adds a field for each built-in its rules declare:
+  `use_fips_endpoint` for `AWS::UseFIPS`, `use_dualstack_endpoint` for
+  `AWS::UseDualStack`, and `account_id_endpoint_mode` for
+  `AWS::Auth::AccountIdEndpointMode`. Each resolves from the environment and
+  profile. `AWS::Region` reads the base `region` field.
+* Generated endpoint tests set those fields, `region`, and an account ID in
+  the test credentials from a case's built-ins. Every test also sets a region,
+  no `endpoint_uri`, static test credentials, and the built-in fields'
+  defaults, so nothing is read from the environment.
+
+S3's bucket and S3 Control's account ID host prefix customizations come with
+S3 support.
 
 ## Clients and Configuration
 
@@ -416,8 +440,8 @@ standard library. Models that require other auth schemes or event or data
 streams fail generation with a diagnostic naming the operation and feature.
 
 Authentication and endpoint extension points are provider-neutral. AWS config
-resolution, the AWS user agent, and SigV4 are AWS integrations. AWS endpoint
-functions and AWS protocols are not supported yet.
+resolution, the AWS user agent, SigV4, and AWS endpoint functions are AWS
+integrations. AWS protocols are not supported yet.
 
 ## Validation
 
@@ -436,7 +460,7 @@ model assembled by Smithy with its ruleset compiled by `CompileBdd`:
 
 | Feature | Fixture |
 | --- | --- |
-| Endpoint rules | Client context fields, `SDK::Endpoint`, an input context parameter, and static context parameters |
+| Endpoint rules | Client context fields, `SDK::Endpoint`, `AWS::Region`, `AWS::UseFIPS`, `aws.partition`, an endpoint auth scheme, an input context parameter, and static context parameters |
 | Endpoint tests | Rules and client cases, run by the snapshot tests |
 | SigV4 | The service's default auth |
 | API key auth | Operations with `@auth([httpApiKeyAuth])`, one also `@optionalAuth` |

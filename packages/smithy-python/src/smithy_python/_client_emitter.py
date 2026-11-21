@@ -73,7 +73,15 @@ def plan_endpoints(
     )
     for integration in integrations:
         reserved.update(integration.config_fields(service))
-    return _endpoints.plan_endpoints(service, reserved=reserved)
+    return _endpoints.plan_endpoints(
+        service,
+        reserved=reserved,
+        extensions=[
+            extension
+            for integration in integrations
+            for extension in integration.rules_extensions(service)
+        ],
+    )
 
 
 def write_client(
@@ -151,6 +159,15 @@ def write_client(
             for integration in integrations
             for name, value in integration.endpoint_test_config(service).items()
         },
+        lambda builtin, value: next(
+            (
+                entry
+                for integration in integrations
+                if (entry := integration.endpoint_test_builtin(service, builtin, value))
+                is not None
+            ),
+            None,
+        ),
     )
     aio_init = context.files.python_module(
         f"src/{directory}/aio/__init__.py", f"{import_name}.aio"
@@ -197,7 +214,6 @@ _PROTOCOL_CONSTRUCTOR: Final = _core("ProtocolConstructor", "interfaces")
 _URI: Final = _core("URI", "interfaces")
 _AUTH_SCHEME_RESOLVER: Final = _core("AuthSchemeResolver", "interfaces.auth")
 _DEFAULT_AUTH_RESOLVER: Final = _core("DefaultAuthResolver", "auth")
-_BDD_ENDPOINT_RESOLVER: Final = _core("BddEndpointResolver", "endpoints")
 _RETRY_STRATEGY: Final = _core("RetryStrategy", "interfaces.retries")
 _RETRY_STRATEGY_OPTIONS: Final = _core("RetryStrategyOptions", "retries")
 _SHAPE_ID: Final = _core("ShapeID", "shapes")
@@ -494,10 +510,7 @@ def _write_core_config(writer: PythonWriter, config: ConfigPlan) -> None:
                 writer.line("}")
             writer.line(
                 "self.endpoint_resolver = endpoint_resolver or ",
-                _BDD_ENDPOINT_RESOLVER,
-                "(",
-                bdd,
-                ")",
+                *endpoints.default_resolver(bdd),
             )
             writer.line("self.endpoint_uri = endpoint_uri")
             writer.line("self.interceptors = interceptors or []")
