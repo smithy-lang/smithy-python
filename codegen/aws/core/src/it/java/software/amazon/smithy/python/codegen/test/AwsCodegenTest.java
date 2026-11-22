@@ -69,9 +69,63 @@ public class AwsCodegenTest {
         assertFalse(client.contains("def _ensure_setup("));
         assertFalse(client.contains("def _prepare_call["));
 
+        // Bearer auth: the config gets the token fields and the AWS setup hook defaults
+        // the resolver: static when a ``token`` is configured, the default token chain
+        // otherwise. No SigV4 on this service, so no credentials chain is wired.
+        assertTrue(config.contains("token: str | None = None"));
+        // The formatter wraps the long annotation, so match its parts.
+        assertInOrder(config,
+                "token_identity_resolver: (",
+                "AsyncIdentityResolver[TokenIdentity, TokenIdentityProperties] | None",
+                ") = None");
+        assertTrue(config.contains("\"token_identity_resolver\": FieldSpec(default=None)"));
+        assertTrue(config.contains("ShapeID(\"smithy.api#httpBearerAuth\"): AsyncBearerAuthScheme()"));
+        assertInOrder(
+                client,
+                "async def _post_setup(self, config: AsyncRESTJSONConfig) -> None:",
+                "if config.token_identity_resolver is None:",
+                "if config.token is not None:",
+                "config.token_identity_resolver = AsyncStaticTokenResolver()",
+                "else:",
+                "config_file, profile_name = await self._profile_overrides(config)",
+                "config.token_identity_resolver = await AsyncIdentityChain.create(",
+                "TokenIdentity,",
+                "config_file=config_file,",
+                "profile_name=profile_name,",
+                "region_override=config.region,",
+                "http_client=cast(AsyncHTTPClient | None, config.transport),",
+                "async def _profile_overrides(",
+                "config_file = await config_context.parsed_profiles()",
+                "if config_context.profile_source is ConfigSource.OVERRIDE:",
+                "return config_file, profile_name");
+        assertTrue(client.contains("from smithy_http.aio.identity.token import AsyncStaticTokenResolver"));
+        assertTrue(client.contains("from smithy_aws_core.aio.identity.chain import AsyncIdentityChain"));
+        assertTrue(client.contains("from smithy_http.identity import TokenIdentity"));
+        assertFalse(client.contains("aws_credentials_identity_resolver"));
+
+        var syncClient = Files.readString(tempDir.resolve("src/restjson/client.py"));
+        assertInOrder(
+                syncClient,
+                "def _post_setup(self, config: RESTJSONConfig) -> None:",
+                "if config.token_identity_resolver is None:",
+                "if config.token is not None:",
+                "config.token_identity_resolver = StaticTokenResolver()",
+                "else:",
+                "config_file, profile_name = self._profile_overrides(config)",
+                "config.token_identity_resolver = IdentityChain.create(",
+                "TokenIdentity,",
+                "http_client=cast(HTTPClient | None, config.transport),",
+                "def _profile_overrides(",
+                "config_file = config_context.parsed_profiles()");
+        assertTrue(syncClient.contains("from smithy_http.identity.token import StaticTokenResolver"));
+        assertTrue(syncClient.contains("from smithy_aws_core.identity.chain.resolver import IdentityChain"));
+        assertFalse(syncClient.contains("async def _post_setup"));
+        assertFalse(syncClient.contains("async def _profile_overrides"));
+
         var schemas = Files.readString(tempDir.resolve("src/restjson/_private/schemas.py"));
         assertTrue(schemas.contains("aws.protocols#restJson1"));
         assertTrue(schemas.contains("smithy.api#httpApiKeyAuth"));
+        assertTrue(schemas.contains("smithy.api#httpBearerAuth"));
         assertTrue(schemas.contains("\"name\": \"weather-auth\""));
         assertTrue(schemas.contains("aws.api#service"));
         assertTrue(schemas.contains("\"sdkId\": \"REST JSON\""));
