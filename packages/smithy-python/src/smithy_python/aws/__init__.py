@@ -8,7 +8,7 @@ send the AWS user agent. A service with the ``aws.auth#sigv4`` trait also gets S
 auth and the default AWS credentials chain. AWS services, and services whose rules
 use AWS functions or built-ins, resolve endpoints with the AWS rules extension.
 Clients may also use the AWS protocols ``aws.protocols#restJson1``,
-``awsJson1_0`` and ``awsJson1_1``.
+``awsJson1_0``, ``awsJson1_1`` and ``restXml``.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from typing import Final
 from ._config import AwsConfigIntegration
 from ._dependencies import SMITHY_AWS_CORE
 from ._endpoints import AwsEndpointsIntegration
-from ._protocols import AWS_JSON_10, AWS_JSON_11, AWS_PROTOCOLS, REST_JSON
+from ._protocols import AWS_JSON_10, AWS_JSON_11, AWS_PROTOCOLS, REST_JSON, REST_XML
 from ._sigv4 import AwsSigV4Integration
 
 __all__ = [
@@ -27,6 +27,7 @@ __all__ = [
     "AWS_JSON_11",
     "AWS_PROTOCOLS",
     "REST_JSON",
+    "REST_XML",
     "SMITHY_AWS_CORE",
     "AwsConfigIntegration",
     "AwsEndpointsIntegration",

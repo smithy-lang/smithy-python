@@ -57,12 +57,21 @@ AWS_JSON_11: Final = ProtocolContribution(
 )
 """The ``aws.protocols#awsJson1_1`` contribution."""
 
+REST_XML: Final = ProtocolContribution(
+    protocol_id=_model.ShapeId("aws.protocols", "restXml"),
+    protocol=_aws("RestXmlClientProtocol", "protocols", "xml"),
+    async_protocol=_aws("AsyncRestXmlClientProtocol", "aio.protocols", "xml"),
+    transport=RPCV2_CBOR.transport,
+    async_transport=RPCV2_CBOR.async_transport,
+)
+"""The ``aws.protocols#restXml`` contribution."""
+
 AWS_PROTOCOLS: Final[Mapping[_model.ShapeId, ProtocolContribution]] = MappingProxyType(
     {
         **DEFAULT_PROTOCOLS,
         **{
             contribution.protocol_id: contribution
-            for contribution in (REST_JSON, AWS_JSON_10, AWS_JSON_11)
+            for contribution in (REST_JSON, AWS_JSON_10, AWS_JSON_11, REST_XML)
         },
     }
 )

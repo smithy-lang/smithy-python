@@ -2,774 +2,779 @@
   "smithy.protocoltests.rpcv2Json#BigDecimalOperation": {
     "requests": [
       {
-        "body": "{\n    \"value\": \"1.5\"\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Serializes a simple big decimal value as a JSON string to preserve precision.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestBigDecimalSimpleValue",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Serializes a simple big decimal value as a JSON string to preserve precision.",
+        "tags": [
+          "arbitrary-precision"
+        ],
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "requireHeaders": [
+          "Content-Length"
+        ],
         "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/BigDecimalOperation",
+        "body": "{\n    \"value\": \"1.5\"\n}",
         "params": {
           "value": 1.5
-        },
+        }
+      },
+      {
+        "id": "RpcV2JsonRequestBigDecimalHighPrecision",
         "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
+        "documentation": "Serializes a big decimal value that exceeds double precision in the decimal\nportion. Implementations use JSON strings to preserve this precision.",
         "tags": [
           "arbitrary-precision"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/BigDecimalOperation"
-      },
-      {
-        "body": "{\n    \"value\": \"0.100000000000000000000001\"\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Serializes a big decimal value that exceeds double precision in the decimal\nportion. Implementations use JSON strings to preserve this precision.",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestBigDecimalHighPrecision",
+        "requireHeaders": [
+          "Content-Length"
+        ],
         "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/BigDecimalOperation",
+        "body": "{\n    \"value\": \"0.100000000000000000000001\"\n}",
         "params": {
           "value": 0.100000000000000000000001
-        },
+        }
+      },
+      {
+        "id": "RpcV2JsonRequestBigDecimalNegativeHighPrecision",
         "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
+        "documentation": "Serializes a negative big decimal value that exceeds double precision in\nthe decimal portion. Implementations use JSON strings to preserve this\nprecision.",
         "tags": [
           "arbitrary-precision"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/BigDecimalOperation"
-      },
-      {
-        "body": "{\n    \"value\": \"-0.100000000000000000000001\"\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Serializes a negative big decimal value that exceeds double precision in\nthe decimal portion. Implementations use JSON strings to preserve this\nprecision.",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestBigDecimalNegativeHighPrecision",
+        "requireHeaders": [
+          "Content-Length"
+        ],
         "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/BigDecimalOperation",
+        "body": "{\n    \"value\": \"-0.100000000000000000000001\"\n}",
         "params": {
           "value": -0.100000000000000000000001
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
-        "tags": [
-          "arbitrary-precision"
-        ],
-        "uri": "/service/RpcV2JsonProtocol/operation/BigDecimalOperation"
+        }
       },
       {
-        "body": "{\n    \"value\": \"100000000000000000000001.0\"\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Serializes a big decimal value that exceeds double precision in the integer\nportion. Implementations use JSON strings to preserve this precision.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestBigDecimalLargeWithFraction",
-        "method": "POST",
-        "params": {
-          "value": 100000000000000000000001.0
-        },
         "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
+        "documentation": "Serializes a big decimal value that exceeds double precision in the integer\nportion. Implementations use JSON strings to preserve this precision.",
         "tags": [
           "arbitrary-precision"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/BigDecimalOperation"
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/BigDecimalOperation",
+        "body": "{\n    \"value\": \"100000000000000000000001.0\"\n}",
+        "params": {
+          "value": 100000000000000000000001.0
+        }
       }
     ],
     "responses": [
       {
-        "body": "{\n    \"value\": \"1.5\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Serializes a simple big decimal value as a JSON string to preserve precision.",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseBigDecimalSimpleValue",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Serializes a simple big decimal value as a JSON string to preserve precision.",
+        "tags": [
+          "arbitrary-precision"
+        ],
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"value\": \"1.5\"\n}",
+        "code": 200,
         "params": {
           "value": 1.5
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "tags": [
-          "arbitrary-precision"
-        ]
+        }
       },
       {
-        "body": "{\n    \"value\": \"0.100000000000000000000001\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Serializes a big decimal value that exceeds double precision in the decimal\nportion. Implementations use JSON strings to preserve this precision.",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseBigDecimalHighPrecision",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Serializes a big decimal value that exceeds double precision in the decimal\nportion. Implementations use JSON strings to preserve this precision.",
+        "tags": [
+          "arbitrary-precision"
+        ],
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"value\": \"0.100000000000000000000001\"\n}",
+        "code": 200,
         "params": {
           "value": 0.100000000000000000000001
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "tags": [
-          "arbitrary-precision"
-        ]
+        }
       },
       {
-        "body": "{\n    \"value\": \"-0.100000000000000000000001\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Serializes a negative big decimal value that exceeds double precision in\nthe decimal portion. Implementations use JSON strings to preserve this\nprecision.",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseBigDecimalNegativeHighPrecision",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Serializes a negative big decimal value that exceeds double precision in\nthe decimal portion. Implementations use JSON strings to preserve this\nprecision.",
+        "tags": [
+          "arbitrary-precision"
+        ],
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"value\": \"-0.100000000000000000000001\"\n}",
+        "code": 200,
         "params": {
           "value": -0.100000000000000000000001
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "tags": [
-          "arbitrary-precision"
-        ]
+        }
       },
       {
-        "body": "{\n    \"value\": \"100000000000000000000001.0\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Serializes a big decimal value that exceeds double precision in the integer\nportion. Implementations use JSON strings to preserve this precision.",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseBigDecimalLargeWithFraction",
-        "params": {
-          "value": 100000000000000000000001.0
-        },
         "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Serializes a big decimal value that exceeds double precision in the integer\nportion. Implementations use JSON strings to preserve this precision.",
         "tags": [
           "arbitrary-precision"
-        ]
+        ],
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"value\": \"100000000000000000000001.0\"\n}",
+        "code": 200,
+        "params": {
+          "value": 100000000000000000000001.0
+        }
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#BigIntegerOperation": {
     "requests": [
       {
-        "body": "{\n    \"value\": \"42\"\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Serializes a simple big integer value as a JSON string to preserve precision.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestBigIntegerSimpleValue",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Serializes a simple big integer value as a JSON string to preserve precision.",
+        "tags": [
+          "arbitrary-precision"
+        ],
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "requireHeaders": [
+          "Content-Length"
+        ],
         "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/BigIntegerOperation",
+        "body": "{\n    \"value\": \"42\"\n}",
         "params": {
           "value": 42
-        },
+        }
+      },
+      {
+        "id": "RpcV2JsonRequestBigIntegerExceedingLongRange",
         "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
+        "documentation": "Serializes a big integer value that exceeds the precision of a long.\nImplementations use JSON strings to preserve this precision.",
         "tags": [
           "arbitrary-precision"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/BigIntegerOperation"
-      },
-      {
-        "body": "{\n    \"value\": \"9223372036854775808\"\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Serializes a big integer value that exceeds the precision of a long.\nImplementations use JSON strings to preserve this precision.",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestBigIntegerExceedingLongRange",
+        "requireHeaders": [
+          "Content-Length"
+        ],
         "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/BigIntegerOperation",
+        "body": "{\n    \"value\": \"9223372036854775808\"\n}",
         "params": {
           "value": 9223372036854775808
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
-        "tags": [
-          "arbitrary-precision"
-        ],
-        "uri": "/service/RpcV2JsonProtocol/operation/BigIntegerOperation"
+        }
       },
       {
-        "body": "{\n    \"value\": \"-9223372036854775809\"\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Serializes a negative big integer value that exceeds the precision of a long.\nImplementations use JSON strings to preserve this precision.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestBigIntegerNegativeLargeValue",
-        "method": "POST",
-        "params": {
-          "value": -9223372036854775809
-        },
         "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
+        "documentation": "Serializes a negative big integer value that exceeds the precision of a long.\nImplementations use JSON strings to preserve this precision.",
         "tags": [
           "arbitrary-precision"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/BigIntegerOperation"
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/BigIntegerOperation",
+        "body": "{\n    \"value\": \"-9223372036854775809\"\n}",
+        "params": {
+          "value": -9223372036854775809
+        }
       }
     ],
     "responses": [
       {
-        "body": "{\n    \"value\": \"42\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Serializes a simple big integer value as a JSON string to preserve precision.",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseBigIntegerSimpleValue",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Serializes a simple big integer value as a JSON string to preserve precision.",
+        "tags": [
+          "arbitrary-precision"
+        ],
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"value\": \"42\"\n}",
+        "code": 200,
         "params": {
           "value": 42
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "tags": [
-          "arbitrary-precision"
-        ]
+        }
       },
       {
-        "body": "{\n    \"value\": \"9223372036854775808\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Serializes a big integer value that exceeds the precision of a long.\nImplementations use JSON strings to preserve this precision.",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseBigIntegerExceedingLongRange",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Serializes a big integer value that exceeds the precision of a long.\nImplementations use JSON strings to preserve this precision.",
+        "tags": [
+          "arbitrary-precision"
+        ],
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"value\": \"9223372036854775808\"\n}",
+        "code": 200,
         "params": {
           "value": 9223372036854775808
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "tags": [
-          "arbitrary-precision"
-        ]
+        }
       },
       {
-        "body": "{\n    \"value\": \"-9223372036854775809\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Serializes a negative big integer value that exceeds the precision of a long.\nImplementations use JSON strings to preserve this precision.",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseBigIntegerNegativeLargeValue",
-        "params": {
-          "value": -9223372036854775809
-        },
         "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Serializes a negative big integer value that exceeds the precision of a long.\nImplementations use JSON strings to preserve this precision.",
         "tags": [
           "arbitrary-precision"
-        ]
+        ],
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"value\": \"-9223372036854775809\"\n}",
+        "code": 200,
+        "params": {
+          "value": -9223372036854775809
+        }
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#ComplexError": {
     "responses": [
       {
-        "body": "{\n    \"__type\": \"smithy.protocoltests.rpcv2Json#ComplexError\",\n    \"TopLevel\": \"Top level\",\n    \"Nested\": {\n        \"Foo\": \"bar\"\n    }\n}",
-        "bodyMediaType": "application/json",
-        "code": 400,
-        "documentation": "Parses a complex error with no message member",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseComplexError",
+        "documentation": "Parses a complex error with no message member",
+        "protocol": "smithy.protocols#rpcv2Json",
         "params": {
+          "TopLevel": "Top level",
           "Nested": {
             "Foo": "bar"
-          },
-          "TopLevel": "Top level"
+          }
         },
-        "protocol": "smithy.protocols#rpcv2Json"
-      },
-      {
-        "body": "{\n    \"__type\": \"smithy.protocoltests.rpcv2Json#ComplexError\"\n}",
-        "bodyMediaType": "application/json",
         "code": 400,
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
+        "body": "{\n    \"__type\": \"smithy.protocoltests.rpcv2Json#ComplexError\",\n    \"TopLevel\": \"Top level\",\n    \"Nested\": {\n        \"Foo\": \"bar\"\n    }\n}",
+        "bodyMediaType": "application/json"
+      },
+      {
         "id": "RpcV2JsonResponseEmptyComplexError",
-        "protocol": "smithy.protocols#rpcv2Json"
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 400,
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
+        "body": "{\n    \"__type\": \"smithy.protocoltests.rpcv2Json#ComplexError\"\n}",
+        "bodyMediaType": "application/json"
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#EmptyInputOutput": {
     "requests": [
       {
-        "body": "{}",
-        "bodyMediaType": "application/json",
-        "documentation": "When Input structure is empty we write an empty JSON object",
-        "forbidHeaders": [
-          "X-Amz-Target"
-        ],
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestEmptyInput",
-        "method": "POST",
         "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "When Input structure is empty we write an empty JSON object",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/EmptyInputOutput"
+        "forbidHeaders": [
+          "X-Amz-Target"
+        ],
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/EmptyInputOutput",
+        "bodyMediaType": "application/json",
+        "body": "{}"
       }
     ],
     "responses": [
       {
+        "id": "RpcV2JsonResponseEmptyOutput",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "When output structure is empty we write an empty JSON object",
         "body": "{}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "When output structure is empty we write an empty JSON object",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseEmptyOutput",
-        "protocol": "smithy.protocols#rpcv2Json"
+        "code": 200
       },
       {
-        "appliesTo": "client",
+        "id": "RpcV2JsonResponseEmptyOutputNoBody",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "When output structure is empty the client should accept an empty body",
         "body": "",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "When output structure is empty the client should accept an empty body",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseEmptyOutputNoBody",
-        "protocol": "smithy.protocols#rpcv2Json"
+        "code": 200,
+        "appliesTo": "client"
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#FractionalSeconds": {
     "responses": [
       {
-        "appliesTo": "client",
-        "body": "{\n    \"datetime\": 946845296.123\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Ensures that clients can correctly parse timestamps with fractional seconds",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseDateTimeWithFractionalSeconds",
+        "documentation": "Ensures that clients can correctly parse timestamps with fractional seconds",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
+        "body": "{\n    \"datetime\": 946845296.123\n}",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
         "params": {
           "datetime": 946845296.123
         },
-        "protocol": "smithy.protocols#rpcv2Json"
+        "bodyMediaType": "application/json",
+        "appliesTo": "client"
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#InvalidGreeting": {
     "responses": [
       {
-        "body": "{\n    \"__type\": \"smithy.protocoltests.rpcv2Json#InvalidGreeting\",\n    \"Message\": \"Hi\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 400,
-        "documentation": "Parses simple RpcV2 JSON errors",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseInvalidGreetingError",
+        "documentation": "Parses simple RpcV2 JSON errors",
+        "protocol": "smithy.protocols#rpcv2Json",
         "params": {
           "Message": "Hi"
         },
-        "protocol": "smithy.protocols#rpcv2Json"
+        "code": 400,
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
+        "body": "{\n    \"__type\": \"smithy.protocoltests.rpcv2Json#InvalidGreeting\",\n    \"Message\": \"Hi\"\n}",
+        "bodyMediaType": "application/json"
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#NoInputOutput": {
     "requests": [
       {
-        "body": "",
+        "id": "RpcV2JsonRequestNoInput",
+        "protocol": "smithy.protocols#rpcv2Json",
         "documentation": "Body is empty and no Content-Type header if no input",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Accept": "application/json"
+        },
         "forbidHeaders": [
           "Content-Type",
           "X-Amz-Target"
         ],
-        "headers": {
-          "Accept": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
-        "id": "RpcV2JsonRequestNoInput",
         "method": "POST",
-        "protocol": "smithy.protocols#rpcv2Json",
-        "uri": "/service/RpcV2JsonProtocol/operation/NoInputOutput"
+        "uri": "/service/RpcV2JsonProtocol/operation/NoInputOutput",
+        "body": ""
       }
     ],
     "responses": [
       {
+        "id": "RpcV2JsonResponseNoOutput",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "A `Content-Type` header should not be set if the response body is empty.",
         "body": "",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "A `Content-Type` header should not be set if the response body is empty.",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json"
+        },
         "forbidHeaders": [
           "Content-Type"
         ],
-        "headers": {
-          "smithy-protocol": "rpc-v2-json"
-        },
-        "id": "RpcV2JsonResponseNoOutput",
-        "protocol": "smithy.protocols#rpcv2Json"
+        "code": 200
       },
       {
-        "appliesTo": "client",
-        "body": "{}",
-        "bodyMediaType": "application/json",
-        "code": 200,
+        "id": "RpcV2JsonResponseNoOutputClientAllowsEmptyJsonObject",
+        "protocol": "smithy.protocols#rpcv2Json",
         "documentation": "Clients should accept a JSON empty object if there is no output.",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseNoOutputClientAllowsEmptyJsonObject",
-        "protocol": "smithy.protocols#rpcv2Json"
+        "code": 200,
+        "bodyMediaType": "application/json",
+        "body": "{}",
+        "appliesTo": "client"
       },
       {
-        "appliesTo": "client",
-        "body": "",
-        "bodyMediaType": "application/json",
-        "code": 200,
+        "id": "RpcV2JsonResponseNoOutputClientAllowsEmptyBody",
+        "protocol": "smithy.protocols#rpcv2Json",
         "documentation": "Clients should accept an empty body if there is no output and\nshould not raise an error if the `Content-Type` header is set.",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseNoOutputClientAllowsEmptyBody",
-        "protocol": "smithy.protocols#rpcv2Json"
+        "code": 200,
+        "bodyMediaType": "application/json",
+        "body": "",
+        "appliesTo": "client"
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#OperationWithDefaults": {
     "requests": [
       {
-        "appliesTo": "client",
-        "body": "{\n    \"defaults\": {\n        \"defaultString\": \"hi\",\n        \"defaultBoolean\": true,\n        \"defaultList\": [],\n        \"defaultTimestamp\": 0,\n        \"defaultBlob\": \"YWJj\",\n        \"defaultByte\": 1,\n        \"defaultShort\": 1,\n        \"defaultInteger\": 10,\n        \"defaultLong\": 100,\n        \"defaultFloat\": 1.0,\n        \"defaultDouble\": 1.0,\n        \"defaultMap\": {},\n        \"defaultEnum\": \"FOO\",\n        \"defaultIntEnum\": 1,\n        \"emptyString\": \"\",\n        \"falseBoolean\": false,\n        \"emptyBlob\": \"\",\n        \"zeroByte\": 0,\n        \"zeroShort\": 0,\n        \"zeroInteger\": 0,\n        \"zeroLong\": 0,\n        \"zeroFloat\": 0.0,\n        \"zeroDouble\": 0.0\n    }\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Client populates default values in input.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestClientPopulatesDefaultValuesInInput",
+        "documentation": "Client populates default values in input.",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "appliesTo": "client",
+        "tags": [
+          "defaults"
+        ],
         "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/OperationWithDefaults",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"defaults\": {\n        \"defaultString\": \"hi\",\n        \"defaultBoolean\": true,\n        \"defaultList\": [],\n        \"defaultTimestamp\": 0,\n        \"defaultBlob\": \"YWJj\",\n        \"defaultByte\": 1,\n        \"defaultShort\": 1,\n        \"defaultInteger\": 10,\n        \"defaultLong\": 100,\n        \"defaultFloat\": 1.0,\n        \"defaultDouble\": 1.0,\n        \"defaultMap\": {},\n        \"defaultEnum\": \"FOO\",\n        \"defaultIntEnum\": 1,\n        \"emptyString\": \"\",\n        \"falseBoolean\": false,\n        \"emptyBlob\": \"\",\n        \"zeroByte\": 0,\n        \"zeroShort\": 0,\n        \"zeroInteger\": 0,\n        \"zeroLong\": 0,\n        \"zeroFloat\": 0.0,\n        \"zeroDouble\": 0.0\n    }\n}",
         "params": {
           "defaults": {}
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
-        "tags": [
-          "defaults"
-        ],
-        "uri": "/service/RpcV2JsonProtocol/operation/OperationWithDefaults"
+        }
       },
       {
-        "appliesTo": "client",
-        "body": "{}",
-        "bodyMediaType": "application/json",
-        "documentation": "Client skips top level default values in input.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestClientSkipsTopLevelDefaultValuesInInput",
-        "method": "POST",
-        "params": {},
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
+        "documentation": "Client skips top level default values in input.",
+        "appliesTo": "client",
         "tags": [
           "defaults"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/OperationWithDefaults"
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/OperationWithDefaults",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "body": "{}",
+        "params": {}
       },
       {
-        "appliesTo": "client",
-        "body": "{\n    \"defaults\": {\n        \"defaultString\": \"bye\",\n        \"defaultBoolean\": true,\n        \"defaultList\": [\"a\"],\n        \"defaultTimestamp\": 1,\n        \"defaultBlob\": \"aGk=\",\n        \"defaultByte\": 2,\n        \"defaultShort\": 2,\n        \"defaultInteger\": 20,\n        \"defaultLong\": 200,\n        \"defaultFloat\": 2.0,\n        \"defaultDouble\": 2.0,\n        \"defaultMap\": {\"name\": \"Jack\"},\n        \"defaultEnum\": \"BAR\",\n        \"defaultIntEnum\": 2,\n        \"emptyString\": \"foo\",\n        \"falseBoolean\": true,\n        \"emptyBlob\": \"aGk=\",\n        \"zeroByte\": 1,\n        \"zeroShort\": 1,\n        \"zeroInteger\": 1,\n        \"zeroLong\": 1,\n        \"zeroFloat\": 1.0,\n        \"zeroDouble\": 1.0\n    }\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Client uses explicitly provided member values over defaults",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestClientUsesExplicitlyProvidedMemberValuesOverDefaults",
+        "documentation": "Client uses explicitly provided member values over defaults",
+        "appliesTo": "client",
+        "tags": [
+          "defaults"
+        ],
+        "protocol": "smithy.protocols#rpcv2Json",
         "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/OperationWithDefaults",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "body": "{\n    \"defaults\": {\n        \"defaultString\": \"bye\",\n        \"defaultBoolean\": true,\n        \"defaultList\": [\"a\"],\n        \"defaultTimestamp\": 1,\n        \"defaultBlob\": \"aGk=\",\n        \"defaultByte\": 2,\n        \"defaultShort\": 2,\n        \"defaultInteger\": 20,\n        \"defaultLong\": 200,\n        \"defaultFloat\": 2.0,\n        \"defaultDouble\": 2.0,\n        \"defaultMap\": {\"name\": \"Jack\"},\n        \"defaultEnum\": \"BAR\",\n        \"defaultIntEnum\": 2,\n        \"emptyString\": \"foo\",\n        \"falseBoolean\": true,\n        \"emptyBlob\": \"aGk=\",\n        \"zeroByte\": 1,\n        \"zeroShort\": 1,\n        \"zeroInteger\": 1,\n        \"zeroLong\": 1,\n        \"zeroFloat\": 1.0,\n        \"zeroDouble\": 1.0\n    }\n}",
         "params": {
           "defaults": {
-            "defaultBlob": "hi",
+            "defaultString": "bye",
             "defaultBoolean": true,
-            "defaultByte": 2,
-            "defaultDouble": 2.0,
-            "defaultEnum": "BAR",
-            "defaultFloat": 2.0,
-            "defaultIntEnum": 2,
-            "defaultInteger": 20,
             "defaultList": [
               "a"
             ],
+            "defaultTimestamp": 1,
+            "defaultBlob": "hi",
+            "defaultByte": 2,
+            "defaultShort": 2,
+            "defaultInteger": 20,
             "defaultLong": 200,
+            "defaultFloat": 2.0,
+            "defaultDouble": 2.0,
             "defaultMap": {
               "name": "Jack"
             },
-            "defaultShort": 2,
-            "defaultString": "bye",
-            "defaultTimestamp": 1,
-            "emptyBlob": "hi",
+            "defaultEnum": "BAR",
+            "defaultIntEnum": 2,
             "emptyString": "foo",
             "falseBoolean": true,
+            "emptyBlob": "hi",
             "zeroByte": 1,
-            "zeroDouble": 1.0,
-            "zeroFloat": 1.0,
+            "zeroShort": 1,
             "zeroInteger": 1,
             "zeroLong": 1,
-            "zeroShort": 1
+            "zeroFloat": 1.0,
+            "zeroDouble": 1.0
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
-        "tags": [
-          "defaults"
-        ],
-        "uri": "/service/RpcV2JsonProtocol/operation/OperationWithDefaults"
+        }
       },
       {
-        "appliesTo": "client",
-        "body": "{\n    \"topLevelDefault\": \"hi\",\n    \"otherTopLevelDefault\": 0\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Any time a value is provided for a member in the top level of input, it is used, regardless of if its the default.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestClientUsesExplicitlyProvidedValuesInTopLevel",
-        "method": "POST",
-        "params": {
-          "otherTopLevelDefault": 0,
-          "topLevelDefault": "hi"
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
+        "documentation": "Any time a value is provided for a member in the top level of input, it is used, regardless of if its the default.",
+        "appliesTo": "client",
         "tags": [
           "defaults"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/OperationWithDefaults"
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/OperationWithDefaults",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "body": "{\n    \"topLevelDefault\": \"hi\",\n    \"otherTopLevelDefault\": 0\n}",
+        "params": {
+          "topLevelDefault": "hi",
+          "otherTopLevelDefault": 0
+        }
       },
       {
-        "appliesTo": "client",
-        "body": "{\n    \"clientOptionalDefaults\": {}\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Typically, non top-level members would have defaults filled in, but if they have the clientOptional trait, the defaults should be ignored.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
+        "documentation": "Typically, non top-level members would have defaults filled in, but if they have the clientOptional trait, the defaults should be ignored.",
+        "appliesTo": "client",
+        "tags": [
+          "defaults"
+        ],
+        "protocol": "smithy.protocols#rpcv2Json",
         "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/OperationWithDefaults",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "body": "{\n    \"clientOptionalDefaults\": {}\n}",
         "params": {
           "clientOptionalDefaults": {}
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
-        "tags": [
-          "defaults"
-        ],
-        "uri": "/service/RpcV2JsonProtocol/operation/OperationWithDefaults"
+        }
       }
     ],
     "responses": [
       {
-        "appliesTo": "client",
-        "body": "{}",
-        "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Client populates default values when missing in response.",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseClientPopulatesDefaultsValuesWhenMissingInResponse",
-        "params": {
-          "defaultBlob": "abc",
-          "defaultBoolean": true,
-          "defaultByte": 1,
-          "defaultDouble": 1.0,
-          "defaultEnum": "FOO",
-          "defaultFloat": 1.0,
-          "defaultIntEnum": 1,
-          "defaultInteger": 10,
-          "defaultList": [],
-          "defaultLong": 100,
-          "defaultMap": {},
-          "defaultShort": 1,
-          "defaultString": "hi",
-          "defaultTimestamp": 0,
-          "emptyBlob": "",
-          "emptyString": "",
-          "falseBoolean": false,
-          "zeroByte": 0,
-          "zeroDouble": 0.0,
-          "zeroFloat": 0.0,
-          "zeroInteger": 0,
-          "zeroLong": 0,
-          "zeroShort": 0
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Client populates default values when missing in response.",
+        "appliesTo": "client",
         "tags": [
           "defaults"
-        ]
+        ],
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
+        "bodyMediaType": "application/json",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
+        "body": "{}",
+        "params": {
+          "defaultString": "hi",
+          "defaultBoolean": true,
+          "defaultList": [],
+          "defaultTimestamp": 0,
+          "defaultBlob": "abc",
+          "defaultByte": 1,
+          "defaultShort": 1,
+          "defaultInteger": 10,
+          "defaultLong": 100,
+          "defaultFloat": 1.0,
+          "defaultDouble": 1.0,
+          "defaultMap": {},
+          "defaultEnum": "FOO",
+          "defaultIntEnum": 1,
+          "emptyString": "",
+          "falseBoolean": false,
+          "emptyBlob": "",
+          "zeroByte": 0,
+          "zeroShort": 0,
+          "zeroInteger": 0,
+          "zeroLong": 0,
+          "zeroFloat": 0.0,
+          "zeroDouble": 0.0
+        }
       },
       {
-        "appliesTo": "client",
-        "body": "{\n    \"defaultString\": \"bye\",\n    \"defaultBoolean\": false,\n    \"defaultList\": [\"a\"],\n    \"defaultTimestamp\": 2,\n    \"defaultBlob\": \"aGk=\",\n    \"defaultByte\": 2,\n    \"defaultShort\": 2,\n    \"defaultInteger\": 20,\n    \"defaultLong\": 200,\n    \"defaultFloat\": 2.0,\n    \"defaultDouble\": 2.0,\n    \"defaultMap\": {\"name\": \"Jack\"},\n    \"defaultEnum\": \"BAR\",\n    \"defaultIntEnum\": 2,\n    \"emptyString\": \"foo\",\n    \"falseBoolean\": true,\n    \"emptyBlob\": \"aGk=\",\n    \"zeroByte\": 1,\n    \"zeroShort\": 1,\n    \"zeroInteger\": 1,\n    \"zeroLong\": 1,\n    \"zeroFloat\": 1.0,\n    \"zeroDouble\": 1.0\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Client ignores default values if member values are present in the response.",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseClientIgnoresDefaultValuesIfMemberValuesArePresentInResponse",
+        "documentation": "Client ignores default values if member values are present in the response.",
+        "appliesTo": "client",
+        "tags": [
+          "defaults"
+        ],
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
+        "bodyMediaType": "application/json",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
+        "body": "{\n    \"defaultString\": \"bye\",\n    \"defaultBoolean\": false,\n    \"defaultList\": [\"a\"],\n    \"defaultTimestamp\": 2,\n    \"defaultBlob\": \"aGk=\",\n    \"defaultByte\": 2,\n    \"defaultShort\": 2,\n    \"defaultInteger\": 20,\n    \"defaultLong\": 200,\n    \"defaultFloat\": 2.0,\n    \"defaultDouble\": 2.0,\n    \"defaultMap\": {\"name\": \"Jack\"},\n    \"defaultEnum\": \"BAR\",\n    \"defaultIntEnum\": 2,\n    \"emptyString\": \"foo\",\n    \"falseBoolean\": true,\n    \"emptyBlob\": \"aGk=\",\n    \"zeroByte\": 1,\n    \"zeroShort\": 1,\n    \"zeroInteger\": 1,\n    \"zeroLong\": 1,\n    \"zeroFloat\": 1.0,\n    \"zeroDouble\": 1.0\n}",
         "params": {
-          "defaultBlob": "hi",
+          "defaultString": "bye",
           "defaultBoolean": false,
-          "defaultByte": 2,
-          "defaultDouble": 2.0,
-          "defaultEnum": "BAR",
-          "defaultFloat": 2.0,
-          "defaultIntEnum": 2,
-          "defaultInteger": 20,
           "defaultList": [
             "a"
           ],
+          "defaultTimestamp": 2,
+          "defaultBlob": "hi",
+          "defaultByte": 2,
+          "defaultShort": 2,
+          "defaultInteger": 20,
           "defaultLong": 200,
+          "defaultFloat": 2.0,
+          "defaultDouble": 2.0,
           "defaultMap": {
             "name": "Jack"
           },
-          "defaultShort": 2,
-          "defaultString": "bye",
-          "defaultTimestamp": 2,
-          "emptyBlob": "hi",
+          "defaultEnum": "BAR",
+          "defaultIntEnum": 2,
           "emptyString": "foo",
           "falseBoolean": true,
+          "emptyBlob": "hi",
           "zeroByte": 1,
-          "zeroDouble": 1.0,
-          "zeroFloat": 1.0,
+          "zeroShort": 1,
           "zeroInteger": 1,
           "zeroLong": 1,
-          "zeroShort": 1
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "tags": [
-          "defaults"
-        ]
+          "zeroFloat": 1.0,
+          "zeroDouble": 1.0
+        }
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#OptionalInputOutput": {
     "requests": [
       {
-        "body": "{}",
-        "bodyMediaType": "application/json",
+        "id": "RpcV2JsonRequestOptionalInput",
+        "protocol": "smithy.protocols#rpcv2Json",
         "documentation": "When input is empty we write an empty JSON object",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         "forbidHeaders": [
           "X-Amz-Target"
         ],
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
-        "id": "RpcV2JsonRequestOptionalInput",
         "method": "POST",
-        "protocol": "smithy.protocols#rpcv2Json",
-        "uri": "/service/RpcV2JsonProtocol/operation/OptionalInputOutput"
+        "uri": "/service/RpcV2JsonProtocol/operation/OptionalInputOutput",
+        "bodyMediaType": "application/json",
+        "body": "{}"
       }
     ],
     "responses": [
       {
+        "id": "RpcV2JsonResponseOptionalOutput",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "When output is empty we write an empty JSON object",
         "body": "{}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "When output is empty we write an empty JSON object",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseOptionalOutput",
-        "protocol": "smithy.protocols#rpcv2Json"
+        "code": 200
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#RecursiveShapes": {
     "requests": [
       {
+        "id": "RpcV2JsonRequestRecursiveShapes",
+        "documentation": "Serializes recursive structures",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/RecursiveShapes",
         "body": "{\n    \"nested\": {\n        \"foo\": \"Foo1\",\n        \"nested\": {\n            \"bar\": \"Bar1\",\n            \"recursiveMember\": {\n                \"foo\": \"Foo2\",\n                \"nested\": {\n                    \"bar\": \"Bar2\"\n                }\n            }\n        }\n    }\n}",
         "bodyMediaType": "application/json",
-        "documentation": "Serializes recursive structures",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestRecursiveShapes",
-        "method": "POST",
+        "requireHeaders": [
+          "Content-Length"
+        ],
         "params": {
           "nested": {
             "foo": "Foo1",
@@ -783,25 +788,21 @@
               }
             }
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
-        "uri": "/service/RpcV2JsonProtocol/operation/RecursiveShapes"
+        }
       }
     ],
     "responses": [
       {
+        "id": "RpcV2JsonResponseRecursiveShapes",
+        "documentation": "Serializes recursive structures",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"nested\": {\n        \"foo\": \"Foo1\",\n        \"nested\": {\n            \"bar\": \"Bar1\",\n            \"recursiveMember\": {\n                \"foo\": \"Foo2\",\n                \"nested\": {\n                    \"bar\": \"Bar2\"\n                }\n            }\n        }\n    }\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Serializes recursive structures",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseRecursiveShapes",
         "params": {
           "nested": {
             "foo": "Foo1",
@@ -815,76 +816,80 @@
               }
             }
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#RpcV2JsonDenseMaps": {
     "requests": [
       {
+        "id": "RpcV2JsonRequestMaps",
+        "documentation": "Serializes maps",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonDenseMaps",
         "body": "{\n    \"denseStructMap\": {\n        \"foo\": {\n            \"hi\": \"there\"\n        },\n        \"baz\": {\n            \"hi\": \"bye\"\n        }\n    }\n}",
         "bodyMediaType": "application/json",
-        "documentation": "Serializes maps",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestMaps",
-        "method": "POST",
+        "requireHeaders": [
+          "Content-Length"
+        ],
         "params": {
           "denseStructMap": {
-            "baz": {
-              "hi": "bye"
-            },
             "foo": {
               "hi": "there"
+            },
+            "baz": {
+              "hi": "bye"
             }
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
-        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonDenseMaps"
+        }
       },
       {
+        "id": "RpcV2JsonRequestSerializesZeroValuesInMaps",
+        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonDenseMaps",
         "body": "{\n    \"denseNumberMap\": {\n        \"x\": 0\n    },\n    \"denseBooleanMap\": {\n        \"x\": false\n    }\n}",
         "bodyMediaType": "application/json",
-        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestSerializesZeroValuesInMaps",
-        "method": "POST",
-        "params": {
-          "denseBooleanMap": {
-            "x": false
-          },
-          "denseNumberMap": {
-            "x": 0
-          }
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonDenseMaps"
+        "params": {
+          "denseNumberMap": {
+            "x": 0
+          },
+          "denseBooleanMap": {
+            "x": false
+          }
+        }
       },
       {
+        "id": "RpcV2JsonRequestSerializesDenseSetMap",
+        "documentation": "A request that contains a dense map of sets.",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonDenseMaps",
         "body": "{\n    \"denseSetMap\": {\n        \"x\": [],\n        \"y\": [\"a\", \"b\"]\n    }\n}",
         "bodyMediaType": "application/json",
-        "documentation": "A request that contains a dense map of sets.",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestSerializesDenseSetMap",
-        "method": "POST",
+        "requireHeaders": [
+          "Content-Length"
+        ],
         "params": {
           "denseSetMap": {
             "x": [],
@@ -893,67 +898,63 @@
               "b"
             ]
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
-        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonDenseMaps"
+        }
       }
     ],
     "responses": [
       {
+        "id": "RpcV2JsonResponseMaps",
+        "documentation": "Deserializes maps",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"denseStructMap\": {\n        \"foo\": {\n            \"hi\": \"there\"\n        },\n        \"baz\": {\n            \"hi\": \"bye\"\n        }\n    }\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Deserializes maps",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseMaps",
         "params": {
           "denseStructMap": {
-            "baz": {
-              "hi": "bye"
-            },
             "foo": {
               "hi": "there"
+            },
+            "baz": {
+              "hi": "bye"
             }
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       },
       {
+        "id": "RpcV2JsonResponseDeserializesZeroValuesInMaps",
+        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"denseNumberMap\": {\n        \"x\": 0\n    },\n    \"denseBooleanMap\": {\n        \"x\": false\n    }\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseDeserializesZeroValuesInMaps",
         "params": {
-          "denseBooleanMap": {
-            "x": false
-          },
           "denseNumberMap": {
             "x": 0
+          },
+          "denseBooleanMap": {
+            "x": false
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       },
       {
+        "id": "RpcV2JsonResponseDeserializesDenseSetMap",
+        "documentation": "A response that contains a dense map of sets",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"denseSetMap\": {\n        \"x\": [],\n        \"y\": [\"a\", \"b\"]\n    }\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "A response that contains a dense map of sets",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseDeserializesDenseSetMap",
         "params": {
           "denseSetMap": {
             "x": [],
@@ -962,42 +963,54 @@
               "b"
             ]
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#RpcV2JsonLists": {
     "requests": [
       {
+        "id": "RpcV2JsonRequestLists",
+        "documentation": "Serializes RpcV2 JSON lists",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonLists",
         "body": "{\n    \"stringList\": [\n        \"foo\",\n        \"bar\"\n    ],\n    \"stringSet\": [\n        \"foo\",\n        \"bar\"\n    ],\n    \"integerList\": [\n        1,\n        2\n    ],\n    \"booleanList\": [\n        true,\n        false\n    ],\n    \"timestampList\": [\n        1398796238,\n        1398796238\n    ],\n    \"enumList\": [\n        \"Foo\",\n        \"0\"\n    ],\n    \"intEnumList\": [\n        1,\n        2\n    ],\n    \"nestedStringList\": [\n        [\n            \"foo\",\n            \"bar\"\n        ],\n        [\n            \"baz\",\n            \"qux\"\n        ]\n    ],\n    \"structureList\": [\n        {\n            \"a\": \"1\",\n            \"b\": \"2\"\n        },\n        {\n            \"a\": \"3\",\n            \"b\": \"4\"\n        }\n    ],\n    \"blobList\": [\n        \"Zm9v\",\n        \"YmFy\"\n    ]\n}",
         "bodyMediaType": "application/json",
-        "documentation": "Serializes RpcV2 JSON lists",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestLists",
-        "method": "POST",
+        "requireHeaders": [
+          "Content-Length"
+        ],
         "params": {
-          "blobList": [
+          "stringList": [
             "foo",
             "bar"
+          ],
+          "stringSet": [
+            "foo",
+            "bar"
+          ],
+          "integerList": [
+            1,
+            2
           ],
           "booleanList": [
             true,
             false
+          ],
+          "timestampList": [
+            1398796238,
+            1398796238
           ],
           "enumList": [
             "Foo",
             "0"
           ],
           "intEnumList": [
-            1,
-            2
-          ],
-          "integerList": [
             1,
             2
           ],
@@ -1011,14 +1024,6 @@
               "qux"
             ]
           ],
-          "stringList": [
-            "foo",
-            "bar"
-          ],
-          "stringSet": [
-            "foo",
-            "bar"
-          ],
           "structureList": [
             {
               "a": "1",
@@ -1029,67 +1034,71 @@
               "b": "4"
             }
           ],
-          "timestampList": [
-            1398796238,
-            1398796238
+          "blobList": [
+            "foo",
+            "bar"
           ]
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
-        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonLists"
+        }
       },
       {
+        "id": "RpcV2JsonRequestListsEmpty",
+        "documentation": "Serializes empty JSON lists",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonLists",
         "body": "{\n    \"stringList\": []\n}",
         "bodyMediaType": "application/json",
-        "documentation": "Serializes empty JSON lists",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestListsEmpty",
-        "method": "POST",
-        "params": {
-          "stringList": []
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonLists"
+        "params": {
+          "stringList": []
+        }
       }
     ],
     "responses": [
       {
+        "id": "RpcV2JsonResponseLists",
+        "documentation": "Serializes RpcV2 JSON lists",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"stringList\": [\n        \"foo\",\n        \"bar\"\n    ],\n    \"stringSet\": [\n        \"foo\",\n        \"bar\"\n    ],\n    \"integerList\": [\n        1,\n        2\n    ],\n    \"booleanList\": [\n        true,\n        false\n    ],\n    \"timestampList\": [\n        1398796238,\n        1398796238\n    ],\n    \"enumList\": [\n        \"Foo\",\n        \"0\"\n    ],\n    \"intEnumList\": [\n        1,\n        2\n    ],\n    \"nestedStringList\": [\n        [\n            \"foo\",\n            \"bar\"\n        ],\n        [\n            \"baz\",\n            \"qux\"\n        ]\n    ],\n    \"structureList\": [\n        {\n            \"a\": \"1\",\n            \"b\": \"2\"\n        },\n        {\n            \"a\": \"3\",\n            \"b\": \"4\"\n        }\n    ],\n    \"blobList\": [\n        \"Zm9v\",\n        \"YmFy\"\n    ]\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Serializes RpcV2 JSON lists",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseLists",
         "params": {
-          "blobList": [
+          "stringList": [
             "foo",
             "bar"
+          ],
+          "stringSet": [
+            "foo",
+            "bar"
+          ],
+          "integerList": [
+            1,
+            2
           ],
           "booleanList": [
             true,
             false
+          ],
+          "timestampList": [
+            1398796238,
+            1398796238
           ],
           "enumList": [
             "Foo",
             "0"
           ],
           "intEnumList": [
-            1,
-            2
-          ],
-          "integerList": [
             1,
             2
           ],
@@ -1103,14 +1112,6 @@
               "qux"
             ]
           ],
-          "stringList": [
-            "foo",
-            "bar"
-          ],
-          "stringSet": [
-            "foo",
-            "bar"
-          ],
           "structureList": [
             {
               "a": "1",
@@ -1121,70 +1122,74 @@
               "b": "4"
             }
           ],
-          "timestampList": [
-            1398796238,
-            1398796238
+          "blobList": [
+            "foo",
+            "bar"
           ]
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       },
       {
+        "id": "RpcV2JsonResponseListsEmpty",
+        "documentation": "Serializes empty RpcV2 JSON lists",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"stringList\": []\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Serializes empty RpcV2 JSON lists",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseListsEmpty",
         "params": {
           "stringList": []
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#RpcV2JsonSparseMaps": {
     "requests": [
       {
+        "id": "RpcV2JsonRequestSparseMaps",
+        "documentation": "Serializes sparse maps",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonSparseMaps",
         "body": "{\n    \"sparseStructMap\": {\n        \"foo\": {\n            \"hi\": \"there\"\n        },\n        \"baz\": {\n            \"hi\": \"bye\"\n        }\n    }\n}",
         "bodyMediaType": "application/json",
-        "documentation": "Serializes sparse maps",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestSparseMaps",
-        "method": "POST",
-        "params": {
-          "sparseStructMap": {
-            "baz": {
-              "hi": "bye"
-            },
-            "foo": {
-              "hi": "there"
-            }
-          }
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonSparseMaps"
+        "params": {
+          "sparseStructMap": {
+            "foo": {
+              "hi": "there"
+            },
+            "baz": {
+              "hi": "bye"
+            }
+          }
+        }
       },
       {
+        "id": "RpcV2JsonRequestSerializesNullMapValues",
+        "documentation": "Serializes null map values in sparse maps",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonSparseMaps",
         "body": "{\n    \"sparseBooleanMap\": {\n        \"x\": null\n    },\n    \"sparseNumberMap\": {\n        \"x\": null\n    },\n    \"sparseStringMap\": {\n        \"x\": null\n    },\n    \"sparseStructMap\": {\n        \"x\": null\n    }\n}",
         "bodyMediaType": "application/json",
-        "documentation": "Serializes null map values in sparse maps",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestSerializesNullMapValues",
-        "method": "POST",
+        "requireHeaders": [
+          "Content-Length"
+        ],
         "params": {
           "sparseBooleanMap": {
             "x": null
@@ -1198,24 +1203,24 @@
           "sparseStructMap": {
             "x": null
           }
-        },
+        }
+      },
+      {
+        "id": "RpcV2JsonRequestSerializesSparseSetMap",
+        "documentation": "A request that contains a sparse map of sets",
         "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonSparseMaps",
+        "body": "{\n    \"sparseSetMap\": {\n        \"x\": [],\n        \"y\": [\"a\", \"b\"]\n    }\n}",
+        "bodyMediaType": "application/json",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonSparseMaps"
-      },
-      {
-        "body": "{\n    \"sparseSetMap\": {\n        \"x\": [],\n        \"y\": [\"a\", \"b\"]\n    }\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "A request that contains a sparse map of sets",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
-        "id": "RpcV2JsonRequestSerializesSparseSetMap",
-        "method": "POST",
         "params": {
           "sparseSetMap": {
             "x": [],
@@ -1224,24 +1229,24 @@
               "b"
             ]
           }
-        },
+        }
+      },
+      {
+        "id": "RpcV2JsonRequestSerializesSparseSetMapAndRetainsNull",
+        "documentation": "A request that contains a sparse map of sets.",
         "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonSparseMaps",
+        "body": "{\n    \"sparseSetMap\": {\n        \"x\": [],\n        \"y\": [\"a\", \"b\"],\n        \"z\": null\n    }\n}",
+        "bodyMediaType": "application/json",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonSparseMaps"
-      },
-      {
-        "body": "{\n    \"sparseSetMap\": {\n        \"x\": [],\n        \"y\": [\"a\", \"b\"],\n        \"z\": null\n    }\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "A request that contains a sparse map of sets.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
-        "id": "RpcV2JsonRequestSerializesSparseSetMapAndRetainsNull",
-        "method": "POST",
         "params": {
           "sparseSetMap": {
             "x": [],
@@ -1251,72 +1256,68 @@
             ],
             "z": null
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
-        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonSparseMaps"
+        }
       },
       {
+        "id": "RpcV2JsonRequestSerializesZeroValuesInSparseMaps",
+        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonSparseMaps",
         "body": "{\n    \"sparseNumberMap\": {\n        \"x\": 0\n    },\n    \"sparseBooleanMap\": {\n        \"x\": false\n    }\n}",
         "bodyMediaType": "application/json",
-        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestSerializesZeroValuesInSparseMaps",
-        "method": "POST",
-        "params": {
-          "sparseBooleanMap": {
-            "x": false
-          },
-          "sparseNumberMap": {
-            "x": 0
-          }
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/RpcV2JsonSparseMaps"
+        "params": {
+          "sparseNumberMap": {
+            "x": 0
+          },
+          "sparseBooleanMap": {
+            "x": false
+          }
+        }
       }
     ],
     "responses": [
       {
+        "id": "RpcV2JsonResponseSparseJsonMaps",
+        "documentation": "Deserializes sparse maps",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"sparseStructMap\": {\n        \"foo\": {\n            \"hi\": \"there\"\n        },\n        \"baz\": {\n            \"hi\": \"bye\"\n        }\n    }\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Deserializes sparse maps",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseSparseJsonMaps",
         "params": {
           "sparseStructMap": {
-            "baz": {
-              "hi": "bye"
-            },
             "foo": {
               "hi": "there"
+            },
+            "baz": {
+              "hi": "bye"
             }
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       },
       {
+        "id": "RpcV2JsonResponseDeserializesNullMapValues",
+        "documentation": "Deserializes null map values",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"sparseBooleanMap\": {\n        \"x\": null\n    },\n    \"sparseNumberMap\": {\n        \"x\": null\n    },\n    \"sparseStringMap\": {\n        \"x\": null\n    },\n    \"sparseStructMap\": {\n        \"x\": null\n    }\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Deserializes null map values",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseDeserializesNullMapValues",
         "params": {
           "sparseBooleanMap": {
             "x": null
@@ -1330,19 +1331,19 @@
           "sparseStructMap": {
             "x": null
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       },
       {
+        "id": "RpcV2JsonResponseDeserializesSparseSetMap",
+        "documentation": "A response that contains a sparse map of sets",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"sparseSetMap\": {\n        \"x\": [],\n        \"y\": [\"a\", \"b\"]\n    }\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "A response that contains a sparse map of sets",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseDeserializesSparseSetMap",
         "params": {
           "sparseSetMap": {
             "x": [],
@@ -1351,19 +1352,19 @@
               "b"
             ]
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       },
       {
+        "id": "RpcV2JsonResponseDeserializesSparseSetMapAndRetainsNull",
+        "documentation": "A response that contains a sparse map of sets with a null",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"sparseSetMap\": {\n        \"x\": [],\n        \"y\": [\"a\", \"b\"],\n        \"z\": null\n    }\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "A response that contains a sparse map of sets with a null",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseDeserializesSparseSetMapAndRetainsNull",
         "params": {
           "sparseSetMap": {
             "x": [],
@@ -1373,46 +1374,49 @@
             ],
             "z": null
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       },
       {
+        "id": "RpcV2JsonResponseDeserializesZeroValuesInSparseMaps",
+        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"sparseNumberMap\": {\n        \"x\": 0\n    },\n    \"sparseBooleanMap\": {\n        \"x\": false\n    }\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseDeserializesZeroValuesInSparseMaps",
         "params": {
-          "sparseBooleanMap": {
-            "x": false
-          },
           "sparseNumberMap": {
             "x": 0
+          },
+          "sparseBooleanMap": {
+            "x": false
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#SimpleScalarProperties": {
     "requests": [
       {
-        "body": "{\n    \"byteValue\": 5,\n    \"doubleValue\": 1.889,\n    \"falseBooleanValue\": false,\n    \"floatValue\": 7.625,\n    \"integerValue\": 256,\n    \"longValue\": 9873,\n    \"shortValue\": 9898,\n    \"stringValue\": \"simple\",\n    \"trueBooleanValue\": true,\n    \"blobValue\": \"Zm9v\"\n}",
-        "bodyMediaType": "application/json",
+        "id": "RpcV2JsonRequestSimpleScalarProperties",
+        "protocol": "smithy.protocols#rpcv2Json",
         "documentation": "Serializes simple scalar properties",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestSimpleScalarProperties",
+        "requireHeaders": [
+          "Content-Length"
+        ],
         "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/SimpleScalarProperties",
+        "body": "{\n    \"byteValue\": 5,\n    \"doubleValue\": 1.889,\n    \"falseBooleanValue\": false,\n    \"floatValue\": 7.625,\n    \"integerValue\": 256,\n    \"longValue\": 9873,\n    \"shortValue\": 9898,\n    \"stringValue\": \"simple\",\n    \"trueBooleanValue\": true,\n    \"blobValue\": \"Zm9v\"\n}",
         "params": {
-          "blobValue": "foo",
           "byteValue": 5,
           "doubleValue": 1.889,
           "falseBooleanValue": false,
@@ -1421,198 +1425,193 @@
           "longValue": 9873,
           "shortValue": 9898,
           "stringValue": "simple",
-          "trueBooleanValue": true
-        },
+          "trueBooleanValue": true,
+          "blobValue": "foo"
+        }
+      },
+      {
+        "id": "RpcV2JsonRequestClientDoesntSerializeNullStructureValues",
+        "documentation": "RpcV2 JSON should not serialize null structure values",
         "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/SimpleScalarProperties",
+        "body": "{}",
+        "bodyMediaType": "application/json",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/SimpleScalarProperties"
-      },
-      {
-        "appliesTo": "client",
-        "body": "{}",
-        "bodyMediaType": "application/json",
-        "documentation": "RpcV2 JSON should not serialize null structure values",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
-        "id": "RpcV2JsonRequestClientDoesntSerializeNullStructureValues",
-        "method": "POST",
         "params": {
           "stringValue": null
         },
+        "appliesTo": "client"
+      },
+      {
+        "id": "RpcV2JsonRequestSupportsNaNFloatInputs",
         "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Supports handling NaN float values.",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/SimpleScalarProperties"
-      },
-      {
-        "body": "{\n    \"doubleValue\": \"NaN\",\n    \"floatValue\": \"NaN\"\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Supports handling NaN float values.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
-        "id": "RpcV2JsonRequestSupportsNaNFloatInputs",
         "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/SimpleScalarProperties",
+        "body": "{\n    \"doubleValue\": \"NaN\",\n    \"floatValue\": \"NaN\"\n}",
         "params": {
           "doubleValue": "NaN",
           "floatValue": "NaN"
-        },
+        }
+      },
+      {
+        "id": "RpcV2JsonRequestSupportsInfinityFloatInputs",
         "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Supports handling Infinity float values.",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/SimpleScalarProperties"
-      },
-      {
-        "body": "{\n    \"doubleValue\": \"Infinity\",\n    \"floatValue\": \"Infinity\"\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Supports handling Infinity float values.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
-        "id": "RpcV2JsonRequestSupportsInfinityFloatInputs",
         "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/SimpleScalarProperties",
+        "body": "{\n    \"doubleValue\": \"Infinity\",\n    \"floatValue\": \"Infinity\"\n}",
         "params": {
           "doubleValue": "Infinity",
           "floatValue": "Infinity"
-        },
+        }
+      },
+      {
+        "id": "RpcV2JsonRequestSupportsNegativeInfinityFloatInputs",
         "protocol": "smithy.protocols#rpcv2Json",
+        "documentation": "Supports handling -Infinity float values.",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/SimpleScalarProperties"
-      },
-      {
-        "body": "{\n    \"doubleValue\": \"-Infinity\",\n    \"floatValue\": \"-Infinity\"\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Supports handling -Infinity float values.",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
-        "id": "RpcV2JsonRequestSupportsNegativeInfinityFloatInputs",
         "method": "POST",
+        "bodyMediaType": "application/json",
+        "uri": "/service/RpcV2JsonProtocol/operation/SimpleScalarProperties",
+        "body": "{\n    \"doubleValue\": \"-Infinity\",\n    \"floatValue\": \"-Infinity\"\n}",
         "params": {
           "doubleValue": "-Infinity",
           "floatValue": "-Infinity"
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
-        "uri": "/service/RpcV2JsonProtocol/operation/SimpleScalarProperties"
+        }
       }
     ],
     "responses": [
       {
-        "body": "{\n    \"trueBooleanValue\": true,\n    \"falseBooleanValue\": false,\n    \"byteValue\": 5,\n    \"doubleValue\": 1.889,\n    \"floatValue\": 7.625,\n    \"integerValue\": 256,\n    \"shortValue\": 9898,\n    \"stringValue\": \"simple\",\n    \"blobValue\": \"Zm9v\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
+        "id": "RpcV2JsonResponseSimpleScalarProperties",
+        "protocol": "smithy.protocols#rpcv2Json",
         "documentation": "Serializes simple scalar properties",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseSimpleScalarProperties",
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"trueBooleanValue\": true,\n    \"falseBooleanValue\": false,\n    \"byteValue\": 5,\n    \"doubleValue\": 1.889,\n    \"floatValue\": 7.625,\n    \"integerValue\": 256,\n    \"shortValue\": 9898,\n    \"stringValue\": \"simple\",\n    \"blobValue\": \"Zm9v\"\n}",
+        "code": 200,
         "params": {
-          "blobValue": "foo",
+          "trueBooleanValue": true,
+          "falseBooleanValue": false,
           "byteValue": 5,
           "doubleValue": 1.889,
-          "falseBooleanValue": false,
           "floatValue": 7.625,
           "integerValue": 256,
           "shortValue": 9898,
           "stringValue": "simple",
-          "trueBooleanValue": true
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+          "blobValue": "foo"
+        }
       },
       {
-        "appliesTo": "client",
-        "body": "{\n    \"stringValue\": null\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "RpcV2 JSON should not deserialize null structure values",
-        "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonResponseClientDoesntDeserializeNullStructureValues",
+        "documentation": "RpcV2 JSON should not deserialize null structure values",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "body": "{\n    \"stringValue\": null\n}",
+        "code": 200,
+        "bodyMediaType": "application/json",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
+        },
         "params": {},
-        "protocol": "smithy.protocols#rpcv2Json"
+        "appliesTo": "client"
       },
       {
-        "body": "{\n    \"doubleValue\": \"NaN\",\n    \"floatValue\": \"NaN\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
+        "id": "RpcV2JsonResponseSupportsNaNFloatOutputs",
+        "protocol": "smithy.protocols#rpcv2Json",
         "documentation": "Supports handling NaN float values.",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseSupportsNaNFloatOutputs",
+        "code": 200,
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"doubleValue\": \"NaN\",\n    \"floatValue\": \"NaN\"\n}",
         "params": {
           "doubleValue": "NaN",
           "floatValue": "NaN"
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       },
       {
-        "body": "{\n    \"doubleValue\": \"Infinity\",\n    \"floatValue\": \"Infinity\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
+        "id": "RpcV2JsonResponseSupportsInfinityFloatOutputs",
+        "protocol": "smithy.protocols#rpcv2Json",
         "documentation": "Supports handling Infinity float values.",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseSupportsInfinityFloatOutputs",
+        "code": 200,
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"doubleValue\": \"Infinity\",\n    \"floatValue\": \"Infinity\"\n}",
         "params": {
           "doubleValue": "Infinity",
           "floatValue": "Infinity"
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       },
       {
-        "body": "{\n    \"doubleValue\": \"-Infinity\",\n    \"floatValue\": \"-Infinity\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
+        "id": "RpcV2JsonResponseSupportsNegativeInfinityFloatOutputs",
+        "protocol": "smithy.protocols#rpcv2Json",
         "documentation": "Supports handling Negative Infinity float values.",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseSupportsNegativeInfinityFloatOutputs",
+        "code": 200,
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"doubleValue\": \"-Infinity\",\n    \"floatValue\": \"-Infinity\"\n}",
         "params": {
           "doubleValue": "-Infinity",
           "floatValue": "-Infinity"
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       },
       {
-        "appliesTo": "client",
-        "body": "{\n    \"byteValue\": 5,\n    \"doubleValue\": 1.889,\n    \"falseBooleanValue\": false,\n    \"floatValue\": 7.625,\n    \"extraObject\": {\n        \"normalString\": \"foo\",\n        \"withAnArray\": [1, 2, 3]\n    },\n    \"integerValue\": 256,\n    \"longValue\": 9873,\n    \"shortValue\": 9898,\n    \"stringValue\": \"simple\",\n    \"someOtherField\": \"this should be skipped\",\n    \"trueBooleanValue\": true,\n    \"blobValue\": \"Zm9v\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 200,
+        "id": "RpcV2JsonResponseExtraFieldsInTheBodyShouldBeSkippedByClients",
+        "protocol": "smithy.protocols#rpcv2Json",
         "documentation": "The client should skip over additional fields that are not part of the structure. This allows a\nclient generated against an older Smithy model to be able to communicate with a server that is\ngenerated against a newer Smithy model.",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseExtraFieldsInTheBodyShouldBeSkippedByClients",
+        "code": 200,
+        "bodyMediaType": "application/json",
+        "body": "{\n    \"byteValue\": 5,\n    \"doubleValue\": 1.889,\n    \"falseBooleanValue\": false,\n    \"floatValue\": 7.625,\n    \"extraObject\": {\n        \"normalString\": \"foo\",\n        \"withAnArray\": [1, 2, 3]\n    },\n    \"integerValue\": 256,\n    \"longValue\": 9873,\n    \"shortValue\": 9898,\n    \"stringValue\": \"simple\",\n    \"someOtherField\": \"this should be skipped\",\n    \"trueBooleanValue\": true,\n    \"blobValue\": \"Zm9v\"\n}",
         "params": {
-          "blobValue": "foo",
           "byteValue": 5,
           "doubleValue": 1.889,
           "falseBooleanValue": false,
@@ -1621,140 +1620,141 @@
           "longValue": 9873,
           "shortValue": 9898,
           "stringValue": "simple",
-          "trueBooleanValue": true
+          "trueBooleanValue": true,
+          "blobValue": "foo"
         },
-        "protocol": "smithy.protocols#rpcv2Json"
+        "appliesTo": "client"
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#SparseNullsOperation": {
     "requests": [
       {
-        "body": "{\n    \"sparseStringMap\": {\n        \"foo\": null\n    }\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Serializes null values in maps",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestSparseMapsSerializeNullValues",
-        "method": "POST",
+        "documentation": "Serializes null values in maps",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "bodyMediaType": "application/json",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "body": "{\n    \"sparseStringMap\": {\n        \"foo\": null\n    }\n}",
         "params": {
           "sparseStringMap": {
             "foo": null
           }
         },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
+        "method": "POST",
         "uri": "/service/RpcV2JsonProtocol/operation/SparseNullsOperation"
       },
       {
-        "body": "{\n    \"sparseStringList\": [\n        null\n    ]\n}",
-        "bodyMediaType": "application/json",
-        "documentation": "Serializes null values in lists",
-        "headers": {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
-        },
         "id": "RpcV2JsonRequestSparseListsSerializeNull",
-        "method": "POST",
+        "documentation": "Serializes null values in lists",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "bodyMediaType": "application/json",
+        "headers": {
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "requireHeaders": [
+          "Content-Length"
+        ],
+        "body": "{\n    \"sparseStringList\": [\n        null\n    ]\n}",
         "params": {
           "sparseStringList": [
             null
           ]
         },
-        "protocol": "smithy.protocols#rpcv2Json",
-        "requireHeaders": [
-          "Content-Length"
-        ],
+        "method": "POST",
         "uri": "/service/RpcV2JsonProtocol/operation/SparseNullsOperation"
       }
     ],
     "responses": [
       {
+        "id": "RpcV2JsonResponseSparseMapsDeserializeNullValues",
+        "documentation": "Deserializes null values in maps",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"sparseStringMap\": {\n        \"foo\": null\n    }\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Deserializes null values in maps",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseSparseMapsDeserializeNullValues",
         "params": {
           "sparseStringMap": {
             "foo": null
           }
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       },
       {
+        "id": "RpcV2JsonResponseSparseListsDeserializeNull",
+        "documentation": "Deserializes null values in lists",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"sparseStringList\": [\n        null\n    ]\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "Deserializes null values in lists",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseSparseListsDeserializeNull",
         "params": {
           "sparseStringList": [
             null
           ]
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       }
     ]
   },
   "smithy.protocoltests.rpcv2Json#TimestampFormatIgnored": {
     "requests": [
       {
+        "id": "RpcV2JsonRequestTimestampFormatIgnored",
+        "documentation": "The rpcv2Json protocol always serializes timestamps as epoch-seconds JSON numbers.\nThe timestampFormat trait MUST NOT be respected.",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "method": "POST",
+        "uri": "/service/RpcV2JsonProtocol/operation/TimestampFormatIgnored",
         "body": "{\n    \"dateTime\": 946845296,\n    \"httpDate\": 946845296,\n    \"epochSeconds\": 946845296,\n    \"normal\": 946845296\n}",
         "bodyMediaType": "application/json",
-        "documentation": "The rpcv2Json protocol always serializes timestamps as epoch-seconds JSON numbers.\nThe timestampFormat trait MUST NOT be respected.",
         "headers": {
-          "Accept": "application/json",
+          "smithy-protocol": "rpc-v2-json",
           "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "Accept": "application/json"
         },
-        "id": "RpcV2JsonRequestTimestampFormatIgnored",
-        "method": "POST",
-        "params": {
-          "dateTime": 946845296,
-          "epochSeconds": 946845296,
-          "httpDate": 946845296,
-          "normal": 946845296
-        },
-        "protocol": "smithy.protocols#rpcv2Json",
         "requireHeaders": [
           "Content-Length"
         ],
-        "uri": "/service/RpcV2JsonProtocol/operation/TimestampFormatIgnored"
+        "params": {
+          "dateTime": 946845296,
+          "httpDate": 946845296,
+          "epochSeconds": 946845296,
+          "normal": 946845296
+        }
       }
     ],
     "responses": [
       {
+        "id": "RpcV2JsonResponseTimestampFormatIgnored",
+        "documentation": "The rpcv2Json protocol always serializes timestamps as epoch-seconds JSON numbers.\nThe timestampFormat trait MUST NOT be respected.",
+        "protocol": "smithy.protocols#rpcv2Json",
+        "code": 200,
         "body": "{\n    \"dateTime\": 946845296,\n    \"httpDate\": 946845296,\n    \"epochSeconds\": 946845296,\n    \"normal\": 946845296\n}",
         "bodyMediaType": "application/json",
-        "code": 200,
-        "documentation": "The rpcv2Json protocol always serializes timestamps as epoch-seconds JSON numbers.\nThe timestampFormat trait MUST NOT be respected.",
         "headers": {
-          "Content-Type": "application/json",
-          "smithy-protocol": "rpc-v2-json"
+          "smithy-protocol": "rpc-v2-json",
+          "Content-Type": "application/json"
         },
-        "id": "RpcV2JsonResponseTimestampFormatIgnored",
         "params": {
           "dateTime": 946845296,
-          "epochSeconds": 946845296,
           "httpDate": 946845296,
+          "epochSeconds": 946845296,
           "normal": 946845296
-        },
-        "protocol": "smithy.protocols#rpcv2Json"
+        }
       }
     ]
   }

@@ -351,6 +351,8 @@ _INCLUDED_TRAITS: Final = frozenset(
             # awsJson1_0 and rpcv2 read these at runtime for query compatibility.
             "aws.protocols#awsQueryCompatible",
             "aws.protocols#awsQueryError",
+            # restXml reads this to take an output from its root element's text.
+            "aws.customizations#s3UnwrappedXmlOutput",
         ),
     )
 )

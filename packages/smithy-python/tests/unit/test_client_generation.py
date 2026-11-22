@@ -744,6 +744,37 @@ def test_aws_json_services_use_the_aws_core_protocol(
     )
 
 
+def test_rest_xml_services_use_the_aws_core_protocol(tmp_path: Path) -> None:
+    shapes = _shapes()
+    shapes["example#Greeter"]["traits"] = {
+        "aws.protocols#restXml": {},
+        "smithy.api#xmlNamespace": {"uri": "https://example.com/greeter"},
+    }
+    shapes["example#Greet"]["traits"] = {
+        "smithy.api#http": {"method": "POST", "uri": "/greet"}
+    }
+    model = load_model({"smithy": "2.0", "shapes": shapes})
+    settings = ClientSettings("greeter_xml", "1.0.0", None)
+    generator = ClientGenerator(
+        ClientPlan.from_model(model, settings, protocols=_aws.AWS_PROTOCOLS),
+        protocols=_aws.AWS_PROTOCOLS,
+    )
+    context = generator.context()
+    generator.generate(context)
+    context.files.commit(tmp_path)
+    source = tmp_path / "src/greeter_xml"
+    config = (source / "config.py").read_text()
+    assert "RestXmlClientProtocol(_PROTOCOL_SETTINGS)" in config
+    assert 'xml_namespace="https://example.com/greeter",' in config
+    assert (
+        "AsyncRestXmlClientProtocol(_PROTOCOL_SETTINGS)"
+        in (source / "aio/config.py").read_text()
+    )
+    assert (
+        '"smithy-aws-core[xml]~=0.16.0",' in (tmp_path / "pyproject.toml").read_text()
+    )
+
+
 def test_integrations_apply_only_to_services_they_match(tmp_path: Path) -> None:
     _aws_generate(tmp_path, "greeter_plain", _shapes())
     assert "class Config:" in (tmp_path / "src/greeter_plain/config.py").read_text()

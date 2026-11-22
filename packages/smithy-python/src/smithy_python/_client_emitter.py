@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Final
 
 from . import _auth, _endpoint_tests, _endpoints, _package
@@ -294,6 +294,7 @@ def _modes(
 
 
 _NO_AUTH: Final = _model.ShapeId("smithy.api", "noAuth")
+_XML_NAMESPACE: Final = _model.ShapeId("smithy.api", "xmlNamespace")
 _CONFIG_FIELDS: Final = frozenset(
     {
         "auth_scheme_resolver",
@@ -351,6 +352,12 @@ def _write_config(
         writer.line("service_target=", _models._quote(service.id.name), ",")  # pyright: ignore[reportPrivateUsage]
         if service.version is not None:
             writer.line("version=", _models._quote(service.version), ",")  # pyright: ignore[reportPrivateUsage]
+        # restXml applies the namespace to payloads that don't declare their own.
+        xml_namespace = service.get_trait(_XML_NAMESPACE)
+        if isinstance(xml_namespace, Mapping) and isinstance(
+            uri := xml_namespace.get("uri"), str
+        ):
+            writer.line("xml_namespace=", _models._quote(uri), ",")  # pyright: ignore[reportPrivateUsage]
         writer.line(
             "service_schema=",
             TypeReference(plan.symbols.schema_name(service.id), schemas),

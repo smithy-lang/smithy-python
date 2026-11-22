@@ -2,12 +2,12 @@
   "aws-json-1-0": {
     "assembled_sha256": "0e6eeb8c431cbf5c988d3daba1983bdc8f9c074657bc9a66915218047bf901f7",
     "fixture_sha256": "ebfcbdfd4aedefd26bd01e3df4dd0ecca8a7b1e3e768ac7c6a27e9f125250b23",
-    "vectors_sha256": "54696ab8632106cae2abfee333866a87c089a191b2f50c27beeec97a03caf32d"
+    "vectors_sha256": "990a2c9b980d7acc0666d2208418db1b25f2806c1539e8bfa7d0fca48c0cfee9"
   },
   "aws-json-1-1": {
     "assembled_sha256": "a783216226370423619536be3211571a74f24a6d4f15107d364a728ee7fec192",
     "fixture_sha256": "580fc43337bf9cc6c68452d63454906590588e3de438cb5ad1f3690b147dc5d3",
-    "vectors_sha256": "37eb26b0b80c064414199ceb4d40909e5bd9fe071bade291b44d765a2e057ec2"
+    "vectors_sha256": "89ca2517320e26bb48a6194b0e763e06aa52fe8ee72fa87ed2dac977e8ec8791"
   },
   "aws-query": {
     "assembled_sha256": "62332fc9f42c8d044f0dd59376ed922236b8ac19a6ac1b5c8d08a3856208a726",
@@ -32,7 +32,7 @@
   "query-compatible-aws-json-1-0": {
     "assembled_sha256": "c7039ea5f648534741a3cbf4bc5b8bb0f2fac94d7c2ef3b287ad449ca11946e8",
     "fixture_sha256": "924cb826da264978f570c819d5d2a0fd2571f974241cdb8f7ddb4efe289083cf",
-    "vectors_sha256": "88bdd4b600c6d0a4462b9bd95a159b8e6116f8d19627f9def2cddea4f6e493d3"
+    "vectors_sha256": "90896759a0ff699e6ff8c8f7d330988aa79754ceb98cd42feafb1a36e1ad2fdf"
   },
   "query-compatible-rpcv2-cbor": {
     "assembled_sha256": "ff18f8a7075b4421c44503ad912d4817022cbc1b0be31f3c6abab86d534fd4fd",
@@ -41,24 +41,26 @@
   "rest-json-1": {
     "assembled_sha256": "e9bd8f77892be7064088fd1fcd8f3add141d1ea5c60ff7740a8910c0159874b5",
     "fixture_sha256": "86695cc8ccebcb8579cee0a52e9fe891bf7745576496e23c6e6a3f328b4c2231",
-    "vectors_sha256": "5a6ad5f85e067099af65e0df4de3a9d8c6c8a22ce51f622998570571199858f0"
+    "vectors_sha256": "0b33d5cf23773c4a454846f7057474d8d9167ef871e084d0f0489ebc11603b6c"
   },
   "rest-xml": {
     "assembled_sha256": "9baf7dd1c331a2c3c4a72b7ab38288a714511b4926ee8a03c8aa4256538b3588",
-    "fixture_sha256": "46f8b05fc58d4d976c64ba1ca52d1ead1b9398b428a2fe2b19892d216062d427"
+    "fixture_sha256": "46f8b05fc58d4d976c64ba1ca52d1ead1b9398b428a2fe2b19892d216062d427",
+    "vectors_sha256": "d0d049532fb04ae77fd62059cd1aa04bef1e070c9b8e9bcf7d6c84b67be5fa66"
   },
   "rest-xml-with-namespace": {
     "assembled_sha256": "3357e842c2542236cdc08a08742b634005ab6cb2233c6b1b1f31d2d79bcc7f5a",
-    "fixture_sha256": "f248a93bcbccbb1ab86614a8faac028a6b2ecde1a0811b2c52e9f21d0113200e"
+    "fixture_sha256": "f248a93bcbccbb1ab86614a8faac028a6b2ecde1a0811b2c52e9f21d0113200e",
+    "vectors_sha256": "0ebe8df1f6e723202b3f40eb8f79d144ad4ed7f84cae42637b1bc934938a6ace"
   },
   "rpcv2-cbor": {
     "assembled_sha256": "68d4c622bfa0ac01065fb563cbfa6c232668ac8ba09bbbb7dae71c1c4475d529",
     "fixture_sha256": "04f97ce5fbed181e811a5210ae18005b5d9e3175bedf7ef53f03356dcbe47a38",
-    "vectors_sha256": "87dd1af15d6d624a836a7bc45fca44d5d3cdd6a776e86cbdcb1b1111fbd9c6f5"
+    "vectors_sha256": "84030fdc31ccb0c9b91071f11394f9c8849be9ea12b560fdf5939fa2674dee42"
   },
   "rpcv2-json": {
     "assembled_sha256": "39446e1f8b195e069632f5e95f6d4b44605f0e99a9df5a2d30b9f94321d3cb1c",
     "fixture_sha256": "698c563eece76205e384984e4ea4a4cbe0ce0415d7663b2dbb2e20f6892e09e5",
-    "vectors_sha256": "7d3c938768f3dccab0978855990f5708ad124e1eaf1634f090b6f1987ebf590b"
+    "vectors_sha256": "028e0ff997ca28b290188b9b2f50496b5caa5ace1fed208e369ea7d46ff3ecdd"
   }
 }

@@ -24,6 +24,8 @@
     "../../codegen-output-py/query-compatible-rpcv2-cbor/src",
     "../../codegen-output-py/rest-json-1-client/src",
     "../../codegen-output-py/rest-json-1/src",
+    "../../codegen-output-py/rest-xml-client/src",
+    "../../codegen-output-py/rest-xml-with-namespace-client/src",
     "../../codegen-output-py/rest-xml-with-namespace/src",
     "../../codegen-output-py/rest-xml/src",
     "../../codegen-output-py/rpcv2-cbor-client/src",

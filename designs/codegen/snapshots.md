@@ -66,6 +66,8 @@ projections, generated with the public `client` command.
 | `aws-json-1-1-client` | `awsjson11_client` | 18 | 118 |
 | `query-compatible-aws-json-1-0-client` | `querycompatible_awsjson10_client` | 1 | 3 |
 | `rest-json-1-client` | `restjson_client` | 103 | 236 |
+| `rest-xml-client` | `restxml_client` | 65 | 178 |
+| `rest-xml-with-namespace-client` | `restxml_xmlns_client` | 1 | 2 |
 | `rpcv2-cbor-client` | `rpcv2cbor_client` | 14 | 72 |
 | `rpcv2-json-client` | `rpcv2json_client` | 15 | 73 |
 
@@ -98,7 +100,9 @@ declares them. Server-only vectors are left out. `models/provenance.json` record
 each file's hash. `tests/test_client_protocol_vectors.py` runs every vector
 through the sync and async clients of the matching snapshot. A request vector
 checks the method, host, path, query, headers, and body the client sends. JSON
-and CBOR bodies are compared decoded, and other bodies as bytes. A response
+and CBOR bodies are compared decoded, XML bodies parsed, and other bodies as
+bytes. Vectors keep their model's key order, since XML map entries are sent in
+order. A response
 vector's request is the smallest input the operation accepts. A response
 vector checks the output model or error it returns. Vectors that the Java client
 also fails or skips, and known runtime gaps, are marked as strict expected
