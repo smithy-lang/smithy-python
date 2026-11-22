@@ -18,14 +18,14 @@ from __future__ import annotations
 
 import datetime
 from base64 import b64decode
-from collections.abc import Collection, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import field as _field
 from dataclasses import make_dataclass
 from decimal import Decimal
 from enum import IntEnum, StrEnum
 from threading import RLock
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, cast, dataclass_transform
+from typing import Any, TypeAlias, cast, dataclass_transform
 
 from ._model_naming import (
     escape_input_member_names,
@@ -53,15 +53,12 @@ from .traits import (
 )
 from .types import UnknownEnumMixin
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-type _Writer = "Callable[[ShapeSerializer, Schema, Any], None]"
-type _Reader = "Callable[[ShapeDeserializer, Schema], Any]"
+_Writer: TypeAlias = Callable[[ShapeSerializer, Schema, Any], None]
+_Reader: TypeAlias = Callable[[ShapeDeserializer, Schema], Any]
 # Converts or checks a member's value: (value, redact, in_model) -> value. ``redact``
 # is set under a sensitive shape, where keys the caller wrote stay out of errors.
 # ``in_model`` is set inside a model the caller built, which is checked as it is.
-type _InputConverter = "Callable[[Any, bool, bool], Any]"
+_InputConverter: TypeAlias = Callable[[Any, bool, bool], Any]
 
 # Sequences that are never meant as a list of their elements.
 _NOT_A_LIST = (str, bytes, bytearray, memoryview)

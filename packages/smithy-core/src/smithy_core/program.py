@@ -8,19 +8,29 @@ signers), so the same program runs synchronously over sync components and
 asynchronously over async ones.
 """
 
+import sys
 from collections.abc import Callable, Generator
 from inspect import isawaitable
-from typing import Any
+from typing import Any, TypeVar
 
 from .exceptions import AsyncBodyError
 
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
+
 __all__ = ["Effect", "Program", "run_program"]
 
-type Effect = Callable[[], Any]
-type Program[T] = Generator[Effect, Any, T]
+_T = TypeVar("_T")
 
 
-def run_program[T](program: Program[T]) -> T:
+Effect = TypeAliasType("Effect", Callable[[], Any])
+Program = TypeAliasType("Program", Generator[Effect, Any, _T], type_params=(_T,))
+
+
+def run_program(program: Program[_T]) -> _T:
     """Drive a program to completion, calling each effect synchronously.
 
     :raises AsyncBodyError: If an effect returns an awaitable.

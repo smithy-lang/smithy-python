@@ -3,7 +3,7 @@
 import re
 from collections.abc import Mapping, Sequence
 from decimal import Decimal
-from typing import Protocol, cast, runtime_checkable
+from typing import Protocol, TypeAlias, cast, runtime_checkable
 
 from smithy_core.exceptions import SmithyError
 
@@ -15,7 +15,7 @@ class Flushable(Protocol):
     def flush(self) -> None: ...
 
 
-type JSONValue = (
+JSONValue: TypeAlias = (
     Mapping[str, "JSONValue"]
     | Sequence["JSONValue"]
     | str

@@ -6,11 +6,13 @@ from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
 from types import MappingProxyType
-from typing import overload
+from typing import TypeVar, overload
 
 from ..exceptions import ModelError, ShapeNotFoundError
 from ._shape_id import PRELUDE_NAMESPACE, ShapeId, as_shape_id
 from ._shapes import MemberShape, Node, ServiceShape, Shape, ShapeType
+
+_T = TypeVar("_T", bound=Shape)
 
 
 class Model:
@@ -72,7 +74,7 @@ class Model:
             raise ShapeNotFoundError(f"Shape {shape_id} is not defined in the model")
         return shape
 
-    def expect_shape[T: Shape](self, shape_id: ShapeId | str, kind: type[T]) -> T:
+    def expect_shape(self, shape_id: ShapeId | str, kind: type[_T]) -> _T:
         """Return the shape with this ID, requiring it to be a ``kind``."""
         shape = self.get_shape(shape_id)
         if not isinstance(shape, kind):
@@ -97,9 +99,9 @@ class Model:
     ) -> Iterator[Shape]: ...
 
     @overload
-    def iter_shapes[T: Shape](
-        self, kind: type[T], *, include_prelude: bool = False
-    ) -> Iterator[T]: ...
+    def iter_shapes(
+        self, kind: type[_T], *, include_prelude: bool = False
+    ) -> Iterator[_T]: ...
 
     @overload
     def iter_shapes(

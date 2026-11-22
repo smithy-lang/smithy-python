@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from io import BytesIO
-from typing import Any, ClassVar, Self
+from typing import Any, ClassVar, Self, TypeAlias, TypeVar
 
 import pytest
 
@@ -63,6 +63,8 @@ from smithy_http import protocols as protocols_module
 from smithy_http.aio.protocols import AsyncRpcV2JsonClientProtocol
 from smithy_http.protocols import RpcV2JsonClientProtocol
 from smithy_json import JSONCodec
+
+_T = TypeVar("_T")
 
 _NAMESPACE = "smithy.example"
 _SERVICE_NAME = "JsonService"
@@ -278,7 +280,7 @@ class MyUnionUnknown:
     tag: str
 
 
-type MyUnion = MyUnionStr | MyUnionNum | MyUnionUnknown
+MyUnion: TypeAlias = MyUnionStr | MyUnionNum | MyUnionUnknown
 
 
 class _MyUnionDeserializer:
@@ -377,7 +379,7 @@ class _Mode:
             return await read_streaming_blob_async(body)
         return read_streaming_blob(body)
 
-    async def run[T](self, program: Program[T]) -> T:
+    async def run(self, program: Program[_T]) -> _T:
         if self.is_async:
             return await run_program_async(program)
         return run_program(program)

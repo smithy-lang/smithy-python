@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, TypeAlias, cast
 
 from smithy_core.auth import DefaultAuthResolver
 from smithy_core.endpoints import BddEndpointResolver
@@ -97,5 +97,5 @@ class Config:
         self.force_path_style = force_path_style
 
 
-type Plugin = Callable[[Config], None]
+Plugin: TypeAlias = Callable[[Config], None]
 "A callable that customizes the client configuration."

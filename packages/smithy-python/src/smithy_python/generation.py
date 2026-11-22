@@ -7,7 +7,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Protocol
+from typing import Generic, Protocol, TypeVar
 
 from . import dependencies as _dependencies
 from . import files as _files
@@ -27,6 +27,12 @@ __all__ = [
     "OperationModel",
     "TypesSettings",
 ]
+
+_SettingsT_co = TypeVar("_SettingsT_co", bound="ArtifactSettings", covariant=True)
+_SettingsT_contra = TypeVar(
+    "_SettingsT_contra", bound="ArtifactSettings", contravariant=True
+)
+
 
 _SERVICE_ERROR = "ServiceError"
 _UNIT = _model.ShapeId("smithy.api", "Unit")
@@ -209,12 +215,12 @@ class GenerationPlan:
 
 
 @dataclass(frozen=True, slots=True)
-class GenerationContext[SettingsT: ArtifactSettings]:
+class GenerationContext(Generic[_SettingsT_co]):
     """State shared by one artifact generation."""
 
     model: _model.Model
     selection: _selection.Selection
-    settings: SettingsT
+    settings: _SettingsT_co
     symbols: _symbols.SymbolProvider
     plan: GenerationPlan
     dependencies: _dependencies.DependencySet
@@ -227,9 +233,9 @@ class GenerationContext[SettingsT: ArtifactSettings]:
             )
 
 
-class ArtifactGenerator[SettingsT: ArtifactSettings](Protocol):
+class ArtifactGenerator(Protocol[_SettingsT_contra]):
     """Generate one artifact into the context's file manifest."""
 
-    def generate(self, context: GenerationContext[SettingsT]) -> None:
+    def generate(self, context: GenerationContext[_SettingsT_contra]) -> None:
         """Register every generated file and dependency."""
         ...

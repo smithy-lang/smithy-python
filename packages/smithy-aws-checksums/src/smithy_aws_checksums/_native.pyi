@@ -2,9 +2,9 @@
 #  SPDX-License-Identifier: Apache-2.0
 """Type stubs for the native extension built from ``rust/lib.rs``."""
 
-from typing import Self
+from typing import Self, TypeAlias
 
-type _Bytes = bytes | bytearray | memoryview
+_Bytes: TypeAlias = bytes | bytearray | memoryview
 
 class Crc32:
     def update(self, data: _Bytes, /) -> None: ...

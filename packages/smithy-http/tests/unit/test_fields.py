@@ -4,6 +4,8 @@
 # mypy: allow-untyped-defs
 # mypy: allow-incomplete-defs
 
+import sys
+
 import pytest
 from smithy_http import Field, Fields, tuples_to_fields
 
@@ -216,9 +218,15 @@ def test_fields_length_value(fields: Fields, expected_length: int) -> None:
     [
         (
             Fields([Field(name="fname1")]),
+            # Python 3.12 changed OrderedDict's repr to the dict form.
             (
                 "Fields(OrderedDict({'fname1': Field(name='fname1', value=[], "
                 "kind='header')}))"
+            )
+            if sys.version_info >= (3, 12)
+            else (
+                "Fields(OrderedDict([('fname1', Field(name='fname1', value=[], "
+                "kind='header'))]))"
             ),
         ),
     ],

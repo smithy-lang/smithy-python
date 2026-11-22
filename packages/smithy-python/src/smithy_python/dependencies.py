@@ -4,11 +4,18 @@
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Collection, Iterable, Iterator
 from dataclasses import dataclass
 from typing import Literal
 
 from . import exceptions as _exceptions
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 __all__ = [
     "HATCHLING",
@@ -22,7 +29,9 @@ __all__ = [
     "DependencySet",
 ]
 
-type DependencyGroup = Literal["runtime", "build", "test", "docs"]
+DependencyGroup = TypeAliasType(
+    "DependencyGroup", Literal["runtime", "build", "test", "docs"]
+)
 
 _GROUP_ORDER: dict[DependencyGroup, int] = {
     "runtime": 0,

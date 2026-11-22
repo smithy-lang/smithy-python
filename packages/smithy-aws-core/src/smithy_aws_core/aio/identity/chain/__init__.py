@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import logging
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
 from smithy_core.aio.program import run_program_async
@@ -20,20 +20,26 @@ from .provider import AsyncChainSetup
 
 __all__ = ("AsyncIdentityChain",)
 
+_ChainIdentity = TypeVar("_ChainIdentity", bound=Identity)
+_I_co = TypeVar("_I_co", bound=Identity, covariant=True)
+
+
 _CHAIN_PROVIDER_ENTRY_POINT_GROUP = "smithy_aws_core.aio.identity.chain_providers"
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class AsyncIdentityChain[I: Identity](
-    _IdentityChainBase[I], AsyncIdentityResolver[I, Mapping[str, Any]]
+class AsyncIdentityChain(
+    _IdentityChainBase[_I_co],
+    AsyncIdentityResolver[_I_co, Mapping[str, Any]],
+    Generic[_I_co],
 ):
     """Resolves identities from an assembled sequence of resolvers."""
 
     def __init__(
         self,
-        resolvers: Sequence[AsyncIdentityResolver[I, Any]],
+        resolvers: Sequence[AsyncIdentityResolver[_I_co, Any]],
         *,
-        identity_type: type[I] | None = None,
+        identity_type: type[_I_co] | None = None,
         unclaimed_sources: Sequence[UnclaimedSource] = (),
     ) -> None:
         """Initialize the chain with resolvers in precedence order.
@@ -50,14 +56,14 @@ class AsyncIdentityChain[I: Identity](
         )
 
     @staticmethod
-    async def create[ChainIdentity: Identity](
-        identity_type: type[ChainIdentity],
+    async def create(
+        identity_type: type[_ChainIdentity],
         *,
         config_file: MergedConfig | None = None,
         profile_name: str | None = None,
         region_override: str | None = None,
         http_client: AsyncHTTPClient | None = None,
-    ) -> "AsyncIdentityChain[ChainIdentity]":
+    ) -> "AsyncIdentityChain[_ChainIdentity]":
         """Create an identity chain from discovered providers.
 
         :param identity_type: The identity type to resolve.
@@ -87,7 +93,7 @@ class AsyncIdentityChain[I: Identity](
             unclaimed_sources=unclaimed_sources,
         )
 
-    async def get_identity(self, *, properties: Mapping[str, Any]) -> I:
+    async def get_identity(self, *, properties: Mapping[str, Any]) -> _I_co:
         """Return the first identity resolved by the chain."""
         return await run_program_async(self._get_identity(properties))
 

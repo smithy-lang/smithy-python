@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from math import isinf, isnan
 from types import UnionType
-from typing import Any, overload
+from typing import Any, TypeVar, overload
 from urllib.parse import urlsplit
 
 from . import URI as _URI
@@ -31,6 +31,9 @@ __all__ = [
     "strict_parse_bool",
     "strict_parse_float",
 ]
+
+_T = TypeVar("_T")
+
 
 RFC3339 = "%Y-%m-%dT%H:%M:%SZ"
 """``strftime`` format for RFC 3339 timestamps in whole seconds."""
@@ -93,7 +96,7 @@ def epoch_seconds_to_datetime(value: int | float) -> datetime:
 
 
 @overload
-def expect_type[T](typ: type[T], value: Any) -> T: ...
+def expect_type(typ: type[_T], value: Any) -> _T: ...
 
 
 # For some reason, mypy and other type checkers don't treat Union like a full type

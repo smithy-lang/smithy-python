@@ -5,7 +5,7 @@ name = "querycompatiblerpcv2cbor"
 version = "0.0.1"
 description = "Python client for Query Compatible RpcV2 Protocol Service"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 keywords = ["smithy", "querycompatiblerpcv2cbor"]
 license = {text = "Apache-2.0"}
 classifiers = [
@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
@@ -58,7 +59,7 @@ enableExperimentalFeatures = true
 exclude = ["**/models.py"]
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 
 [tool.ruff.lint]
 ignore = ["F841"]

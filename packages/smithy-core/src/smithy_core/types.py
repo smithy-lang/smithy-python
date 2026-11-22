@@ -9,7 +9,16 @@ from dataclasses import dataclass
 from datetime import datetime
 from email.utils import format_datetime, parsedate_to_datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Self, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Generic,
+    Self,
+    TypeAlias,
+    TypeVar,
+    overload,
+)
 
 from .exceptions import ExpectationNotMetError
 from .interfaces import PropertyKey as _PropertyKey
@@ -21,6 +30,11 @@ from .utils import (
     serialize_epoch_seconds,
     serialize_rfc3339,
 )
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
 
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
@@ -36,11 +50,36 @@ __all__ = [
     "UnknownEnumMixin",
 ]
 
+_DT = TypeVar("_DT")
+_T = TypeVar("_T")
+
+
 _GREEDY_LABEL_RE = re.compile(r"\{(\w+)\+\}")
 
-type Document = (
-    Mapping[str, "Document"] | Sequence["Document"] | str | int | float | bool | None
-)
+# Type checkers read the recursive TypeAlias; at runtime the alias is a named
+# TypeAliasType, so annotations that use it resolve without the caller's globals.
+# Keep both values identical.
+if TYPE_CHECKING:
+    Document: TypeAlias = (
+        Mapping[str, "Document"]
+        | Sequence["Document"]
+        | str
+        | int
+        | float
+        | bool
+        | None
+    )
+else:
+    Document = TypeAliasType(
+        "Document",
+        Mapping[str, "Document"]
+        | Sequence["Document"]
+        | str
+        | int
+        | float
+        | bool
+        | None,
+    )
 
 
 class JsonString(str):
@@ -237,7 +276,7 @@ class PathPattern:
 
 
 @dataclass(kw_only=True, frozen=True, slots=True, init=False)
-class PropertyKey[T](_PropertyKey[T]):
+class PropertyKey(_PropertyKey[_T], Generic[_T]):
     """A typed property key.
 
     .. code-block:: python
@@ -251,10 +290,10 @@ class PropertyKey[T](_PropertyKey[T]):
     key: str
     """The string key used to access the value."""
 
-    value_type: "TypeForm[T]"
+    value_type: "TypeForm[_T]"
     """The type of the associated value in the property bag."""
 
-    def __init__(self, *, key: str, value_type: "TypeForm[T]") -> None:
+    def __init__(self, *, key: str, value_type: "TypeForm[_T]") -> None:
         # Intern the key to speed up dict access
         object.__setattr__(self, "key", sys.intern(key))
         object.__setattr__(self, "value_type", value_type)
@@ -304,14 +343,14 @@ class TypedProperties(UserDict[str, Any], _TypedProperties):
     """
 
     @overload
-    def __getitem__[T](self, key: _PropertyKey[T]) -> T: ...
+    def __getitem__(self, key: _PropertyKey[_T]) -> _T: ...
     @overload
     def __getitem__(self, key: str) -> Any: ...
     def __getitem__(self, key: str | _PropertyKey[Any]) -> Any:
         return self.data[key if isinstance(key, str) else key.key]
 
     @overload
-    def __setitem__[T](self, key: _PropertyKey[T], value: T) -> None: ...
+    def __setitem__(self, key: _PropertyKey[_T], value: _T) -> None: ...
     @overload
     def __setitem__(self, key: str, value: Any) -> None: ...
     def __setitem__(self, key: str | _PropertyKey[Any], value: Any) -> None:
@@ -324,15 +363,15 @@ class TypedProperties(UserDict[str, Any], _TypedProperties):
         return super().__contains__(key.key if isinstance(key, _PropertyKey) else key)
 
     @overload
-    def get[T](self, key: _PropertyKey[T], default: None = None) -> T | None: ...
+    def get(self, key: _PropertyKey[_T], default: None = None) -> _T | None: ...
     @overload
-    def get[T](self, key: _PropertyKey[T], default: T) -> T: ...
+    def get(self, key: _PropertyKey[_T], default: _T) -> _T: ...
     @overload
-    def get[T, DT](self, key: _PropertyKey[T], default: DT) -> T | DT: ...
+    def get(self, key: _PropertyKey[_T], default: _DT) -> _T | _DT: ...
     @overload
     def get(self, key: str, default: None = None) -> Any | None: ...
     @overload
-    def get[T](self, key: str, default: T) -> Any | T: ...
+    def get(self, key: str, default: _T) -> Any | _T: ...
 
     # pyright has trouble detecting compatible overrides when both the superclass
     # and subclass have overloads.
@@ -340,15 +379,15 @@ class TypedProperties(UserDict[str, Any], _TypedProperties):
         return self.data.get(key if isinstance(key, str) else key.key, default)
 
     @overload
-    def pop[T](self, key: _PropertyKey[T], default: None = None) -> T | None: ...
+    def pop(self, key: _PropertyKey[_T], default: None = None) -> _T | None: ...
     @overload
-    def pop[T](self, key: _PropertyKey[T], default: T) -> T: ...
+    def pop(self, key: _PropertyKey[_T], default: _T) -> _T: ...
     @overload
-    def pop[T, DT](self, key: _PropertyKey[T], default: DT) -> T | DT: ...
+    def pop(self, key: _PropertyKey[_T], default: _DT) -> _T | _DT: ...
     @overload
     def pop(self, key: str, default: None = None) -> Any | None: ...
     @overload
-    def pop[T](self, key: str, default: T) -> Any | T: ...
+    def pop(self, key: str, default: _T) -> Any | _T: ...
 
     # pyright has trouble detecting compatible overrides when both the superclass
     # and subclass have overloads.

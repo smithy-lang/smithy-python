@@ -153,7 +153,7 @@ public final class SetupGenerator {
                     version = $2S
                     description = $3S
                     readme = "README.md"
-                    requires-python = ">=3.12"
+                    requires-python = ">=3.11"
                     keywords = ["smithy", $1S]
                     license = {text = "Apache-2.0"}
                     classifiers = [
@@ -165,6 +165,7 @@ public final class SetupGenerator {
                         "Programming Language :: Python",
                         "Programming Language :: Python :: 3",
                         "Programming Language :: Python :: 3 :: Only",
+                        "Programming Language :: Python :: 3.11",
                         "Programming Language :: Python :: 3.12",
                         "Programming Language :: Python :: 3.13",
                         "Programming Language :: Python :: 3.14",
@@ -208,7 +209,7 @@ public final class SetupGenerator {
                     exclude = ["**/models.py"]
 
                     [tool.ruff]
-                    target-version = "py312"
+                    target-version = "py311"
 
                     [tool.ruff.lint]
                     ignore = ["F841"]

@@ -3,7 +3,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, ClassVar, Final
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeVar
 from xml.etree.ElementTree import Element
 
 from smithy_core import URI as _URI
@@ -63,6 +63,12 @@ from .utils import (
     parse_response_metadata,
     parse_retry_after,
 )
+
+_I = TypeVar("_I", bound=SerializeableShape)
+_O = TypeVar("_O", bound=DeserializeableShape)
+_OperationInput = TypeVar("_OperationInput", bound=SerializeableShape)
+_OperationOutput = TypeVar("_OperationOutput", bound=DeserializeableShape)
+
 
 try:
     from smithy_json import JSONCodec, JSONDocument
@@ -201,15 +207,12 @@ class RestXmlClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol
     def content_type(self) -> str:
         return self._content_type
 
-    def _deserialize_output[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def _deserialize_output(
         self,
-        operation: APIOperation[OperationInput, OperationOutput],
+        operation: APIOperation[_OperationInput, _OperationOutput],
         response: HTTPResponse,
         body: SyncStreamingBlob | None,
-    ) -> OperationOutput:
+    ) -> _OperationOutput:
         if operation.schema.get_trait(S3UnwrappedXmlOutputTrait) is None:
             return super()._deserialize_output(operation, response, body)
         output_schema = operation.output_schema
@@ -344,14 +347,11 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
     def error_identifier(self) -> HTTPErrorIdentifier:
         return self._error_identifier
 
-    def serialize_request[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def serialize_request(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
-        input: OperationInput,
+        operation: APIOperation[_OperationInput, _OperationOutput],
+        input: _OperationInput,
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
@@ -398,18 +398,15 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
             http2_required=http2_required,
         )
 
-    def _deserialize_body[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def _deserialize_body(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
+        operation: APIOperation[_OperationInput, _OperationOutput],
         response: HTTPResponse,
         body: bytes,
         error_registry: TypeRegistry,
         context: TypedProperties,
-    ) -> OperationOutput:
+    ) -> _OperationOutput:
         if not self._is_success(operation, context, response):
             raise self._create_error(
                 operation=operation,
@@ -579,14 +576,11 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
             return metadata
         return replace(metadata, request_id=recorded.value)
 
-    def serialize_request[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def serialize_request(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
-        input: OperationInput,
+        operation: APIOperation[_OperationInput, _OperationOutput],
+        input: _OperationInput,
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
@@ -613,18 +607,15 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
             body=sink,
         )
 
-    def _deserialize_body[
-        OperationInput: SerializeableShape,
-        OperationOutput: DeserializeableShape,
-    ](
+    def _deserialize_body(
         self,
         *,
-        operation: APIOperation[OperationInput, OperationOutput],
+        operation: APIOperation[_OperationInput, _OperationOutput],
         response: HTTPResponse,
         body: bytes,
         error_registry: TypeRegistry,
         context: TypedProperties,
-    ) -> OperationOutput:
+    ) -> _OperationOutput:
         root = parse_xml_root(body)
 
         # Recorded before any branch below returns or raises, so successes, empty
@@ -706,15 +697,15 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
             sink=sink, action=action, version=self._version, params=params
         )
 
-    def _action_name[I: SerializeableShape, O: DeserializeableShape](
+    def _action_name(
         self,
-        operation: APIOperation[I, O],
+        operation: APIOperation[_I, _O],
     ) -> str:
         return operation.schema.id.name
 
-    def _response_wrapper_elements[I: SerializeableShape, O: DeserializeableShape](
+    def _response_wrapper_elements(
         self,
-        operation: APIOperation[I, O],
+        operation: APIOperation[_I, _O],
     ) -> tuple[str, ...]:
         name = operation.schema.id.name
         # Operations with no output members will omit the <OpResult> element.
@@ -750,9 +741,9 @@ class Ec2QueryClientProtocol(AwsQueryClientProtocol):
             sink=sink, action=action, version=self._version, params=params
         )
 
-    def _response_wrapper_elements[I: SerializeableShape, O: DeserializeableShape](
+    def _response_wrapper_elements(
         self,
-        operation: APIOperation[I, O],
+        operation: APIOperation[_I, _O],
     ) -> tuple[str, ...]:
         return (f"{operation.schema.id.name}Response",)
 

@@ -1,6 +1,8 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
+import sys
+
 import pytest
 from aws_sdk_signers import Field, Fields
 
@@ -208,9 +210,15 @@ def test_fields_length_value(fields: Fields, expected_length: int) -> None:
     [
         (
             Fields([Field(name="fname1")]),
+            # Python 3.12 changed OrderedDict's repr to the dict form.
             (
                 "Fields(OrderedDict({'fname1': Field(name='fname1', value=[], "
                 "kind='header')}))"
+            )
+            if sys.version_info >= (3, 12)
+            else (
+                "Fields(OrderedDict([('fname1', Field(name='fname1', value=[], "
+                "kind='header'))]))"
             ),
         ),
     ],

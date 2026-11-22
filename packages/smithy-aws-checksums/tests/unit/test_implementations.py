@@ -11,6 +11,7 @@ import random
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from types import ModuleType
+from typing import TypeAlias
 
 import pytest
 from smithy_aws_checksums._private import crc, xxhash
@@ -18,7 +19,7 @@ from smithy_aws_checksums._private.selection import ChecksumImpl
 
 from .vectors import ALGORITHMS, KNOWN_ANSWERS, PATTERN_DIGESTS, pattern
 
-type Factory = Callable[[], ChecksumImpl]
+Factory: TypeAlias = Callable[[], ChecksumImpl]
 
 PURE: dict[str, Factory] = {
     "crc32": crc.Crc32,

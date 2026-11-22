@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable, Collection, Mapping
 from dataclasses import replace
 from json import dumps
@@ -14,6 +15,12 @@ from . import dependencies as _dependencies
 from . import exceptions as _exceptions
 from . import model as _model
 from . import symbols as _symbols
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 
 if TYPE_CHECKING:
     from .generation import GenerationContext, ModelArtifactSettings, ModelPlan
@@ -89,7 +96,7 @@ _SEQUENCE: Final = _symbols.TypeReference("Sequence", "collections.abc")
 _MAPPING: Final = _symbols.TypeReference("Mapping", "collections.abc")
 _UNIT_ID: Final = _model.ShapeId("smithy.api", "Unit")
 
-type _SourcePart = str | _symbols.TypeReference
+_SourcePart = TypeAliasType("_SourcePart", str | _symbols.TypeReference)
 
 _ERROR_MESSAGE_NAMES: Final = frozenset({"errormessage", "error_message", "message"})
 _DOCSTRING_WIDTH: Final = 72

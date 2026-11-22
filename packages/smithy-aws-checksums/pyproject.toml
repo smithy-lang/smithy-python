@@ -2,7 +2,7 @@
 name = "smithy-aws-checksums"
 # The version must stay static: both build backends read it from here.
 version = "0.1.1"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 authors = [
   {name = "Amazon Web Services"},
 ]
@@ -20,6 +20,7 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
@@ -29,7 +30,9 @@ classifiers = [
   "Programming Language :: Rust",
   "Topic :: Software Development :: Libraries"
 ]
-dependencies = []
+dependencies = [
+    "typing-extensions>=4.14.0; python_version < '3.12'",
+]
 
 [project.urls]
 "Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-aws-checksums/CHANGELOG.md"

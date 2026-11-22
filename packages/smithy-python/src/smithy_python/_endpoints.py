@@ -15,9 +15,10 @@ import base64
 import binascii
 import re
 import struct
+import sys
 from collections.abc import Collection, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 from . import dependencies as _dependencies
 from . import exceptions as _exceptions
@@ -25,11 +26,22 @@ from . import model as _model
 from . import symbols as _symbols
 from .symbols import TypeReference
 
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
 if TYPE_CHECKING:
     from .writer import PythonWriter
 
-type Value = None | bool | int | str | tuple[Value, ...]
-"""A lowered value: a Python literal, with tuples for every sequence."""
+# Type checkers read the recursive TypeAlias; at runtime the alias is a named
+# TypeAliasType, so annotations that use it resolve without the caller's globals.
+# Keep both values identical.
+if TYPE_CHECKING:
+    Value: TypeAlias = None | bool | int | str | tuple["Value", ...]
+    """A lowered value: a Python literal, with tuples for every sequence."""
+else:
+    Value = TypeAliasType("Value", None | bool | int | str | tuple["Value", ...])
 
 
 @dataclass(frozen=True, slots=True)

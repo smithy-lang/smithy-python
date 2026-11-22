@@ -10,13 +10,20 @@ path against the input shape, so values are trusted to have their modeled types.
 
 import json
 import re
+import sys
 from collections.abc import Callable, Iterable
 from dataclasses import fields, is_dataclass
 from typing import Any, NamedTuple
 
 from ._model_naming import member_field_name
 
-type _Closure = Callable[[Any], Any]
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
+
+
+_Closure = TypeAliasType("_Closure", Callable[[Any], Any])
 
 
 def compile(expression: str) -> _Closure:

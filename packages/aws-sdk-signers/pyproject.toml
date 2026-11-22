@@ -1,7 +1,7 @@
 [project]
 name = "aws-sdk-signers"
 dynamic = ["version"]
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 authors = [
   {name = "Amazon Web Services"},
 ]
@@ -19,6 +19,7 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
@@ -26,6 +27,9 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Free Threading :: 2 - Beta",
   "Topic :: Software Development :: Libraries"
+]
+dependencies = [
+    "typing-extensions>=4.14.0; python_version < '3.12'",
 ]
 
 [project.urls]

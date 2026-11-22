@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from collections.abc import Mapping
-from typing import Any, Protocol
+from typing import Any, Protocol, TypeVar
 
 from smithy_core.interfaces import Request
 
@@ -11,11 +11,20 @@ from ...interfaces.identity import Identity
 from ...shapes import ShapeID
 from .identity import AsyncIdentityResolver
 
+_I_contra = TypeVar("_I_contra", contravariant=True)
+_AuthIdentity = TypeVar("_AuthIdentity", bound=Identity)
+_IP = TypeVar("_IP", bound=Mapping[str, Any])
+_R = TypeVar("_R", bound=Request)
+_SP = TypeVar("_SP", bound=Mapping[str, Any])
+_SP_contra = TypeVar("_SP_contra", bound=Mapping[str, Any], contravariant=True)
 
-class AsyncSigner[R: Request, I, SP: Mapping[str, Any]](Protocol):
+
+class AsyncSigner(Protocol[_R, _I_contra, _SP_contra]):
     """A class that signs requests before they are sent."""
 
-    async def sign(self, *, request: R, identity: I, properties: SP) -> R:
+    async def sign(
+        self, *, request: _R, identity: _I_contra, properties: _SP_contra
+    ) -> _R:
         """Get a signed version of the request.
 
         :param request: The request to be signed.
@@ -25,18 +34,13 @@ class AsyncSigner[R: Request, I, SP: Mapping[str, Any]](Protocol):
         ...
 
 
-class AsyncAuthScheme[
-    R: Request,
-    I: Identity,
-    IP: Mapping[str, Any],
-    SP: Mapping[str, Any],
-](Protocol):
+class AsyncAuthScheme(Protocol[_R, _AuthIdentity, _IP, _SP]):
     """A class that coordinates identity and auth."""
 
     scheme_id: ShapeID
     """The ID of the auth scheme."""
 
-    def identity_properties(self, *, context: _TypedProperties) -> IP:
+    def identity_properties(self, *, context: _TypedProperties) -> _IP:
         """Construct identity properties from the request context.
 
         The context will always include the client's config under "config". Other
@@ -48,7 +52,7 @@ class AsyncAuthScheme[
 
     def identity_resolver(
         self, *, context: _TypedProperties
-    ) -> AsyncIdentityResolver[I, IP]:
+    ) -> AsyncIdentityResolver[_AuthIdentity, _IP]:
         """Get an identity resolver for the request.
 
         The context will always include the client's config under "config". Other
@@ -58,7 +62,7 @@ class AsyncAuthScheme[
         """
         ...
 
-    def signer_properties(self, *, context: _TypedProperties) -> SP:
+    def signer_properties(self, *, context: _TypedProperties) -> _SP:
         """Construct signer properties from the request context.
 
         The context will always include the client's config under "config". Other
@@ -68,14 +72,16 @@ class AsyncAuthScheme[
         """
         ...
 
-    def signer(self) -> AsyncSigner[R, I, SP] | Signer[R, I, SP]:
+    def signer(
+        self,
+    ) -> AsyncSigner[_R, _AuthIdentity, _SP] | Signer[_R, _AuthIdentity, _SP]:
         """Get a signer for the request.
 
         Signers that do no I/O may be synchronous.
         """
         ...
 
-    def event_signer(self, *, request: R) -> EventSigner[I, SP] | None:
+    def event_signer(self, *, request: _R) -> EventSigner[_AuthIdentity, _SP] | None:
         """Construct a signer for event stream events.
 
         :param request: The request that will initiate the event stream. The request

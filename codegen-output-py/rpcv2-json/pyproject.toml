@@ -5,7 +5,7 @@ name = "rpcv2json"
 version = "0.0.1"
 description = "Native Python types for the rpcv2-json projection"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 keywords = ["smithy", "rpcv2json"]
 license = {text = "Apache-2.0"}
 dependencies = [
@@ -27,7 +27,7 @@ packages = [
 typeCheckingMode = "strict"
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 
 [tool.ruff.lint]
 ignore = ["F841"]
