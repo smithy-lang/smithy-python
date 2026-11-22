@@ -46,6 +46,20 @@
     "service": "aws.protocoltests.restjson#RestJson",
     "version": "0.0.1"
   },
+  "rest-xml-client": {
+    "description": "Python client for the rest-xml projection",
+    "model": "models/rest-xml.json",
+    "package": "restxml_client",
+    "service": "aws.protocoltests.restxml#RestXml",
+    "version": "0.0.1"
+  },
+  "rest-xml-with-namespace-client": {
+    "description": "Python client for the rest-xml-with-namespace projection",
+    "model": "models/rest-xml-with-namespace.json",
+    "package": "restxml_xmlns_client",
+    "service": "aws.protocoltests.restxml.xmlns#RestXmlWithNamespace",
+    "version": "0.0.1"
+  },
   "rpcv2-cbor-client": {
     "description": "Python client for the rpcv2-cbor projection",
     "model": "models/rpcv2-cbor.json",

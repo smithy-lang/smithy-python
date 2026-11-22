@@ -2,64 +2,64 @@
   "aws.protocoltests.json10#CustomCodeError": {
     "responses": [
       {
-        "body": "{\n    \"__type\": \"aws.protocoltests.json10#CustomCodeError\",\n    \"message\": \"Hi\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 400,
+        "id": "QueryCompatibleAwsJson10CustomCodeError",
         "documentation": "Parses simple errors with query error code",
+        "protocol": "aws.protocols#awsJson1_0",
+        "params": {
+          "message": "Hi"
+        },
+        "code": 400,
         "headers": {
           "Content-Type": "application/x-amz-json-1.0",
           "x-amzn-query-error": "Customized;Sender"
         },
-        "id": "QueryCompatibleAwsJson10CustomCodeError",
-        "params": {
-          "message": "Hi"
-        },
-        "protocol": "aws.protocols#awsJson1_0",
+        "body": "{\n    \"__type\": \"aws.protocoltests.json10#CustomCodeError\",\n    \"message\": \"Hi\"\n}",
+        "bodyMediaType": "application/json",
+        "vendorParamsShape": "aws.protocoltests.config#ErrorCodeParams",
         "vendorParams": {
           "code": "Customized",
           "type": "Sender"
-        },
-        "vendorParamsShape": "aws.protocoltests.config#ErrorCodeParams"
+        }
       }
     ]
   },
   "aws.protocoltests.json10#NoCustomCodeError": {
     "responses": [
       {
-        "body": "{\n    \"__type\": \"aws.protocoltests.json10#NoCustomCodeError\",\n    \"message\": \"Hi\"\n}",
-        "bodyMediaType": "application/json",
-        "code": 400,
-        "documentation": "Parses simple errors with no query error code",
-        "headers": {
-          "Content-Type": "application/x-amz-json-1.0"
-        },
         "id": "QueryCompatibleAwsJson10NoCustomCodeError",
+        "documentation": "Parses simple errors with no query error code",
+        "protocol": "aws.protocols#awsJson1_0",
         "params": {
           "message": "Hi"
         },
-        "protocol": "aws.protocols#awsJson1_0",
+        "code": 400,
+        "headers": {
+          "Content-Type": "application/x-amz-json-1.0"
+        },
+        "body": "{\n    \"__type\": \"aws.protocoltests.json10#NoCustomCodeError\",\n    \"message\": \"Hi\"\n}",
+        "bodyMediaType": "application/json",
+        "vendorParamsShape": "aws.protocoltests.config#ErrorCodeParams",
         "vendorParams": {
           "code": "NoCustomCodeError"
-        },
-        "vendorParamsShape": "aws.protocoltests.config#ErrorCodeParams"
+        }
       }
     ]
   },
   "aws.protocoltests.json10#QueryCompatibleOperation": {
     "requests": [
       {
-        "body": "{}",
-        "bodyMediaType": "application/json",
+        "id": "QueryCompatibleAwsJson10CborSendsQueryModeHeader",
         "documentation": "Clients for query-compatible services MUST send the x-amzn-query-mode header.",
+        "protocol": "aws.protocols#awsJson1_0",
+        "method": "POST",
         "headers": {
           "Content-Type": "application/x-amz-json-1.0",
-          "X-Amz-Target": "QueryCompatibleJsonRpc10.QueryCompatibleOperation",
-          "x-amzn-query-mode": "true"
+          "x-amzn-query-mode": "true",
+          "X-Amz-Target": "QueryCompatibleJsonRpc10.QueryCompatibleOperation"
         },
-        "id": "QueryCompatibleAwsJson10CborSendsQueryModeHeader",
-        "method": "POST",
-        "protocol": "aws.protocols#awsJson1_0",
-        "uri": "/"
+        "uri": "/",
+        "body": "{}",
+        "bodyMediaType": "application/json"
       }
     ]
   }
