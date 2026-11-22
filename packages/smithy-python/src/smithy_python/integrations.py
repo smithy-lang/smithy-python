@@ -82,6 +82,10 @@ class ConfigPlan:
     protocol_settings: str
     """The name of the module-level ``ProtocolSettings`` constant."""
 
+    host_prefix: bool = False
+    """Whether an operation has an endpoint host prefix, so the config has
+    ``disable_host_prefix_injection``."""
+
 
 class ClientIntegration:
     """Changes the clients generated for the services it matches.
