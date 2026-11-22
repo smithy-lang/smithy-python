@@ -64,6 +64,8 @@ projections, generated with the public `client` command.
 | --- | --- | ---: | ---: |
 | `aws-json-1-0-client` | `awsjson10_client` | 16 | 67 |
 | `aws-json-1-1-client` | `awsjson11_client` | 18 | 118 |
+| `aws-query-client` | `awsquery_client` | 33 | 77 |
+| `ec2-query-client` | `ec2query_client` | 25 | 59 |
 | `query-compatible-aws-json-1-0-client` | `querycompatible_awsjson10_client` | 1 | 3 |
 | `rest-json-1-client` | `restjson_client` | 103 | 236 |
 | `rest-xml-client` | `restxml_client` | 65 | 178 |

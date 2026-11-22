@@ -13,6 +13,20 @@
     "service": "aws.protocoltests.json#JsonProtocol",
     "version": "0.0.1"
   },
+  "aws-query-client": {
+    "description": "Python client for the aws-query projection",
+    "model": "models/aws-query.json",
+    "package": "awsquery_client",
+    "service": "aws.protocoltests.query#AwsQuery",
+    "version": "0.0.1"
+  },
+  "ec2-query-client": {
+    "description": "Python client for the ec2-query projection",
+    "model": "models/ec2-query.json",
+    "package": "ec2query_client",
+    "service": "aws.protocoltests.ec2#AwsEc2",
+    "version": "0.0.1"
+  },
   "features-client": {
     "description": "Python client for the client features fixture",
     "model": "models/features.json",

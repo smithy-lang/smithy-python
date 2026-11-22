@@ -1366,6 +1366,33 @@ def test_aws_json_services_use_the_aws_core_protocol(
     )
 
 
+@pytest.mark.parametrize(
+    ("trait", "protocol"),
+    [("awsQuery", "AwsQueryClientProtocol"), ("ec2Query", "Ec2QueryClientProtocol")],
+)
+def test_query_services_use_the_aws_core_protocol(
+    tmp_path: Path, trait: str, protocol: str
+) -> None:
+    shapes = _shapes()
+    shapes["example#Greeter"]["traits"] = {f"aws.protocols#{trait}": {}}
+    model = load_model({"smithy": "2.0", "shapes": shapes})
+    settings = ClientSettings("greeter_query", "1.0.0", None)
+    generator = ClientGenerator(
+        ClientPlan.from_model(model, settings, protocols=_aws.AWS_PROTOCOLS),
+        protocols=_aws.AWS_PROTOCOLS,
+    )
+    context = generator.context()
+    generator.generate(context)
+    context.files.commit(tmp_path)
+    source = tmp_path / "src/greeter_query"
+    # Async clients use the sync protocol, since query has no event streams.
+    for path in ("config.py", "aio/config.py"):
+        assert f" {protocol}(_PROTOCOL_SETTINGS)" in (source / path).read_text()
+    assert (
+        '"smithy-aws-core[xml]~=0.16.0",' in (tmp_path / "pyproject.toml").read_text()
+    )
+
+
 def test_rest_xml_services_use_the_aws_core_protocol(tmp_path: Path) -> None:
     shapes = _shapes()
     shapes["example#Greeter"]["traits"] = {
