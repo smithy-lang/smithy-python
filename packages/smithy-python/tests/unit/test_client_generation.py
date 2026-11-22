@@ -671,6 +671,41 @@ def test_aws_services_get_named_resolving_clients(tmp_path: Path) -> None:
     assert '"smithy-aws-core~=0.16.0",' in (tmp_path / "pyproject.toml").read_text()
 
 
+def test_rest_json_services_use_the_aws_core_protocol(tmp_path: Path) -> None:
+    shapes = _shapes()
+    shapes["example#Greeter"]["traits"] = {"aws.protocols#restJson1": {}}
+    shapes["example#Greet"]["traits"] = {
+        "smithy.api#http": {"method": "POST", "uri": "/greet"}
+    }
+    with pytest.raises(CodegenError, match="has no supported protocol"):
+        _generate(tmp_path / "core", "greeter_core", shapes)
+
+    model = load_model({"smithy": "2.0", "shapes": shapes})
+    settings = ClientSettings("greeter_rest", "1.0.0", None)
+    generator = ClientGenerator(
+        ClientPlan.from_model(model, settings, protocols=_aws.AWS_PROTOCOLS),
+        protocols=_aws.AWS_PROTOCOLS,
+    )
+    context = generator.context()
+    generator.generate(context)
+    output = tmp_path / "rest"
+    context.files.commit(output)
+    source = output / "src/greeter_rest"
+    assert (
+        "RestJsonClientProtocol(_PROTOCOL_SETTINGS)"
+        in (source / "config.py").read_text()
+    )
+    assert (
+        "AsyncRestJsonClientProtocol(_PROTOCOL_SETTINGS)"
+        in (source / "aio/config.py").read_text()
+    )
+    assert '"smithy-aws-core[json]~=0.16.0",' in (output / "pyproject.toml").read_text()
+    # The service schema keeps the protocol trait, which the AST doesn't define.
+    assert "aws.protocols#restJson1" in "".join(
+        path.read_text() for path in (source / "_private").glob("schemas*.py")
+    )
+
+
 def test_integrations_apply_only_to_services_they_match(tmp_path: Path) -> None:
     _aws_generate(tmp_path, "greeter_plain", _shapes())
     assert "class Config:" in (tmp_path / "src/greeter_plain/config.py").read_text()

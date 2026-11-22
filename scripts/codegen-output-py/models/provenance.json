@@ -37,7 +37,8 @@
   },
   "rest-json-1": {
     "assembled_sha256": "e9bd8f77892be7064088fd1fcd8f3add141d1ea5c60ff7740a8910c0159874b5",
-    "fixture_sha256": "86695cc8ccebcb8579cee0a52e9fe891bf7745576496e23c6e6a3f328b4c2231"
+    "fixture_sha256": "86695cc8ccebcb8579cee0a52e9fe891bf7745576496e23c6e6a3f328b4c2231",
+    "vectors_sha256": "5a6ad5f85e067099af65e0df4de3a9d8c6c8a22ce51f622998570571199858f0"
   },
   "rest-xml": {
     "assembled_sha256": "9baf7dd1c331a2c3c4a72b7ab38288a714511b4926ee8a03c8aa4256538b3588",

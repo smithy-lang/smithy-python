@@ -11,6 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 
 from smithy_python.cli import main as generate
 
@@ -33,17 +34,24 @@ def main() -> None:
     args = parser.parse_args()
 
     # A fresh tree also detects removed projections and obsolete partitions.
-    with TemporaryDirectory(prefix="smithy-python-snapshots-") as temporary:
+    with (
+        TemporaryDirectory(prefix="smithy-python-snapshots-") as temporary,
+        TemporaryDirectory(prefix="smithy-python-models-") as models,
+    ):
         staged = Path(temporary)
         for artifact, inputs, options in _ARTIFACTS:
             projections = json.loads((_INPUTS / inputs).read_text())
             for name, settings in sorted(projections.items()):
+                model = _INPUTS / settings["model"]
+                if "omitOperations" in settings:
+                    model = Path(models) / f"{name}.json"
+                    model.write_text(json.dumps(projection_model(settings)))
                 result = generate(
                     (
                         "generate",
                         artifact,
                         "--model",
-                        str(_INPUTS / settings["model"]),
+                        str(model),
                         "--output",
                         str(staged / name),
                         "--service",
@@ -84,6 +92,23 @@ def main() -> None:
             sys.stdout.write(f"Updated {len(changed)} snapshot file(s).\n")
         else:
             sys.stdout.write("codegen-output-py is up to date; no files changed.\n")
+
+
+def projection_model(settings: dict[str, Any]) -> dict[str, Any]:
+    """A projection's model AST, without the service operations it omits.
+
+    A client projection omits the operations that need features client
+    generation doesn't support yet, such as streaming.
+    """
+    model: dict[str, Any] = json.loads((_INPUTS / settings["model"]).read_text())
+    omitted = set(settings.get("omitOperations", ()))
+    service = model["shapes"][settings["service"]]
+    service["operations"] = [
+        operation
+        for operation in service.get("operations", ())
+        if operation["target"] not in omitted
+    ]
+    return model
 
 
 def _files(root: Path) -> dict[str, bytes]:

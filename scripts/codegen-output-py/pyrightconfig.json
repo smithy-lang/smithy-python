@@ -19,6 +19,7 @@
     "../../codegen-output-py/partitioned-types/src",
     "../../codegen-output-py/query-compatible-aws-json-1-0/src",
     "../../codegen-output-py/query-compatible-rpcv2-cbor/src",
+    "../../codegen-output-py/rest-json-1-client/src",
     "../../codegen-output-py/rest-json-1/src",
     "../../codegen-output-py/rest-xml-with-namespace/src",
     "../../codegen-output-py/rest-xml/src",

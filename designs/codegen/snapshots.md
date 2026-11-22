@@ -62,6 +62,7 @@ projections, generated with the public `client` command.
 
 | Projection | Import package | Operations | Protocol vectors |
 | --- | --- | ---: | ---: |
+| `rest-json-1-client` | `restjson_client` | 103 | 236 |
 | `rpcv2-cbor-client` | `rpcv2cbor_client` | 14 | 72 |
 | `rpcv2-json-client` | `rpcv2json_client` | 15 | 73 |
 
@@ -69,7 +70,9 @@ Each reuses the model input of the types projection with the same base name. Its
 import package differs from the types snapshot's, so both resolve in one Pyright
 project. Each client snapshot adds `client.py`, `config.py`, and their `aio`
 counterparts to the types files, plus service and operation schemas and lazy
-operation exports. Tests compare the RPCv2 CBOR client's operation methods with
+operation exports. A projection's `omitOperations` removes service operations
+that need features client generation doesn't support yet. `rest-json-1-client`
+omits its 10 streaming operations and their 8 vectors. Tests compare the RPCv2 CBOR client's operation methods with
 the Java client and send one call through fake sync and async transports.
 
 ## Inputs and maintenance
@@ -91,9 +94,12 @@ The models used by client projections also keep their client protocol vectors in
 declares them. Server-only vectors are left out. `models/provenance.json` records
 each file's hash. `tests/test_client_protocol_vectors.py` runs every vector
 through the sync and async clients of the matching snapshot. A request vector
-checks the method, path, headers, and decoded body the client sends. A response
+checks the method, host, path, query, headers, and body the client sends. JSON
+and CBOR bodies are compared decoded, and other bodies as bytes. A response
+vector's request is the smallest input the operation accepts. A response
 vector checks the output model or error it returns. Vectors that the Java client
-also fails are marked as strict expected failures.
+also fails or skips, and known runtime gaps, are marked as strict expected
+failures.
 
 To refresh reference inputs when their models change, obtain assembled JSON ASTs
 and run:

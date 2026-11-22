@@ -285,10 +285,14 @@ def _generate_client(
         protocol=args.protocol,
     )
     try:
-        plan = _clients.ClientPlan.from_model(model, settings, service_id=args.service)
+        plan = _clients.ClientPlan.from_model(
+            model, settings, service_id=args.service, protocols=_aws.AWS_PROTOCOLS
+        )
     except ValueError as error:
         raise InvalidInvocationError(str(error)) from error
-    generator = _clients.ClientGenerator(plan, integrations=_aws.AWS_INTEGRATIONS)
+    generator = _clients.ClientGenerator(
+        plan, protocols=_aws.AWS_PROTOCOLS, integrations=_aws.AWS_INTEGRATIONS
+    )
     context = generator.context()
     generator.generate(context)
     context.files.commit(output_dir)
