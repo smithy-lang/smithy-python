@@ -706,6 +706,44 @@ def test_rest_json_services_use_the_aws_core_protocol(tmp_path: Path) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("trait", "protocol"),
+    [
+        ("awsJson1_0", "AwsJson10ClientProtocol"),
+        ("awsJson1_1", "AwsJson11ClientProtocol"),
+    ],
+)
+def test_aws_json_services_use_the_aws_core_protocol(
+    tmp_path: Path, trait: str, protocol: str
+) -> None:
+    shapes = _shapes()
+    shapes["example#Greeter"]["traits"] = {
+        f"aws.protocols#{trait}": {},
+        "aws.protocols#awsQueryCompatible": {},
+    }
+    model = load_model({"smithy": "2.0", "shapes": shapes})
+    settings = ClientSettings("greeter_aws_json", "1.0.0", None)
+    generator = ClientGenerator(
+        ClientPlan.from_model(model, settings, protocols=_aws.AWS_PROTOCOLS),
+        protocols=_aws.AWS_PROTOCOLS,
+    )
+    context = generator.context()
+    generator.generate(context)
+    context.files.commit(tmp_path)
+    source = tmp_path / "src/greeter_aws_json"
+    assert f"{protocol}(_PROTOCOL_SETTINGS)" in (source / "config.py").read_text()
+    assert (
+        f"Async{protocol}(_PROTOCOL_SETTINGS)" in (source / "aio/config.py").read_text()
+    )
+    assert (
+        '"smithy-aws-core[json]~=0.16.0",' in (tmp_path / "pyproject.toml").read_text()
+    )
+    # The runtime reads query compatibility from the service schema.
+    assert "aws.protocols#awsQueryCompatible" in "".join(
+        path.read_text() for path in (source / "_private").glob("schemas*.py")
+    )
+
+
 def test_integrations_apply_only_to_services_they_match(tmp_path: Path) -> None:
     _aws_generate(tmp_path, "greeter_plain", _shapes())
     assert "class Config:" in (tmp_path / "src/greeter_plain/config.py").read_text()

@@ -39,7 +39,31 @@ REST_JSON: Final = ProtocolContribution(
 )
 """The ``aws.protocols#restJson1`` contribution."""
 
+AWS_JSON_10: Final = ProtocolContribution(
+    protocol_id=_model.ShapeId("aws.protocols", "awsJson1_0"),
+    protocol=_aws("AwsJson10ClientProtocol", "protocols", "json"),
+    async_protocol=_aws("AsyncAwsJson10ClientProtocol", "aio.protocols", "json"),
+    transport=RPCV2_CBOR.transport,
+    async_transport=RPCV2_CBOR.async_transport,
+)
+"""The ``aws.protocols#awsJson1_0`` contribution."""
+
+AWS_JSON_11: Final = ProtocolContribution(
+    protocol_id=_model.ShapeId("aws.protocols", "awsJson1_1"),
+    protocol=_aws("AwsJson11ClientProtocol", "protocols", "json"),
+    async_protocol=_aws("AsyncAwsJson11ClientProtocol", "aio.protocols", "json"),
+    transport=RPCV2_CBOR.transport,
+    async_transport=RPCV2_CBOR.async_transport,
+)
+"""The ``aws.protocols#awsJson1_1`` contribution."""
+
 AWS_PROTOCOLS: Final[Mapping[_model.ShapeId, ProtocolContribution]] = MappingProxyType(
-    {**DEFAULT_PROTOCOLS, REST_JSON.protocol_id: REST_JSON}
+    {
+        **DEFAULT_PROTOCOLS,
+        **{
+            contribution.protocol_id: contribution
+            for contribution in (REST_JSON, AWS_JSON_10, AWS_JSON_11)
+        },
+    }
 )
 """The core protocols and the AWS protocols."""

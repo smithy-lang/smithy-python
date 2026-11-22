@@ -59,6 +59,14 @@ _PROJECTIONS: dict[str, Any] = json.loads(
 # support the httpChecksumRequired or requestCompression traits yet.
 _EXPECTED_FAILURES = frozenset(
     {
+        "AwsJson10ClientPopulatesDefaultValuesInInput",
+        "AwsJson10ClientSkipsTopLevelDefaultValuesInInput",
+        "AwsJson10ClientUsesExplicitlyProvidedMemberValuesOverDefaults",
+        "AwsJson10ClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
+        "SDKAppliedContentEncoding_awsJson1_0",
+        "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_awsJson1_0",
+        "SDKAppliedContentEncoding_awsJson1_1",
+        "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_awsJson1_1",
         "RestJsonClientPopulatesDefaultValuesInInput",
         "RestJsonClientSkipsTopLevelDefaultValuesInInput",
         "RestJsonClientUsesExplicitlyProvidedMemberValuesOverDefaults",
@@ -563,5 +571,6 @@ def test_vectors_match_their_provenance() -> None:
 def test_every_client_vector_is_collected() -> None:
     # The Java clients run the same vectors: rpcv2Cbor has 29 request and 43
     # response vectors, and rpcv2Json has 34 and 39. restJson1 has 244, less the 8
-    # of the streaming operations the client omits.
-    assert len(list(_vectors())) == 72 + 73 + 236
+    # of the streaming operations the client omits. awsJson1_0 has 67, awsJson1_1
+    # has 118, and the query-compatible awsJson1_0 service has 3.
+    assert len(list(_vectors())) == 72 + 73 + 236 + 67 + 118 + 3

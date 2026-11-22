@@ -1,0 +1,21 @@
+{
+  "files": {
+    "README.md": "8ce5cf31c8603b8731a66bb56ad203075cdd820f28afc1dc6227195175440b2f",
+    "pyproject.toml": "87892268a6a7f4f6888d72e07dc2baa91357d8f6533dab3acf08d07581d9bd9a",
+    "src/awsjson10_client/__init__.py": "ec844bac46e7e3e17f454e045ec19ada1706b015f51118fc1d08f1d6ef760444",
+    "src/awsjson10_client/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/awsjson10_client/_private/endpoints.py": "7d515fe771678e82ddbe07798d6b7e48c25c6c9bec19cec9318deb0bc5064ead",
+    "src/awsjson10_client/_private/schemas.py": "0e254d9f031858bb9894d35adbceb708ad3d77db5030ce91ff0c4e150ba04657",
+    "src/awsjson10_client/aio/__init__.py": "e2072bcfa8185b3654fd315c0b92205140c5d22ddfc4ac50c80bb9089bda8d75",
+    "src/awsjson10_client/aio/client.py": "1ae4e9910e15f60579ee8b15f7337e90596e27be8932ef9cdeb977f364601370",
+    "src/awsjson10_client/aio/config.py": "c0f6a8506afd000e8de4697e02faa34280e0a0a4b68366009311739e50ec6c4d",
+    "src/awsjson10_client/aio/user_agent.py": "8e17f04fa14a0e1721e55beefbfa640c838b53be7c231f020d2ff3ed2f63f20a",
+    "src/awsjson10_client/client.py": "e6bd7e342676f5f5a71c38c02174b595afbd413ac337c377813a4e2c9bcfd843",
+    "src/awsjson10_client/config.py": "024eb5f174b588e67ebf9a272930eba6fcc3b1a181d677dade0823b7c2da7773",
+    "src/awsjson10_client/models.py": "d184b6f8288bd787f23c6f119a0a1259e1a468fb487c3d9c2c710825d390636a",
+    "src/awsjson10_client/models.pyi": "fc5bc36883b8b0851132826edfa5b51dbf7a2023e94b357dccac383878ff9d02",
+    "src/awsjson10_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/awsjson10_client/user_agent.py": "9cc5406633815f0a196c979e9e362e335772e47f6f56071770c8b59e83f6e199"
+  },
+  "version": 1
+}

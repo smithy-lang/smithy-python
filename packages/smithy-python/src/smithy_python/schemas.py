@@ -348,6 +348,9 @@ _INCLUDED_TRAITS: Final = frozenset(
             "smithy.api#httpQueryParams",
             "smithy.api#httpResponseCode",
             "smithy.api#hostLabel",
+            # awsJson1_0 and rpcv2 read these at runtime for query compatibility.
+            "aws.protocols#awsQueryCompatible",
+            "aws.protocols#awsQueryError",
         ),
     )
 )

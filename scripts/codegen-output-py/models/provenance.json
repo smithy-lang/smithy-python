@@ -1,11 +1,13 @@
 {
   "aws-json-1-0": {
     "assembled_sha256": "0e6eeb8c431cbf5c988d3daba1983bdc8f9c074657bc9a66915218047bf901f7",
-    "fixture_sha256": "ebfcbdfd4aedefd26bd01e3df4dd0ecca8a7b1e3e768ac7c6a27e9f125250b23"
+    "fixture_sha256": "ebfcbdfd4aedefd26bd01e3df4dd0ecca8a7b1e3e768ac7c6a27e9f125250b23",
+    "vectors_sha256": "54696ab8632106cae2abfee333866a87c089a191b2f50c27beeec97a03caf32d"
   },
   "aws-json-1-1": {
     "assembled_sha256": "a783216226370423619536be3211571a74f24a6d4f15107d364a728ee7fec192",
-    "fixture_sha256": "580fc43337bf9cc6c68452d63454906590588e3de438cb5ad1f3690b147dc5d3"
+    "fixture_sha256": "580fc43337bf9cc6c68452d63454906590588e3de438cb5ad1f3690b147dc5d3",
+    "vectors_sha256": "37eb26b0b80c064414199ceb4d40909e5bd9fe071bade291b44d765a2e057ec2"
   },
   "aws-query": {
     "assembled_sha256": "62332fc9f42c8d044f0dd59376ed922236b8ac19a6ac1b5c8d08a3856208a726",
@@ -29,7 +31,8 @@
   },
   "query-compatible-aws-json-1-0": {
     "assembled_sha256": "c7039ea5f648534741a3cbf4bc5b8bb0f2fac94d7c2ef3b287ad449ca11946e8",
-    "fixture_sha256": "924cb826da264978f570c819d5d2a0fd2571f974241cdb8f7ddb4efe289083cf"
+    "fixture_sha256": "924cb826da264978f570c819d5d2a0fd2571f974241cdb8f7ddb4efe289083cf",
+    "vectors_sha256": "88bdd4b600c6d0a4462b9bd95a159b8e6116f8d19627f9def2cddea4f6e493d3"
   },
   "query-compatible-rpcv2-cbor": {
     "assembled_sha256": "ff18f8a7075b4421c44503ad912d4817022cbc1b0be31f3c6abab86d534fd4fd",
