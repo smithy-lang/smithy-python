@@ -35,11 +35,14 @@ def write_endpoint_tests(
     endpoints: _endpoints.EndpointPlan,
     client: TypeReference,
     config: TypeReference,
+    new_config: tuple[str | TypeReference, ...] | None = None,
 ) -> None:
     """Register ``tests/test_endpoints.py`` when the service has endpoint tests.
 
     :param client: The async client class.
     :param config: The async config class.
+    :param new_config: The callable that creates an async config from keyword
+        fields. Defaults to the config class.
     :raises CodegenError: If a case names an operation the service doesn't
         contain, expects neither an endpoint nor an error, or gives an operation
         an input member it doesn't have.
@@ -64,6 +67,7 @@ def write_endpoint_tests(
         endpoints,
         client,
         config,
+        new_config or (config,),
     ).write(service, tuple(_object(case, "test case") for case in cases))
 
 
@@ -137,8 +141,10 @@ class _Writer:
         endpoints: _endpoints.EndpointPlan,
         client: TypeReference,
         config: TypeReference,
+        new_config: tuple[str | TypeReference, ...],
     ) -> None:
         self._writer = writer
+        self._new_config = new_config
         self._plan = plan
         self._client = client
         self._config = config
@@ -174,7 +180,7 @@ class _Writer:
         with w.indent():
             w.line(
                 "return ",
-                self._config,
+                *self._new_config,
                 "(**fields, retry_strategy=",
                 _RETRY,
                 "(max_attempts=1))",
