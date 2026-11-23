@@ -14,6 +14,7 @@ from .interfaces import retries as retries_interface
 from .types import PropertyKey
 
 __all__ = [
+    "RETRY_ATTEMPT",
     "RETRY_STRATEGY",
     "AdaptiveRetryStrategy",
     "ClientRateLimiter",
@@ -38,6 +39,9 @@ RETRY_STRATEGY = PropertyKey(
     key="retry_strategy", value_type=retries_interface.RetryStrategy
 )
 """The retry strategy the client chose for the call."""
+
+RETRY_ATTEMPT = PropertyKey(key="retry_attempt", value_type=int)
+"""The number of the attempt being sent, starting at 1."""
 
 
 @dataclass(kw_only=True, frozen=True)

@@ -1,7 +1,9 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
+import uuid
 from dataclasses import dataclass
+from types import SimpleNamespace
 from typing import Any, Self
 
 import pytest
@@ -14,6 +16,7 @@ from smithy_core.exceptions import CallError, ModeledError
 from smithy_core.interfaces import TypedProperties as TypedPropertiesInterface
 from smithy_core.interfaces import URI as URIInterface
 from smithy_core.program import Program, run_program
+from smithy_core.retries import RETRY_ATTEMPT, RETRY_STRATEGY
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
@@ -365,6 +368,102 @@ def test_extract_response_metadata_reports_only_the_status_code() -> None:
     assert metadata.http_status_code == 429
     assert metadata.request_id is None
     assert metadata.extended_request_id is None
+
+
+def _attempt_request() -> HTTPRequest:
+    return HTTPRequest(
+        method="POST", destination=URI(host="example.com"), fields=Fields()
+    )
+
+
+def _attempt_context(*, sends: bool = True) -> TypedProperties:
+    return TypedProperties({"config": SimpleNamespace(_sends_retry_info_headers=sends)})
+
+
+def _prepare(context: TypedProperties) -> HTTPRequestInterface:
+    return MockProtocol().prepare_attempt_request(
+        request=_attempt_request(), context=context
+    )
+
+
+@pytest.mark.parametrize(
+    "context",
+    [
+        TypedProperties(),
+        TypedProperties({"config": SimpleNamespace()}),
+        _attempt_context(sends=False),
+    ],
+    ids=["no config", "no flag", "flag off"],
+)
+def test_prepare_attempt_request_adds_nothing_without_the_flag(
+    context: TypedProperties,
+) -> None:
+    request = _prepare(context)
+    assert "amz-sdk-invocation-id" not in request.fields
+    assert "amz-sdk-request" not in request.fields
+
+
+def test_invocation_id_is_a_version_4_uuid() -> None:
+    request = _prepare(_attempt_context())
+    assert uuid.UUID(request.fields["amz-sdk-invocation-id"].as_string()).version == 4
+
+
+def test_invocation_id_is_the_same_on_every_attempt() -> None:
+    context = _attempt_context()
+    ids: set[str] = set()
+    for attempt in range(1, 4):
+        context[RETRY_ATTEMPT] = attempt
+        ids.add(_prepare(context).fields["amz-sdk-invocation-id"].as_string())
+    assert len(ids) == 1
+
+
+def test_invocation_id_differs_between_calls() -> None:
+    first = _prepare(_attempt_context()).fields["amz-sdk-invocation-id"].as_string()
+    second = _prepare(_attempt_context()).fields["amz-sdk-invocation-id"].as_string()
+    assert first != second
+
+
+def test_retry_headers_replace_a_callers_values() -> None:
+    request = _attempt_request()
+    request.fields.set_field(Field(name="amz-sdk-invocation-id", values=["caller"]))
+    request.fields.set_field(Field(name="amz-sdk-request", values=["caller"]))
+    prepared = MockProtocol().prepare_attempt_request(
+        request=request, context=_attempt_context()
+    )
+    invocation_id = prepared.fields["amz-sdk-invocation-id"].as_string()
+    assert uuid.UUID(invocation_id).version == 4
+    assert prepared.fields["amz-sdk-request"].as_string() == "attempt=1"
+
+
+_NO_STRATEGY = object()
+
+
+def _request_header(strategy: Any, attempt: int | None = None) -> str:
+    context = _attempt_context()
+    if strategy is not _NO_STRATEGY:
+        context[RETRY_STRATEGY] = strategy
+    if attempt is not None:
+        context[RETRY_ATTEMPT] = attempt
+    return _prepare(context).fields["amz-sdk-request"].as_string()
+
+
+@pytest.mark.parametrize(
+    "strategy",
+    [
+        _NO_STRATEGY,
+        SimpleNamespace(),
+        SimpleNamespace(max_attempts=None),
+        SimpleNamespace(max_attempts=0),
+        SimpleNamespace(max_attempts=True),
+    ],
+    ids=["no strategy", "no attribute", "None", "0", "True"],
+)
+def test_request_header_omits_unknown_max(strategy: Any) -> None:
+    assert _request_header(strategy) == "attempt=1"
+
+
+def test_request_header_sends_the_attempt_and_max_attempts() -> None:
+    assert _request_header(SimpleNamespace(max_attempts=3), 2) == "attempt=2; max=3"
 
 
 _MODELED_ERROR_ID = ShapeID("ns.foo#ModeledError")

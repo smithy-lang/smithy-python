@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "`HttpClientProtocol` adds the `amz-sdk-invocation-id` and `amz-sdk-request` headers to each attempt when the client's config turns them on, as the AWS configs do."
+}

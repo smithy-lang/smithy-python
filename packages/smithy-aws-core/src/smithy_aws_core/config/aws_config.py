@@ -112,6 +112,9 @@ class _AwsConfigBase:
 
     _FIELDS: ClassVar[dict[str, FieldSpec]]
     _RESOLVE_PREFIX: ClassVar[str] = ""
+    # Read by HttpClientProtocol.prepare_attempt_request in smithy_http.protocols,
+    # which adds amz-sdk-invocation-id and amz-sdk-request to each attempt.
+    _sends_retry_info_headers: ClassVar[bool] = True
 
     _ctx: Any
     _sources: dict[str, ConfigSource]

@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Clients record the number of each attempt, starting at 1, under `RETRY_ATTEMPT` in the request context."
+}

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import json
 import os
+import uuid
 from collections.abc import Callable, Mapping, Sequence
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, cast
@@ -37,6 +38,7 @@ from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 from smithy_core.prelude import DOCUMENT, UNIT
 from smithy_core.program import Program
 from smithy_core.response import ResponseMetadata
+from smithy_core.retries import RETRY_STRATEGY as _RETRY_STRATEGY
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import SerializeableShape, SerializeableStruct
 from smithy_core.shapes import ShapeID, ShapeType
@@ -47,8 +49,10 @@ from smithy_core.traits import (
     RpcV2CborTrait,
     RpcV2JsonTrait,
 )
+from smithy_core.types import PropertyKey as _PropertyKey
 from smithy_core.types import TimestampFormat as _TimestampFormat
 
+from smithy_http import Field as _Field
 from smithy_http import HTTPRequest as _HTTPRequest
 from smithy_http.interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 
@@ -79,6 +83,11 @@ _AWS_QUERY_ERROR = ShapeID("aws.protocols#awsQueryError")
 _QUERY_MODE_HEADER = "x-amzn-query-mode"
 _QUERY_ERROR_HEADER = "x-amzn-query-error"
 _QUERY_ERROR_FAULTS: dict[str, _Fault] = {"Sender": "client", "Receiver": "server"}
+# The ID that every attempt of one call sends in amz-sdk-invocation-id.
+_INVOCATION_ID = _PropertyKey(key="amz_sdk_invocation_id", value_type=str)
+# Read by key so smithy-http works with smithy-core releases that predate
+# smithy_core.retries.RETRY_ATTEMPT.
+_RETRY_ATTEMPT = _PropertyKey(key="retry_attempt", value_type=int)
 # Read by ID so smithy-http works with smithy-core releases that predate the
 # ClientOptionalTrait class.
 _CLIENT_OPTIONAL = ShapeID("smithy.api#clientOptional")
@@ -170,6 +179,44 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
             fragment=uri.fragment or previous.fragment,
         )
 
+        return request
+
+    def prepare_attempt_request(
+        self, *, request: HTTPRequest, context: TypedProperties
+    ) -> HTTPRequest:
+        """Add the headers that tell an AWS service how a call is retried.
+
+        They are added only when the client's config sets
+        ``_sends_retry_info_headers``, as the AWS configs do.
+
+        ``amz-sdk-invocation-id`` holds a random (version 4) UUID that is the same on
+        every attempt of a call and different for every call, so a service can tell
+        which requests are attempts of the same call.
+
+        ``amz-sdk-request`` holds the number of the attempt, starting at 1, and the
+        most attempts the call's retry strategy allows, such as ``attempt=2; max=3``.
+        When that number is not known (no retry strategy, or a ``max_attempts`` that
+        is missing or not a positive integer), it holds only the attempt number.
+        """
+        if not getattr(context.get("config"), "_sends_retry_info_headers", False):
+            return request
+
+        if (invocation_id := context.get(_INVOCATION_ID)) is None:
+            invocation_id = context[_INVOCATION_ID] = str(uuid.uuid4())
+        request.fields.set_field(
+            _Field(name="amz-sdk-invocation-id", values=[invocation_id])
+        )
+
+        value = f"attempt={context.get(_RETRY_ATTEMPT, 1)}"
+        # A custom strategy may not set max_attempts, so it's read with a default.
+        max_attempts = getattr(context.get(_RETRY_STRATEGY), "max_attempts", None)
+        if (
+            isinstance(max_attempts, int)
+            and not isinstance(max_attempts, bool)
+            and max_attempts >= 1
+        ):
+            value += f"; max={max_attempts}"
+        request.fields.set_field(_Field(name="amz-sdk-request", values=[value]))
         return request
 
     def extract_response_metadata(

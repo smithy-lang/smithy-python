@@ -445,6 +445,19 @@ class ClientProtocol[I, O](Protocol):
         """
         ...
 
+    def prepare_attempt_request(self, *, request: I, context: TypedProperties) -> I:
+        """Update a transport request before one attempt of it is signed and sent.
+
+        This is called once for each attempt, after the endpoint is set and before
+        the ``modify_before_signing`` interceptor hook, so changes it makes are
+        signed. ``context`` holds the number of the attempt under
+        :py:data:`smithy_core.retries.RETRY_ATTEMPT`.
+
+        :param request: The request of the attempt.
+        :param context: A context bag for the request.
+        """
+        ...
+
     def deserialize_response_program[
         OperationInput: "SerializeableShape",
         OperationOutput: "DeserializeableShape",

@@ -540,6 +540,7 @@
     "CubicCalculator": "class",
     "ExponentialBackoffJitterType": "class",
     "ExponentialRetryBackoffStrategy": "class",
+    "RETRY_ATTEMPT": "PropertyKey",
     "RETRY_STRATEGY": "PropertyKey",
     "RequestRateTracker": "class",
     "RetryStrategyOptions": "class",
