@@ -205,9 +205,9 @@ class RetryableTrait(Trait, id=ShapeID("smithy.api#retryable")):
     @property
     def throttling(self) -> bool:
         """Whether the error is a throttling error."""
-        if self.document_value is None:
+        if not isinstance(self.document_value, Mapping):
             return False
-        return self.document_value.get("throttling", False)  # type: ignore
+        return self.document_value.get("throttling") is True
 
 
 @dataclass(init=False, frozen=True)

@@ -1,4 +1,4 @@
 {
-  "type": "feature",
+  "type": "enhancement",
   "description": "Added `RetryableTrait` to `smithy_core.traits`."
 }
