@@ -44,9 +44,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  * 3.2 or later), on Windows, after {@link #close}, or when Pandoc logs a message or
  * fails for a document. The caller then runs the command line, which reproduces its
  * exact output, warnings, and errors. A timeout or broken exchange stops the
- * process, and that and every later conversion return empty too, so the command
- * line, with its own deadline per document, converts the rest. An interruption, or
- * a {@link #close} during a conversion, throws.
+ * process, and a new one retries the document, up to three times per generation.
+ * Past that, or on an interruption, it throws instead.
  *
  * <p>The process starts on the first conversion and must be closed when the
  * generation ends.
@@ -57,6 +56,8 @@ public final class PandocWorker implements AutoCloseable {
     private static final Logger LOGGER = Logger.getLogger(PandocWorker.class.getName());
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
     private static final long CLOSE_WAIT_SECONDS = 2;
+    // A document that stalls every fresh worker still fails the generation.
+    private static final int MAX_RESTARTS = 3;
     private static final int MAX_HEADER_BYTES = 256;
     private static final int MAX_REPLY_BYTES = 64 * 1024 * 1024;
     private static final int TAB_STOP = 4;
@@ -72,6 +73,7 @@ public final class PandocWorker implements AutoCloseable {
     private final Object conversionLock = new Object();
     private final AtomicReference<State> state = new AtomicReference<>(State.NEW);
     private final AtomicInteger fallbacks = new AtomicInteger();
+    private final AtomicInteger restarts = new AtomicInteger();
     private volatile Process process;
     private volatile ExecutorService executor;
     private volatile OutputStream requests;
@@ -106,30 +108,46 @@ public final class PandocWorker implements AutoCloseable {
     Optional<String> convert(String input, String fromFormat, String toFormat)
             throws IOException, InterruptedException {
         synchronized (conversionLock) {
-            if (!ensureStarted()) {
-                return Optional.empty();
-            }
             byte[] body = prepareInput(input).getBytes(StandardCharsets.UTF_8);
-            OutputStream out = requests;
-            InputStream in = replies;
-            Optional<String> output;
-            try {
-                output = call(() -> exchange(out, in, fromFormat, toFormat, body));
-            } catch (IOException | CodegenException e) {
-                // call() stopped the worker. Unless the generation closed it, this and
-                // later conversions use the command line, which has its own deadline.
-                if (state.get() == State.CLOSED) {
-                    throw e;
+            while (true) {
+                Optional<String> output;
+                try {
+                    if (!ensureStarted()) {
+                        return Optional.empty();
+                    }
+                    OutputStream out = requests;
+                    InputStream in = replies;
+                    output = call(() -> exchange(out, in, fromFormat, toFormat, body));
+                } catch (IOException | CodegenException e) {
+                    // call() stopped the worker. A fresh one converts the same document,
+                    // so a stall on a busy host costs one restart, not the generation.
+                    if (!restart(e)) {
+                        throw e;
+                    }
+                    continue;
                 }
-                LOGGER.warning(() -> "The pandoc worker stopped (" + e.getMessage() + "). Starting a "
-                        + "separate pandoc process for each remaining documentation string instead.");
-                output = Optional.empty();
+                if (output.isEmpty()) {
+                    fallbacks.incrementAndGet();
+                }
+                return output;
             }
-            if (output.isEmpty()) {
-                fallbacks.incrementAndGet();
-            }
-            return output;
         }
+    }
+
+    /**
+     * Readies a new worker after the last one failed, unless the generation closed
+     * it or the restarts are used up.
+     *
+     * @return Whether the conversion may try again.
+     */
+    private boolean restart(Exception cause) {
+        if (restarts.get() >= MAX_RESTARTS || !state.compareAndSet(State.FAILED, State.NEW)) {
+            return false;
+        }
+        int count = restarts.incrementAndGet();
+        LOGGER.warning(() -> "Restarting the pandoc worker (" + count + " of " + MAX_RESTARTS
+                + ") after: " + cause.getMessage());
+        return true;
     }
 
     /**
@@ -176,9 +194,10 @@ public final class PandocWorker implements AutoCloseable {
             case READY:
                 return true;
             case UNAVAILABLE:
-            case FAILED:
             case CLOSED:
                 return false;
+            case FAILED:
+                throw new IOException("The pandoc worker stopped after an earlier failure.");
             default:
                 break;
         }
@@ -213,18 +232,7 @@ public final class PandocWorker implements AutoCloseable {
         }
 
         InputStream in = replies;
-        String handshake;
-        try {
-            handshake = call(() -> readLine(in));
-        } catch (IOException | CodegenException e) {
-            // call() stopped the worker, so conversions use the command line.
-            if (state.get() == State.CLOSED) {
-                return false;
-            }
-            LOGGER.warning(() -> "The pandoc worker did not start (" + e.getMessage() + "). Starting a "
-                    + "separate pandoc process for each documentation string instead.");
-            return false;
-        }
+        String handshake = call(() -> readLine(in));
         if (handshake == null || !handshake.startsWith("READY ")) {
             // The process exited or answered without the protocol, e.g. Pandoc older than 3.0
             // has no "lua" command and 3.0 to 3.1 report UNSUPPORTED.
@@ -376,7 +384,7 @@ public final class PandocWorker implements AutoCloseable {
         return result.toString();
     }
 
-    private static String loadScript() throws IOException {
+    static String loadScript() throws IOException {
         InputStream stream = PandocWorker.class.getResourceAsStream("pandoc-worker.lua");
         if (stream == null) {
             throw new IOException("Missing resource pandoc-worker.lua");
