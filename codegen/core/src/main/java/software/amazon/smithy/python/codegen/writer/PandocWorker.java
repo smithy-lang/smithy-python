@@ -43,8 +43,10 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  * command line: when this Pandoc lacks the Lua API the worker needs (Pandoc
  * 3.2 or later), on Windows, after {@link #close}, or when Pandoc logs a message or
  * fails for a document. The caller then runs the command line, which reproduces its
- * exact output, warnings, and errors. A timeout, interruption, or broken exchange
- * stops the process and throws instead.
+ * exact output, warnings, and errors. A timeout or broken exchange stops the
+ * process, and that and every later conversion return empty too, so the command
+ * line, with its own deadline per document, converts the rest. An interruption, or
+ * a {@link #close} during a conversion, throws.
  *
  * <p>The process starts on the first conversion and must be closed when the
  * generation ends.
@@ -110,7 +112,19 @@ public final class PandocWorker implements AutoCloseable {
             byte[] body = prepareInput(input).getBytes(StandardCharsets.UTF_8);
             OutputStream out = requests;
             InputStream in = replies;
-            Optional<String> output = call(() -> exchange(out, in, fromFormat, toFormat, body));
+            Optional<String> output;
+            try {
+                output = call(() -> exchange(out, in, fromFormat, toFormat, body));
+            } catch (IOException | CodegenException e) {
+                // call() stopped the worker. Unless the generation closed it, this and
+                // later conversions use the command line, which has its own deadline.
+                if (state.get() == State.CLOSED) {
+                    throw e;
+                }
+                LOGGER.warning(() -> "The pandoc worker stopped (" + e.getMessage() + "). Starting a "
+                        + "separate pandoc process for each remaining documentation string instead.");
+                output = Optional.empty();
+            }
             if (output.isEmpty()) {
                 fallbacks.incrementAndGet();
             }
@@ -162,10 +176,9 @@ public final class PandocWorker implements AutoCloseable {
             case READY:
                 return true;
             case UNAVAILABLE:
+            case FAILED:
             case CLOSED:
                 return false;
-            case FAILED:
-                throw new IOException("The pandoc worker stopped after an earlier failure.");
             default:
                 break;
         }
@@ -200,7 +213,18 @@ public final class PandocWorker implements AutoCloseable {
         }
 
         InputStream in = replies;
-        String handshake = call(() -> readLine(in));
+        String handshake;
+        try {
+            handshake = call(() -> readLine(in));
+        } catch (IOException | CodegenException e) {
+            // call() stopped the worker, so conversions use the command line.
+            if (state.get() == State.CLOSED) {
+                return false;
+            }
+            LOGGER.warning(() -> "The pandoc worker did not start (" + e.getMessage() + "). Starting a "
+                    + "separate pandoc process for each documentation string instead.");
+            return false;
+        }
         if (handshake == null || !handshake.startsWith("READY ")) {
             // The process exited or answered without the protocol, e.g. Pandoc older than 3.0
             // has no "lua" command and 3.0 to 3.1 report UNSUPPORTED.

@@ -507,29 +507,42 @@ public class MarkdownConverterTest {
     }
 
     @Test
-    public void testWorkerThatExitsFailsInsteadOfFallingBack() {
+    public void testWorkerThatExitsFallsBackToCommandLine() throws Exception {
         assumeTrue(WORKER_SUPPORTED, "Windows or this pandoc cannot run a worker");
         try (PandocWorker worker = new PandocWorker(
                 List.of("pandoc", "lua", "-e", "io.write('READY test\\n') io.flush()"),
                 Duration.ofSeconds(10))) {
             GenerationContext context = createContext(true);
-            assertThrows(CodegenException.class, () -> MarkdownConverter.convert("<b>a</b>", context, worker));
-            // The failure is not forgotten: later conversions fail too.
-            assertThrows(CodegenException.class, () -> MarkdownConverter.convert("<b>a</b>", context, worker));
+            assertEquals("**a**", MarkdownConverter.convert("<b>a</b>", context, worker));
+            // The worker is not restarted: later conversions use the command line too.
+            assertTrue(worker.convert("<b>a</b>", "html+raw_html", "markdown").isEmpty());
+            assertFalse(worker.isRunning());
         }
     }
 
     @Test
-    public void testWorkerThatStopsReadingTimesOutAndStops() {
+    public void testWorkerThatStopsReadingTimesOutAndFallsBack() throws Exception {
         assumeTrue(WORKER_SUPPORTED, "Windows or this pandoc cannot run a worker");
         // The worker never reads, so writing a large document blocks once the pipe is full.
         try (PandocWorker worker = new PandocWorker(
                 List.of("pandoc", "lua", "-e", "io.write('READY test\\n') io.flush() while true do end"),
                 Duration.ofSeconds(1))) {
             String input = "<p>" + "x".repeat(4 * 1024 * 1024) + "</p>";
-            CodegenException e = assertThrows(CodegenException.class,
-                    () -> MarkdownConverter.convert(input, createContext(true), worker));
-            assertTrue(e.getMessage().contains("timed out"), e.getMessage());
+            assertTrue(worker.convert(input, "html+raw_html", "markdown").isEmpty());
+            assertFalse(worker.isRunning());
+            assertEquals("**a**", MarkdownConverter.convert("<b>a</b>", createContext(true), worker));
+        }
+    }
+
+    @Test
+    public void testWorkerThatTimesOutStartingFallsBack() throws Exception {
+        assumeTrue(WORKER_SUPPORTED, "Windows or this pandoc cannot run a worker");
+        try (PandocWorker worker = new PandocWorker(
+                List.of("pandoc", "lua", "-e", "while true do end"),
+                Duration.ofSeconds(1))) {
+            assertTrue(worker.convert("<b>a</b>", "html+raw_html", "markdown").isEmpty());
+            // The worker is not restarted.
+            assertTrue(worker.convert("<b>a</b>", "html+raw_html", "markdown").isEmpty());
             worker.close();
             assertFalse(worker.isRunning());
         }
