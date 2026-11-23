@@ -41,8 +41,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         The example tests how servers must support requests
         containing a `Content-Type` header with parameters.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ContentTypeParametersOutput`.
         """
 
     async def content_type_parameters(
@@ -79,8 +83,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         and empty output structure that reuses the same shape. While this should
         be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EmptyInputAndEmptyOutputOutput`.
         """
 
     async def empty_input_and_empty_output(
@@ -113,8 +121,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         Invokes the EndpointOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
         """
 
     async def endpoint_operation(
@@ -148,8 +160,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
         """
 
     async def endpoint_with_host_label_operation(
@@ -189,8 +205,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         Implementations must be able to successfully take a response and
         properly deserialize successful and error responses.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
         """
 
     async def greeting_with_errors(
@@ -224,8 +244,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         Invokes the HostWithPathOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
         """
 
     async def host_with_path_operation(
@@ -258,8 +282,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         This operation uses unions for inputs and outputs.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonUnionsOutput`.
         """
 
     async def json_unions(
@@ -295,8 +323,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         output.
         While this should be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndNoOutputOutput`.
         """
 
     async def no_input_and_no_output(
@@ -333,8 +365,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         output is empty. While this should be rare, code generators must support
         this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndOutputOutput`.
         """
 
     async def no_input_and_output(
@@ -368,8 +404,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         Invokes the OperationWithDefaults operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OperationWithDefaultsOutput`.
         """
 
     async def operation_with_defaults(
@@ -403,8 +443,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         Invokes the OperationWithNestedStructure operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OperationWithNestedStructureOutput`.
         """
 
     async def operation_with_nested_structure(
@@ -438,8 +482,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         Invokes the OperationWithRequiredMembers operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OperationWithRequiredMembersOutput`.
         """
 
     async def operation_with_required_members(
@@ -473,8 +521,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         Invokes the OperationWithRequiredMembersWithDefaults operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OperationWithRequiredMembersWithDefaultsOutput`.
         """
 
     async def operation_with_required_members_with_defaults(
@@ -510,8 +562,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
         """
 
     async def put_with_content_encoding(
@@ -545,8 +601,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         Invokes the QueryIncompatibleOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryIncompatibleOperationOutput`.
         """
 
     async def query_incompatible_operation(
@@ -580,8 +640,12 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         Invokes the SimpleScalarProperties operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
         """
 
     async def simple_scalar_properties(

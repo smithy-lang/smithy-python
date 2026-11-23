@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Generated client methods document their arguments and return values in Google style, like the Java generator, instead of reStructuredText."
+}

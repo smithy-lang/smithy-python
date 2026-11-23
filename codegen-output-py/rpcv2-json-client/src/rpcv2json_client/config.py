@@ -45,7 +45,7 @@ class Config:
     "Resolves the endpoint of each operation."
 
     endpoint_uri: str | URI | None
-    "The endpoint URI, read by the endpoint rules as ``SDK::Endpoint``."
+    "The endpoint URI, read by the endpoint rules as `SDK::Endpoint`."
 
     interceptors: list[Interceptor[Any, Any, Any, Any]]
     "Hooks called during the execution of a request."

@@ -431,7 +431,7 @@ def _write_core_config(writer: PythonWriter, config: ConfigPlan) -> None:
         (
             "endpoint_uri",
             ("str | ", _URI, " | None"),
-            "The endpoint URI, read by the endpoint rules as ``SDK::Endpoint``.",
+            "The endpoint URI, read by the endpoint rules as `SDK::Endpoint`.",
         ),
         (
             "interceptors",
@@ -693,9 +693,12 @@ def _write_operation(
     with writer.indent():
         _models._write_docstring(  # pyright: ignore[reportPrivateUsage]
             writer,
+            # Google style sections, as in the Java generator. Each section line
+            # fits the docstring width, so wrapping keeps its indent.
             (docs or f"Invokes the {operation.operation.id.name} operation.")
-            + "\n\n:param plugins: Callables that change the configuration for "
-            "this call only.",
+            + "\n\nArgs:\n    plugins:\n        Callables that change the "
+            "configuration for this call only.\n\nReturns:\n    An instance of "
+            f"`{operation.output_name}`.",
         )
     writer.line()
     writer.line(define, name, "(")

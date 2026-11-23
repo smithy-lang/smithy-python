@@ -34,8 +34,12 @@ class RpcV2Protocol(Client[Config]):
         """
         Invokes the EmptyInputOutput operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EmptyInputOutputOutput`.
         """
 
     def empty_input_output(
@@ -68,8 +72,12 @@ class RpcV2Protocol(Client[Config]):
         """
         Invokes the Float16 operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `Float16Output`.
         """
 
     def float16(
@@ -102,8 +110,12 @@ class RpcV2Protocol(Client[Config]):
         """
         Invokes the FractionalSeconds operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
         """
 
     def fractional_seconds(
@@ -143,8 +155,12 @@ class RpcV2Protocol(Client[Config]):
         Implementations must be able to successfully take a response and
         properly deserialize successful and error responses.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
         """
 
     def greeting_with_errors(
@@ -177,8 +193,12 @@ class RpcV2Protocol(Client[Config]):
         """
         Invokes the NoInputOutput operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputOutputOutput`.
         """
 
     def no_input_output(
@@ -212,8 +232,12 @@ class RpcV2Protocol(Client[Config]):
         """
         Invokes the OperationWithDefaults operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OperationWithDefaultsOutput`.
         """
 
     def operation_with_defaults(
@@ -246,8 +270,12 @@ class RpcV2Protocol(Client[Config]):
         """
         Invokes the OptionalInputOutput operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OptionalInputOutputOutput`.
         """
 
     def optional_input_output(
@@ -280,8 +308,12 @@ class RpcV2Protocol(Client[Config]):
         """
         Invokes the RecursiveShapes operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RecursiveShapesOutput`.
         """
 
     def recursive_shapes(
@@ -314,8 +346,12 @@ class RpcV2Protocol(Client[Config]):
         """
         The example tests basic map serialization.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RpcV2CborDenseMapsOutput`.
         """
 
     def rpc_v2_cbor_dense_maps(
@@ -354,8 +390,12 @@ class RpcV2Protocol(Client[Config]):
         3. Lists of lists.
         4. Lists of structures.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RpcV2CborListsOutput`.
         """
 
     def rpc_v2_cbor_lists(
@@ -388,8 +428,12 @@ class RpcV2Protocol(Client[Config]):
         """
         Invokes the RpcV2CborSparseMaps operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RpcV2CborSparseMapsOutput`.
         """
 
     def rpc_v2_cbor_sparse_maps(
@@ -422,8 +466,12 @@ class RpcV2Protocol(Client[Config]):
         """
         This operation uses unions for inputs and outputs.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RpcV2CborUnionsOutput`.
         """
 
     def rpc_v2_cbor_unions(
@@ -457,8 +505,12 @@ class RpcV2Protocol(Client[Config]):
         """
         Invokes the SimpleScalarProperties operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
         """
 
     def simple_scalar_properties(
@@ -492,8 +544,12 @@ class RpcV2Protocol(Client[Config]):
         """
         Invokes the SparseNullsOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SparseNullsOperationOutput`.
         """
 
     def sparse_nulls_operation(
