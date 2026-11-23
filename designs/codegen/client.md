@@ -162,7 +162,10 @@ two shapes with the same name.
 Effective auth scheme IDs follow Smithy's `NO_AUTH_AWARE` mode. Service schemes
 are ordered by shape ID unless an `auth` trait on the operation, or else the
 service, orders them. `smithy.api#noAuth` is appended when no scheme applies or
-the operation has `optionalAuth`.
+the operation has `optionalAuth`. A service trait is an auth scheme when its
+definition has `authDefinition`. The prelude HTTP auth traits, `aws.auth#sigv4`,
+and `aws.auth#sigv4a` count without a definition, since JSON ASTs usually leave
+those definitions out.
 
 ## Protocols
 
@@ -255,6 +258,11 @@ default, a client parameter that is not a client context parameter, and a blob,
 timestamp, big decimal, or document value. An input that names an operation the
 service lacks, or a member its input lacks, fails generation.
 
+Every test sets `_TEST_CONFIG`, the config fields integrations supply through
+`endpoint_test_config`, and a case's own fields replace them. The AWS config
+integration sets a region and static credentials, so tests never reach the
+credentials chain.
+
 The module marks its tests with `pytest.mark.asyncio`. The package's `test`
 dependency group adds `pytest`, `pytest-asyncio`, and `smithy-test`.
 
@@ -292,9 +300,12 @@ defaults to no change:
 | Hook | Changes |
 | --- | --- |
 | `client_names` | The client and config class names |
+| `auth_schemes` | Auth schemes added to the core ones |
 | `config_fields` | Config fields a client context field must not take |
 | `write_config` | The config class, written in place of the core one |
 | `new_config` | The callable that creates a default config |
+| `write_client_methods` | Extra client methods, such as `_post_setup` |
+| `endpoint_test_config` | Config fields every generated endpoint test sets |
 | `client_plugins` | Plugins every client applies, before the core ones |
 | `write_files` | Extra modules |
 
@@ -327,6 +338,20 @@ config:
 
 The generated package depends on `smithy-aws-core`. A client context field may
 not take an `AwsConfig` field name.
+
+`AwsSigV4Integration` matches a service with both `aws.api#service` and
+`aws.auth#sigv4`, and follows the Java generator:
+
+* Both configs default `auth_schemes` to `SigV4AuthScheme` or
+  `AsyncSigV4AuthScheme` for the trait's signing name. `AwsConfig` already
+  declares the credential fields and `aws_credentials_identity_resolver`.
+* A client's `_post_setup` sets the default AWS credentials chain when the
+  config has no credentials resolver. The chain reads the config's profile,
+  region, and transport.
+* A service with `aws.auth#sigv4` but not `aws.api#service` fails generation,
+  because SigV4 needs the AWS config.
+
+S3 signing properties come later with S3 support.
 
 ## Clients and Configuration
 
@@ -386,13 +411,13 @@ runtime metadata. It covers `self`, `plugins`, defaults, and idempotency tokens.
 ## Supported Features
 
 The generator supports non-streaming RPCv2 CBOR and RPCv2 JSON operations that
-are unsigned or use API key auth, and whose endpoint rules use the standard
-library. Models that require other auth schemes or event or data streams fail
-generation with a diagnostic naming the operation and feature.
+are unsigned or use API key auth or SigV4, and whose endpoint rules use the
+standard library. Models that require other auth schemes or event or data
+streams fail generation with a diagnostic naming the operation and feature.
 
 Authentication and endpoint extension points are provider-neutral. AWS config
-resolution and the AWS user agent are AWS integrations. SigV4, AWS endpoint
-functions, and AWS protocols are not supported yet.
+resolution, the AWS user agent, and SigV4 are AWS integrations. AWS endpoint
+functions and AWS protocols are not supported yet.
 
 ## Validation
 
@@ -403,24 +428,27 @@ decoded CBOR payload, response models, and error types. An endpoint test
 resolves a host from a client context field, an input context parameter, and
 a static context parameter.
 
-Lowering tests port the Java generator's tests. The `endpoint-rules-client`
-snapshot is generated from a fixture whose endpoint rules read client context
-fields, `SDK::Endpoint`, an input context parameter, and static context
-parameters. `models/endpoint-rules.smithy` is its source, and
-`models/endpoint-rules.json` is that model assembled by Smithy with its ruleset
-compiled by `CompileBdd`. The snapshot tests run the snapshot's generated
-endpoint tests.
+Lowering tests port the Java generator's tests.
 
-The `api-key-auth-client` snapshot comes from `models/api-key-auth.smithy`,
-assembled by Smithy into `models/api-key-auth.json`. Its operations use the
-service's API key auth, `@auth([])`, and `@optionalAuth`. Tests check which
-requests carry the key and that a missing key fails the call.
+The `features-client` snapshot covers every client feature in one AWS service.
+`models/features.smithy` is its source, and `models/features.json` is that
+model assembled by Smithy with its ruleset compiled by `CompileBdd`:
 
-The `aws-config-client` snapshot comes from `models/aws-config.smithy`,
-assembled by Smithy into `models/aws-config.json` with its ruleset compiled by
-`CompileBdd`. Its tests resolve the endpoint from `AWS_ENDPOINT_URL_<SDK_ID>`
-and from a profile, check the AWS user agent, and check that unknown fields and
-direct construction fail.
+| Feature | Fixture |
+| --- | --- |
+| Endpoint rules | Client context fields, `SDK::Endpoint`, an input context parameter, and static context parameters |
+| Endpoint tests | Rules and client cases, run by the snapshot tests |
+| SigV4 | The service's default auth |
+| API key auth | Operations with `@auth([httpApiKeyAuth])`, one also `@optionalAuth` |
+| No auth | Operations with `@auth([])` |
+| AWS config | `aws.api#service`, with the SDK ID `Field Notes` |
+
+Its tests check which requests carry the API key and that a missing key fails
+the call. They resolve the endpoint from `AWS_ENDPOINT_URL_<SDK_ID>` and from a
+profile, check the AWS user agent, check that unknown fields and direct
+construction fail, and check SigV4 signing with configured credentials and with
+credentials from the default chain. The core config is covered by the
+`rpcv2-cbor-client` and `rpcv2-json-client` snapshots and by unit tests.
 
 Client snapshots sit alongside the types snapshots and cover the
 provider-neutral RPCv2 CBOR and RPCv2 JSON projections. Checks cover deterministic
