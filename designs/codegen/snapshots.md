@@ -62,6 +62,9 @@ projections, generated with the public `client` command.
 
 | Projection | Import package | Operations | Protocol vectors |
 | --- | --- | ---: | ---: |
+| `aws-json-1-0-client` | `awsjson10_client` | 16 | 67 |
+| `aws-json-1-1-client` | `awsjson11_client` | 18 | 118 |
+| `query-compatible-aws-json-1-0-client` | `querycompatible_awsjson10_client` | 1 | 3 |
 | `rest-json-1-client` | `restjson_client` | 103 | 236 |
 | `rpcv2-cbor-client` | `rpcv2cbor_client` | 14 | 72 |
 | `rpcv2-json-client` | `rpcv2json_client` | 15 | 73 |

@@ -1,0 +1,21 @@
+{
+  "files": {
+    "README.md": "13c6e54a48c48f6a024e981c140de0b6899c86e19a4961c5b5bbfbca5d0ba6b7",
+    "pyproject.toml": "bacc62bc6d525ddbee7edda4b886b87ec116c42509ffaac11d0302956ea482a6",
+    "src/querycompatible_awsjson10_client/__init__.py": "aff5fd6054c35b4aadbf376bca648883901c2581a005c5f5bdafb5c0b41214e2",
+    "src/querycompatible_awsjson10_client/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/querycompatible_awsjson10_client/_private/endpoints.py": "7d515fe771678e82ddbe07798d6b7e48c25c6c9bec19cec9318deb0bc5064ead",
+    "src/querycompatible_awsjson10_client/_private/schemas.py": "cc88f0e7ad5c190d8c8dfeef89c45c73bfffd54e6710bec6e693ba8753f37f55",
+    "src/querycompatible_awsjson10_client/aio/__init__.py": "c147a9d60c2a26446fffc16eb7c4452299b7ec7c8de0cb55207a8f5e0189893e",
+    "src/querycompatible_awsjson10_client/aio/client.py": "a901f0976d7071bc02e3f73812ad89178b828bfa332bb2fd83b5852d64dc4664",
+    "src/querycompatible_awsjson10_client/aio/config.py": "c50946907f8489db780b579c2d1d4815a827b649c754745d61da765eec34523c",
+    "src/querycompatible_awsjson10_client/aio/user_agent.py": "3f53ccc91866f16bc80ea835a16fef5593be909ec62938f10d7b433494b8671a",
+    "src/querycompatible_awsjson10_client/client.py": "e99bc0002072f720baced05fdf598793406d8ec3a730b81fb954895f60864fce",
+    "src/querycompatible_awsjson10_client/config.py": "fbafbc4431b0c279f45561193b035ab09f9521913fcfa4076a5db52ec3f4f4ca",
+    "src/querycompatible_awsjson10_client/models.py": "143e8b8644ac97c317c07d9a31f7975364cb3c952601a640755a4568e31e2d3d",
+    "src/querycompatible_awsjson10_client/models.pyi": "16a51e56007a1bbb95969fc2aa0ecb3044196c2c4d4234420d01e7e06844d9ac",
+    "src/querycompatible_awsjson10_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/querycompatible_awsjson10_client/user_agent.py": "ef216309a4d581ecb0034a953c559af28ba29ea046e842a0dbea2a0209569565"
+  },
+  "version": 1
+}

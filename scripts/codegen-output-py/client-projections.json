@@ -1,9 +1,30 @@
 {
+  "aws-json-1-0-client": {
+    "description": "Python client for the aws-json-1-0 projection",
+    "model": "models/aws-json-1-0.json",
+    "package": "awsjson10_client",
+    "service": "aws.protocoltests.json10#JsonRpc10",
+    "version": "0.0.1"
+  },
+  "aws-json-1-1-client": {
+    "description": "Python client for the aws-json-1-1 projection",
+    "model": "models/aws-json-1-1.json",
+    "package": "awsjson11_client",
+    "service": "aws.protocoltests.json#JsonProtocol",
+    "version": "0.0.1"
+  },
   "features-client": {
     "description": "Python client for the client features fixture",
     "model": "models/features.json",
     "package": "features_client",
     "service": "example.features#FieldNotes",
+    "version": "0.0.1"
+  },
+  "query-compatible-aws-json-1-0-client": {
+    "description": "Python client for the query-compatible-aws-json-1-0 projection",
+    "model": "models/query-compatible-aws-json-1-0.json",
+    "package": "querycompatible_awsjson10_client",
+    "service": "aws.protocoltests.json10#QueryCompatibleJsonRpc10",
     "version": "0.0.1"
   },
   "rest-json-1-client": {

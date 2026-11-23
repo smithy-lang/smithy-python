@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `aws.protocols#awsJson1_0` and `aws.protocols#awsJson1_1` support to generated clients, using the `smithy-aws-core` JSON RPC protocols."
+}

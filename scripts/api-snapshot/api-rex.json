@@ -1329,6 +1329,8 @@
     "TimestampFormat": "rex-class"
   },
   "smithy_python.aws": {
+    "AWS_JSON_10": "rex-ProtocolContribution",
+    "AWS_JSON_11": "rex-ProtocolContribution",
     "AwsConfigIntegration": "rex-class",
     "AwsEndpointsIntegration": "rex-class",
     "AwsSigV4Integration": "rex-class",

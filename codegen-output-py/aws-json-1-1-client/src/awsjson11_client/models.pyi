@@ -1,0 +1,982 @@
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from datetime import datetime
+from enum import IntEnum, StrEnum
+from typing import Required, Self, TypedDict
+
+from smithy_core.deserializers import ShapeDeserializer
+from smithy_core.documents import Document
+from smithy_core.exceptions import ModeledError
+from smithy_core.response import ResponseMetadata
+from smithy_core.schemas import APIOperation
+from smithy_core.serializers import ShapeSerializer
+from smithy_core.types import UnknownEnumMixin
+
+__all__ = [
+    "CONTENT_TYPE_PARAMETERS",
+    "DATETIME_OFFSETS",
+    "EMPTY_OPERATION",
+    "ENDPOINT_OPERATION",
+    "ENDPOINT_WITH_HOST_LABEL_OPERATION",
+    "FRACTIONAL_SECONDS",
+    "GREETING_WITH_ERRORS",
+    "HOST_WITH_PATH_OPERATION",
+    "JSON_ENUMS",
+    "JSON_INT_ENUMS",
+    "JSON_UNIONS",
+    "KITCHEN_SINK_OPERATION",
+    "NULL_OPERATION",
+    "OPERATION_WITH_OPTIONAL_INPUT_OUTPUT",
+    "PUT_AND_GET_INLINE_DOCUMENTS",
+    "PUT_WITH_CONTENT_ENCODING",
+    "SIMPLE_SCALAR_PROPERTIES",
+    "SPARSE_NULLS_OPERATION",
+    "ComplexError",
+    "ComplexNestedErrorData",
+    "ContentTypeParametersInput",
+    "ContentTypeParametersOutput",
+    "DatetimeOffsetsInput",
+    "DatetimeOffsetsOutput",
+    "EmptyOperationInput",
+    "EmptyOperationOutput",
+    "EmptyStruct",
+    "EndpointOperationInput",
+    "EndpointOperationOutput",
+    "EndpointWithHostLabelOperationInput",
+    "EndpointWithHostLabelOperationOutput",
+    "ErrorWithMembers",
+    "ErrorWithoutMembers",
+    "FooEnum",
+    "FooError",
+    "FractionalSecondsInput",
+    "FractionalSecondsOutput",
+    "GreetingStruct",
+    "GreetingWithErrorsInput",
+    "GreetingWithErrorsOutput",
+    "HostWithPathOperationInput",
+    "HostWithPathOperationOutput",
+    "IntegerEnum",
+    "InvalidGreeting",
+    "JsonEnumsInput",
+    "JsonEnumsOutput",
+    "JsonIntEnumsInput",
+    "JsonIntEnumsOutput",
+    "JsonUnionsInput",
+    "JsonUnionsOutput",
+    "KitchenSink",
+    "KitchenSinkOperationInput",
+    "KitchenSinkOperationOutput",
+    "MyUnion",
+    "MyUnionBlobValue",
+    "MyUnionBooleanValue",
+    "MyUnionEnumValue",
+    "MyUnionListValue",
+    "MyUnionMapValue",
+    "MyUnionNumberValue",
+    "MyUnionStringValue",
+    "MyUnionStructureValue",
+    "MyUnionTimestampValue",
+    "MyUnionUnknown",
+    "NullOperationInput",
+    "NullOperationOutput",
+    "OperationWithOptionalInputOutputInput",
+    "OperationWithOptionalInputOutputOutput",
+    "PutAndGetInlineDocumentsInput",
+    "PutAndGetInlineDocumentsOutput",
+    "PutWithContentEncodingInput",
+    "PutWithContentEncodingOutput",
+    "ServiceError",
+    "SimpleScalarPropertiesInput",
+    "SimpleScalarPropertiesOutput",
+    "SimpleStruct",
+    "SparseNullsOperationInput",
+    "SparseNullsOperationOutput",
+    "StructWithJsonName",
+]
+
+class _SerdeShape:
+    def serialize(self, serializer: ShapeSerializer) -> None: ...
+    def serialize_members(self, serializer: ShapeSerializer) -> None: ...
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
+
+class ServiceError(ModeledError):
+    """
+    Base error for all errors in the service.
+
+    Some exceptions do not extend from this class, including synthetic,
+    implicit, and shared exception types.
+    """
+
+@dataclass(kw_only=True)
+class ComplexError(ServiceError, _SerdeShape):
+    "This error is thrown when a request is invalid."
+
+    top_level: str | None = ...
+    nested: ComplexNestedErrorData | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class ComplexNestedErrorData(_SerdeShape):
+    "Dataclass for ComplexNestedErrorData structure."
+
+    foo: str | None = ...
+
+@dataclass(kw_only=True)
+class ContentTypeParametersInput(_SerdeShape):
+    "Dataclass for ContentTypeParametersInput structure."
+
+    value: int | None = ...
+
+class ContentTypeParametersInputDict(TypedDict, total=False):
+    "Dictionary form of `ContentTypeParametersInput`."
+
+    value: int | None
+
+@dataclass(kw_only=True)
+class ContentTypeParametersOutput(_SerdeShape):
+    "Dataclass for ContentTypeParametersOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class DatetimeOffsetsOutput(_SerdeShape):
+    "Dataclass for DatetimeOffsetsOutput structure."
+
+    datetime_: datetime | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class EmptyStruct(_SerdeShape):
+    "Dataclass for EmptyStruct structure."
+
+class EmptyStructDict(TypedDict, total=False):
+    "Dictionary form of `EmptyStruct`."
+
+@dataclass(kw_only=True)
+class ErrorWithMembers(ServiceError, _SerdeShape):
+    "Dataclass for ErrorWithMembers structure."
+
+    code: str | None = ...
+    complex_data: KitchenSink | None = ...
+    integer_field: int | None = ...
+    list_field: list[str] | None = ...
+    map_field: dict[str, str] | None = ...
+    string_field: str | None = ...
+    "abc"
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class ErrorWithoutMembers(ServiceError, _SerdeShape):
+    "Dataclass for ErrorWithoutMembers structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class FooError(ServiceError, _SerdeShape):
+    """
+    This error has test cases that test some of the dark corners of Amazon
+    service
+    framework history. It should only be implemented by clients.
+    """
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class FractionalSecondsOutput(_SerdeShape):
+    "Dataclass for FractionalSecondsOutput structure."
+
+    datetime_: datetime | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class GreetingWithErrorsOutput(_SerdeShape):
+    "Dataclass for GreetingWithErrorsOutput structure."
+
+    greeting: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class InvalidGreeting(ServiceError, _SerdeShape):
+    "This error is thrown when an invalid greeting value is provided."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class KitchenSink(_SerdeShape):
+    "Dataclass for KitchenSink structure."
+
+    blob: bytes | None = ...
+    boolean: bool | None = ...
+    double: float | None = ...
+    empty_struct: EmptyStruct | None = ...
+    float_: float | None = ...
+    httpdate_timestamp: datetime | None = ...
+    integer: int | None = ...
+    iso8601_timestamp: datetime | None = ...
+    json_value: str | None = ...
+    list_of_lists: list[list[str]] | None = ...
+    list_of_maps_of_strings: list[dict[str, str]] | None = ...
+    list_of_strings: list[str] | None = ...
+    list_of_structs: list[SimpleStruct] | None = ...
+    long: int | None = ...
+    map_of_lists_of_strings: dict[str, list[str]] | None = ...
+    map_of_maps: dict[str, dict[str, str]] | None = ...
+    map_of_strings: dict[str, str] | None = ...
+    map_of_structs: dict[str, SimpleStruct] | None = ...
+    recursive_list: list[KitchenSink] | None = ...
+    recursive_map: dict[str, KitchenSink] | None = ...
+    recursive_struct: KitchenSink | None = ...
+    simple_struct: SimpleStruct | None = ...
+    string: str | None = ...
+    struct_with_json_name: StructWithJsonName | None = ...
+    timestamp: datetime | None = ...
+    unix_timestamp: datetime | None = ...
+
+class KitchenSinkDict(TypedDict, total=False):
+    "Dictionary form of `KitchenSink`."
+
+    blob: bytes | None
+    boolean: bool | None
+    double: float | None
+    empty_struct: EmptyStruct | EmptyStructDict | None
+    float_: float | None
+    httpdate_timestamp: datetime | None
+    integer: int | None
+    iso8601_timestamp: datetime | None
+    json_value: str | None
+    list_of_lists: Sequence[Sequence[str]] | None
+    list_of_maps_of_strings: Sequence[Mapping[str, str]] | None
+    list_of_strings: Sequence[str] | None
+    list_of_structs: Sequence[SimpleStruct | SimpleStructDict] | None
+    long: int | None
+    map_of_lists_of_strings: Mapping[str, Sequence[str]] | None
+    map_of_maps: Mapping[str, Mapping[str, str]] | None
+    map_of_strings: Mapping[str, str] | None
+    map_of_structs: Mapping[str, SimpleStruct | SimpleStructDict] | None
+    recursive_list: Sequence[KitchenSink | KitchenSinkDict] | None
+    recursive_map: Mapping[str, KitchenSink | KitchenSinkDict] | None
+    recursive_struct: KitchenSink | KitchenSinkDict | None
+    simple_struct: SimpleStruct | SimpleStructDict | None
+    string: str | None
+    struct_with_json_name: StructWithJsonName | StructWithJsonNameDict | None
+    timestamp: datetime | None
+    unix_timestamp: datetime | None
+
+@dataclass
+class MyUnionStringValue(_SerdeShape):
+    value: str
+
+@dataclass
+class MyUnionBooleanValue(_SerdeShape):
+    value: bool
+
+@dataclass
+class MyUnionNumberValue(_SerdeShape):
+    value: int
+
+@dataclass
+class MyUnionBlobValue(_SerdeShape):
+    value: bytes
+
+@dataclass
+class MyUnionTimestampValue(_SerdeShape):
+    value: datetime
+
+@dataclass
+class MyUnionEnumValue(_SerdeShape):
+    value: str
+
+@dataclass
+class MyUnionListValue(_SerdeShape):
+    value: list[str]
+
+@dataclass
+class MyUnionMapValue(_SerdeShape):
+    value: dict[str, str]
+
+@dataclass
+class MyUnionStructureValue(_SerdeShape):
+    value: GreetingStruct
+
+@dataclass
+class MyUnionUnknown(_SerdeShape):
+    """
+    Represents an unknown variant.
+
+    If you receive this value, you will need to update your library to
+    receive the parsed value.
+
+    This value may not be deliberately sent.
+    """
+
+    tag: str
+
+MyUnion = (
+    MyUnionStringValue
+    | MyUnionBooleanValue
+    | MyUnionNumberValue
+    | MyUnionBlobValue
+    | MyUnionTimestampValue
+    | MyUnionEnumValue
+    | MyUnionListValue
+    | MyUnionMapValue
+    | MyUnionStructureValue
+    | MyUnionUnknown
+)
+"A union with a representative set of types for members."
+
+class _MyUnionDeserializer:
+    def deserialize(self, deserializer: ShapeDeserializer) -> MyUnion: ...
+
+class MyUnionStringValueDict(TypedDict):
+    string_value: str
+
+class MyUnionBooleanValueDict(TypedDict):
+    boolean_value: bool
+
+class MyUnionNumberValueDict(TypedDict):
+    number_value: int
+
+class MyUnionBlobValueDict(TypedDict):
+    blob_value: bytes
+
+class MyUnionTimestampValueDict(TypedDict):
+    timestamp_value: datetime
+
+class MyUnionEnumValueDict(TypedDict):
+    enum_value: str
+
+class MyUnionListValueDict(TypedDict):
+    list_value: Sequence[str]
+
+class MyUnionMapValueDict(TypedDict):
+    map_value: Mapping[str, str]
+
+class MyUnionStructureValueDict(TypedDict):
+    structure_value: GreetingStruct | GreetingStructDict
+
+MyUnionDict = (
+    MyUnionStringValueDict
+    | MyUnionBooleanValueDict
+    | MyUnionNumberValueDict
+    | MyUnionBlobValueDict
+    | MyUnionTimestampValueDict
+    | MyUnionEnumValueDict
+    | MyUnionListValueDict
+    | MyUnionMapValueDict
+    | MyUnionStructureValueDict
+)
+"Dictionary form of `MyUnion`, setting exactly one variant."
+
+@dataclass(kw_only=True)
+class OperationWithOptionalInputOutputInput(_SerdeShape):
+    "Dataclass for OperationWithOptionalInputOutputInput structure."
+
+    value: str | None = ...
+
+class OperationWithOptionalInputOutputInputDict(TypedDict, total=False):
+    "Dictionary form of `OperationWithOptionalInputOutputInput`."
+
+    value: str | None
+
+@dataclass(kw_only=True)
+class OperationWithOptionalInputOutputOutput(_SerdeShape):
+    "Dataclass for OperationWithOptionalInputOutputOutput structure."
+
+    value: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class PutWithContentEncodingInput(_SerdeShape):
+    "Dataclass for PutWithContentEncodingInput structure."
+
+    encoding: str | None = ...
+    data: str | None = ...
+
+class PutWithContentEncodingInputDict(TypedDict, total=False):
+    "Dictionary form of `PutWithContentEncodingInput`."
+
+    encoding: str | None
+    data: str | None
+
+@dataclass(kw_only=True)
+class SimpleStruct(_SerdeShape):
+    "Dataclass for SimpleStruct structure."
+
+    value: str | None = ...
+
+class SimpleStructDict(TypedDict, total=False):
+    "Dictionary form of `SimpleStruct`."
+
+    value: str | None
+
+@dataclass(kw_only=True)
+class StructWithJsonName(_SerdeShape):
+    "Dataclass for StructWithJsonName structure."
+
+    value: str | None = ...
+
+class StructWithJsonNameDict(TypedDict, total=False):
+    "Dictionary form of `StructWithJsonName`."
+
+    value: str | None
+
+class FooEnum(UnknownEnumMixin, StrEnum):
+    FOO = "Foo"
+    BAZ = "Baz"
+    BAR = "Bar"
+    ONE = "1"
+    ZERO = "0"
+
+@dataclass(kw_only=True)
+class GreetingStruct(_SerdeShape):
+    "Dataclass for GreetingStruct structure."
+
+    hi: str | None = ...
+
+class GreetingStructDict(TypedDict, total=False):
+    "Dictionary form of `GreetingStruct`."
+
+    hi: str | None
+
+class IntegerEnum(UnknownEnumMixin, IntEnum):
+    A = 1
+    B = 2
+    C = 3
+
+@dataclass(kw_only=True)
+class DatetimeOffsetsInput(_SerdeShape):
+    "Dataclass for DatetimeOffsetsInput structure."
+
+class DatetimeOffsetsInputDict(TypedDict, total=False):
+    "Dictionary form of `DatetimeOffsetsInput`."
+
+@dataclass(kw_only=True)
+class EmptyOperationInput(_SerdeShape):
+    "Dataclass for EmptyOperationInput structure."
+
+class EmptyOperationInputDict(TypedDict, total=False):
+    "Dictionary form of `EmptyOperationInput`."
+
+@dataclass(kw_only=True)
+class EmptyOperationOutput(_SerdeShape):
+    "Dataclass for EmptyOperationOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class EndpointOperationInput(_SerdeShape):
+    "Dataclass for EndpointOperationInput structure."
+
+class EndpointOperationInputDict(TypedDict, total=False):
+    "Dictionary form of `EndpointOperationInput`."
+
+@dataclass(kw_only=True)
+class EndpointOperationOutput(_SerdeShape):
+    "Dataclass for EndpointOperationOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class EndpointWithHostLabelOperationInput(_SerdeShape):
+    "Dataclass for EndpointWithHostLabelOperationInput structure."
+
+    label: str | None = ...
+
+class EndpointWithHostLabelOperationInputDict(TypedDict, total=False):
+    "Dictionary form of `EndpointWithHostLabelOperationInput`."
+
+    label: Required[str]
+
+@dataclass(kw_only=True)
+class EndpointWithHostLabelOperationOutput(_SerdeShape):
+    "Dataclass for EndpointWithHostLabelOperationOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class FractionalSecondsInput(_SerdeShape):
+    "Dataclass for FractionalSecondsInput structure."
+
+class FractionalSecondsInputDict(TypedDict, total=False):
+    "Dictionary form of `FractionalSecondsInput`."
+
+@dataclass(kw_only=True)
+class GreetingWithErrorsInput(_SerdeShape):
+    "Dataclass for GreetingWithErrorsInput structure."
+
+class GreetingWithErrorsInputDict(TypedDict, total=False):
+    "Dictionary form of `GreetingWithErrorsInput`."
+
+@dataclass(kw_only=True)
+class HostWithPathOperationInput(_SerdeShape):
+    "Dataclass for HostWithPathOperationInput structure."
+
+class HostWithPathOperationInputDict(TypedDict, total=False):
+    "Dictionary form of `HostWithPathOperationInput`."
+
+@dataclass(kw_only=True)
+class HostWithPathOperationOutput(_SerdeShape):
+    "Dataclass for HostWithPathOperationOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class JsonEnumsInput(_SerdeShape):
+    "Dataclass for JsonEnumsInput structure."
+
+    foo_enum1: str | None = ...
+    foo_enum2: str | None = ...
+    foo_enum3: str | None = ...
+    foo_enum_list: list[str] | None = ...
+    foo_enum_set: list[str] | None = ...
+    foo_enum_map: dict[str, str] | None = ...
+
+class JsonEnumsInputDict(TypedDict, total=False):
+    "Dictionary form of `JsonEnumsInput`."
+
+    foo_enum1: str | None
+    foo_enum2: str | None
+    foo_enum3: str | None
+    foo_enum_list: Sequence[str] | None
+    foo_enum_set: Sequence[str] | None
+    foo_enum_map: Mapping[str, str] | None
+
+@dataclass(kw_only=True)
+class JsonEnumsOutput(_SerdeShape):
+    "Dataclass for JsonEnumsOutput structure."
+
+    foo_enum1: str | None = ...
+    foo_enum2: str | None = ...
+    foo_enum3: str | None = ...
+    foo_enum_list: list[str] | None = ...
+    foo_enum_set: list[str] | None = ...
+    foo_enum_map: dict[str, str] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class JsonIntEnumsInput(_SerdeShape):
+    "Dataclass for JsonIntEnumsInput structure."
+
+    int_enum1: int | None = ...
+    int_enum2: int | None = ...
+    int_enum3: int | None = ...
+    int_enum_list: list[int] | None = ...
+    int_enum_set: list[int] | None = ...
+    int_enum_map: dict[str, int] | None = ...
+
+class JsonIntEnumsInputDict(TypedDict, total=False):
+    "Dictionary form of `JsonIntEnumsInput`."
+
+    int_enum1: int | None
+    int_enum2: int | None
+    int_enum3: int | None
+    int_enum_list: Sequence[int] | None
+    int_enum_set: Sequence[int] | None
+    int_enum_map: Mapping[str, int] | None
+
+@dataclass(kw_only=True)
+class JsonIntEnumsOutput(_SerdeShape):
+    "Dataclass for JsonIntEnumsOutput structure."
+
+    int_enum1: int | None = ...
+    int_enum2: int | None = ...
+    int_enum3: int | None = ...
+    int_enum_list: list[int] | None = ...
+    int_enum_set: list[int] | None = ...
+    int_enum_map: dict[str, int] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class JsonUnionsInput(_SerdeShape):
+    "A shared structure that contains a single union member."
+
+    contents: MyUnion | None = ...
+
+class JsonUnionsInputDict(TypedDict, total=False):
+    "Dictionary form of `JsonUnionsInput`."
+
+    contents: MyUnion | MyUnionDict | None
+
+@dataclass(kw_only=True)
+class JsonUnionsOutput(_SerdeShape):
+    "A shared structure that contains a single union member."
+
+    contents: MyUnion | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class KitchenSinkOperationInput(_SerdeShape):
+    "Dataclass for KitchenSinkOperationInput structure."
+
+    blob: bytes | None = ...
+    boolean: bool | None = ...
+    double: float | None = ...
+    empty_struct: EmptyStruct | None = ...
+    float_: float | None = ...
+    httpdate_timestamp: datetime | None = ...
+    integer: int | None = ...
+    iso8601_timestamp: datetime | None = ...
+    json_value: str | None = ...
+    list_of_lists: list[list[str]] | None = ...
+    list_of_maps_of_strings: list[dict[str, str]] | None = ...
+    list_of_strings: list[str] | None = ...
+    list_of_structs: list[SimpleStruct] | None = ...
+    long: int | None = ...
+    map_of_lists_of_strings: dict[str, list[str]] | None = ...
+    map_of_maps: dict[str, dict[str, str]] | None = ...
+    map_of_strings: dict[str, str] | None = ...
+    map_of_structs: dict[str, SimpleStruct] | None = ...
+    recursive_list: list[KitchenSink] | None = ...
+    recursive_map: dict[str, KitchenSink] | None = ...
+    recursive_struct: KitchenSink | None = ...
+    simple_struct: SimpleStruct | None = ...
+    string: str | None = ...
+    struct_with_json_name: StructWithJsonName | None = ...
+    timestamp: datetime | None = ...
+    unix_timestamp: datetime | None = ...
+
+class KitchenSinkOperationInputDict(TypedDict, total=False):
+    "Dictionary form of `KitchenSinkOperationInput`."
+
+    blob: bytes | None
+    boolean: bool | None
+    double: float | None
+    empty_struct: EmptyStruct | EmptyStructDict | None
+    float_: float | None
+    httpdate_timestamp: datetime | None
+    integer: int | None
+    iso8601_timestamp: datetime | None
+    json_value: str | None
+    list_of_lists: Sequence[Sequence[str]] | None
+    list_of_maps_of_strings: Sequence[Mapping[str, str]] | None
+    list_of_strings: Sequence[str] | None
+    list_of_structs: Sequence[SimpleStruct | SimpleStructDict] | None
+    long: int | None
+    map_of_lists_of_strings: Mapping[str, Sequence[str]] | None
+    map_of_maps: Mapping[str, Mapping[str, str]] | None
+    map_of_strings: Mapping[str, str] | None
+    map_of_structs: Mapping[str, SimpleStruct | SimpleStructDict] | None
+    recursive_list: Sequence[KitchenSink | KitchenSinkDict] | None
+    recursive_map: Mapping[str, KitchenSink | KitchenSinkDict] | None
+    recursive_struct: KitchenSink | KitchenSinkDict | None
+    simple_struct: SimpleStruct | SimpleStructDict | None
+    string: str | None
+    struct_with_json_name: StructWithJsonName | StructWithJsonNameDict | None
+    timestamp: datetime | None
+    unix_timestamp: datetime | None
+
+@dataclass(kw_only=True)
+class KitchenSinkOperationOutput(_SerdeShape):
+    "Dataclass for KitchenSinkOperationOutput structure."
+
+    blob: bytes | None = ...
+    boolean: bool | None = ...
+    double: float | None = ...
+    empty_struct: EmptyStruct | None = ...
+    float_: float | None = ...
+    httpdate_timestamp: datetime | None = ...
+    integer: int | None = ...
+    iso8601_timestamp: datetime | None = ...
+    json_value: str | None = ...
+    list_of_lists: list[list[str]] | None = ...
+    list_of_maps_of_strings: list[dict[str, str]] | None = ...
+    list_of_strings: list[str] | None = ...
+    list_of_structs: list[SimpleStruct] | None = ...
+    long: int | None = ...
+    map_of_lists_of_strings: dict[str, list[str]] | None = ...
+    map_of_maps: dict[str, dict[str, str]] | None = ...
+    map_of_strings: dict[str, str] | None = ...
+    map_of_structs: dict[str, SimpleStruct] | None = ...
+    recursive_list: list[KitchenSink] | None = ...
+    recursive_map: dict[str, KitchenSink] | None = ...
+    recursive_struct: KitchenSink | None = ...
+    simple_struct: SimpleStruct | None = ...
+    string: str | None = ...
+    struct_with_json_name: StructWithJsonName | None = ...
+    timestamp: datetime | None = ...
+    unix_timestamp: datetime | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class NullOperationInput(_SerdeShape):
+    "Dataclass for NullOperationInput structure."
+
+    string: str | None = ...
+
+class NullOperationInputDict(TypedDict, total=False):
+    "Dictionary form of `NullOperationInput`."
+
+    string: str | None
+
+@dataclass(kw_only=True)
+class NullOperationOutput(_SerdeShape):
+    "Dataclass for NullOperationOutput structure."
+
+    string: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class PutAndGetInlineDocumentsInput(_SerdeShape):
+    "Dataclass for PutAndGetInlineDocumentsInput structure."
+
+    inline_document: Document | None = ...
+
+class PutAndGetInlineDocumentsInputDict(TypedDict, total=False):
+    "Dictionary form of `PutAndGetInlineDocumentsInput`."
+
+    inline_document: Document | None
+
+@dataclass(kw_only=True)
+class PutAndGetInlineDocumentsOutput(_SerdeShape):
+    "Dataclass for PutAndGetInlineDocumentsOutput structure."
+
+    inline_document: Document | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class PutWithContentEncodingOutput(_SerdeShape):
+    "Dataclass for PutWithContentEncodingOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class SimpleScalarPropertiesInput(_SerdeShape):
+    "Dataclass for SimpleScalarPropertiesInput structure."
+
+    float_value: float | None = ...
+    double_value: float | None = ...
+
+class SimpleScalarPropertiesInputDict(TypedDict, total=False):
+    "Dictionary form of `SimpleScalarPropertiesInput`."
+
+    float_value: float | None
+    double_value: float | None
+
+@dataclass(kw_only=True)
+class SimpleScalarPropertiesOutput(_SerdeShape):
+    "Dataclass for SimpleScalarPropertiesOutput structure."
+
+    float_value: float | None = ...
+    double_value: float | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class SparseNullsOperationInput(_SerdeShape):
+    "Dataclass for SparseNullsOperationInput structure."
+
+    sparse_string_list: list[str | None] | None = ...
+    sparse_string_map: dict[str, str | None] | None = ...
+
+class SparseNullsOperationInputDict(TypedDict, total=False):
+    "Dictionary form of `SparseNullsOperationInput`."
+
+    sparse_string_list: Sequence[str | None] | None
+    sparse_string_map: Mapping[str, str | None] | None
+
+@dataclass(kw_only=True)
+class SparseNullsOperationOutput(_SerdeShape):
+    "Dataclass for SparseNullsOperationOutput structure."
+
+    sparse_string_list: list[str | None] | None = ...
+    sparse_string_map: dict[str, str | None] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+CONTENT_TYPE_PARAMETERS: APIOperation[
+    ContentTypeParametersInput, ContentTypeParametersOutput
+]
+DATETIME_OFFSETS: APIOperation[DatetimeOffsetsInput, DatetimeOffsetsOutput]
+EMPTY_OPERATION: APIOperation[EmptyOperationInput, EmptyOperationOutput]
+ENDPOINT_OPERATION: APIOperation[EndpointOperationInput, EndpointOperationOutput]
+ENDPOINT_WITH_HOST_LABEL_OPERATION: APIOperation[
+    EndpointWithHostLabelOperationInput, EndpointWithHostLabelOperationOutput
+]
+FRACTIONAL_SECONDS: APIOperation[FractionalSecondsInput, FractionalSecondsOutput]
+GREETING_WITH_ERRORS: APIOperation[GreetingWithErrorsInput, GreetingWithErrorsOutput]
+HOST_WITH_PATH_OPERATION: APIOperation[
+    HostWithPathOperationInput, HostWithPathOperationOutput
+]
+JSON_ENUMS: APIOperation[JsonEnumsInput, JsonEnumsOutput]
+JSON_INT_ENUMS: APIOperation[JsonIntEnumsInput, JsonIntEnumsOutput]
+JSON_UNIONS: APIOperation[JsonUnionsInput, JsonUnionsOutput]
+KITCHEN_SINK_OPERATION: APIOperation[
+    KitchenSinkOperationInput, KitchenSinkOperationOutput
+]
+NULL_OPERATION: APIOperation[NullOperationInput, NullOperationOutput]
+OPERATION_WITH_OPTIONAL_INPUT_OUTPUT: APIOperation[
+    OperationWithOptionalInputOutputInput, OperationWithOptionalInputOutputOutput
+]
+PUT_AND_GET_INLINE_DOCUMENTS: APIOperation[
+    PutAndGetInlineDocumentsInput, PutAndGetInlineDocumentsOutput
+]
+PUT_WITH_CONTENT_ENCODING: APIOperation[
+    PutWithContentEncodingInput, PutWithContentEncodingOutput
+]
+SIMPLE_SCALAR_PROPERTIES: APIOperation[
+    SimpleScalarPropertiesInput, SimpleScalarPropertiesOutput
+]
+SPARSE_NULLS_OPERATION: APIOperation[
+    SparseNullsOperationInput, SparseNullsOperationOutput
+]
