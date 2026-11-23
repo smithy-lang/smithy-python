@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Resolve AWS endpoints with the AWS rules extension, so rules can call aws.partition and other AWS functions. AWS configs get fields for the AWS built-ins their rules declare, and generated endpoint tests set AWS built-ins."
+}

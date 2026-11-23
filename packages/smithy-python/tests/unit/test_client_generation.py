@@ -752,3 +752,61 @@ def test_sigv4_trait_needs_a_signing_name(tmp_path: Path) -> None:
     shapes["example#Greeter"]["traits"]["aws.auth#sigv4"] = {}
     with pytest.raises(CodegenError, match="needs a name"):
         _aws_generate(tmp_path, "greeter_no_signing_name", shapes)
+
+
+def _add_aws_rules(shapes: dict[str, Any]) -> None:
+    nodes = (-1, 1, -1, 0, 100_000_001, 100_000_002)
+    shapes["example#Greeter"]["traits"]["smithy.rules#endpointBdd"] = {
+        "version": "1.1",
+        "parameters": {
+            "Region": {"type": "string", "builtIn": "AWS::Region"},
+            "UseFIPS": {
+                "type": "boolean",
+                "builtIn": "AWS::UseFIPS",
+                "required": True,
+                "default": False,
+                "documentation": "Whether to use FIPS.",
+            },
+        },
+        "conditions": [
+            {"fn": "aws.partition", "argv": [{"ref": "Region"}], "assign": "p"}
+        ],
+        "results": [
+            {
+                "conditions": [],
+                "type": "endpoint",
+                "endpoint": {"url": "https://{Region}.{p#dnsSuffix}"},
+            },
+            {"conditions": [], "type": "error", "error": "No region"},
+        ],
+        "root": 2,
+        "nodeCount": 2,
+        "nodes": base64.b64encode(struct.pack(">6i", *nodes)).decode(),
+    }
+
+
+def test_aws_rules_use_the_aws_rules_extension(tmp_path: Path) -> None:
+    shapes = _shapes()
+    _add_aws_rules(shapes)
+    shapes["example#Greeter"]["traits"]["aws.api#service"] = {"sdkId": "Greeter"}
+    _aws_generate(tmp_path, "greeter_aws_rules", shapes)
+    config = (tmp_path / "src/greeter_aws_rules/aio/config.py").read_text()
+    assert "BddEndpointResolver(BDD, extensions=[AWS_RULES_EXTENSION])" in config
+    assert "use_fips_endpoint: bool | None = None" in config
+    assert "resolver=resolve_use_fips_endpoint_program" in config
+
+
+def test_non_aws_services_with_aws_rules_use_the_extension(tmp_path: Path) -> None:
+    shapes = _shapes()
+    _add_aws_rules(shapes)
+    _aws_generate(tmp_path, "greeter_plain_aws_rules", shapes)
+    config = (tmp_path / "src/greeter_plain_aws_rules/config.py").read_text()
+    assert "class Config:" in config
+    assert "BddEndpointResolver(BDD, extensions=[AWS_RULES_EXTENSION])" in config
+
+
+def test_aws_rule_functions_need_the_aws_integrations(tmp_path: Path) -> None:
+    shapes = _shapes()
+    _add_aws_rules(shapes)
+    with pytest.raises(CodegenError, match=r"rules call aws\.partition"):
+        _generate(tmp_path, "greeter_no_aws_rules", shapes)

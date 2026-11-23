@@ -15,7 +15,7 @@ import base64
 import binascii
 import re
 import struct
-from collections.abc import Collection, Mapping
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Final
 
@@ -61,6 +61,17 @@ class ClientContextField:
 
 
 @dataclass(frozen=True, slots=True)
+class RulesExtension:
+    """A runtime ``smithy_core.endpoints.RulesExtension`` a client's resolver uses."""
+
+    reference: TypeReference
+    """The extension constant."""
+
+    functions: frozenset[str]
+    """The rules functions it adds to the standard library."""
+
+
+@dataclass(frozen=True, slots=True)
 class EndpointPlan:
     """A service's lowered endpoint rules and the config fields they read."""
 
@@ -69,10 +80,30 @@ class EndpointPlan:
 
     bdd: EndpointBdd
     client_context_fields: tuple[ClientContextField, ...]
+    extensions: tuple[RulesExtension, ...] = ()
+    """The rules extensions the default endpoint resolver uses, in order."""
+
+    def default_resolver(self, bdd: TypeReference) -> tuple[str | TypeReference, ...]:
+        """The default endpoint resolver expression.
+
+        :param bdd: The ``BDD`` constant of the generated endpoints module.
+        """
+        if not self.extensions:
+            return (_BDD_RESOLVER, "(", bdd, ")")
+        parts: list[str | TypeReference] = [_BDD_RESOLVER, "(", bdd, ", extensions=["]
+        for index, extension in enumerate(self.extensions):
+            if index:
+                parts.append(", ")
+            parts.append(extension.reference)
+        parts.append("])")
+        return tuple(parts)
 
 
 def plan_endpoints(
-    service: _model.ServiceShape, *, reserved: Collection[str] = ()
+    service: _model.ServiceShape,
+    *,
+    reserved: Collection[str] = (),
+    extensions: Sequence[RulesExtension] = (),
 ) -> EndpointPlan:
     """Lower a service's endpoint rules.
 
@@ -81,9 +112,11 @@ def plan_endpoints(
 
     :param service: The service.
     :param reserved: Config attribute names a client context field must not take.
+    :param extensions: Rules extensions whose functions the rules may also call.
     :raises CodegenError: If the service has only an endpointRuleSet trait, its
-        endpointBdd trait is invalid, its rules call functions outside the rules
-        standard library, or a client context field is unsupported or collides.
+        endpointBdd trait is invalid, its rules call functions neither the rules
+        standard library nor an extension provides, or a client context field is
+        unsupported or collides.
     """
     if service.has_trait(_ENDPOINT_BDD):
         trait = _object(service.get_trait(_ENDPOINT_BDD), "the trait")
@@ -97,13 +130,21 @@ def plan_endpoints(
         trait = MANUAL_ENDPOINT_BDD
     fields = client_context_fields(service, reserved=reserved)
     bdd = lower(trait, {field.parameter: field.attribute for field in fields})
-    unsupported = [name for name in bdd.functions if name not in STANDARD_FUNCTIONS]
+    provided = STANDARD_FUNCTIONS.union(
+        *(extension.functions for extension in extensions)
+    )
+    unsupported = [name for name in bdd.functions if name not in provided]
     if unsupported:
         raise _exceptions.CodegenError(
             f"Service {service.id} endpoint rules call {', '.join(unsupported)}, "
             "which client generation does not support yet"
         )
-    return EndpointPlan(trait=trait, bdd=bdd, client_context_fields=fields)
+    return EndpointPlan(
+        trait=trait,
+        bdd=bdd,
+        client_context_fields=fields,
+        extensions=tuple(extensions),
+    )
 
 
 def client_context_fields(
@@ -272,6 +313,11 @@ _ENDPOINT_BDD: Final = _model.ShapeId("smithy.rules", "endpointBdd")
 _ENDPOINT_RULE_SET: Final = _model.ShapeId("smithy.rules", "endpointRuleSet")
 _CLIENT_CONTEXT_PARAMS: Final = _model.ShapeId("smithy.rules", "clientContextParams")
 _FIELD_TYPES: Final = {"boolean": "bool", "string": "str"}
+_BDD_RESOLVER: Final = TypeReference(
+    "BddEndpointResolver",
+    "smithy_core.endpoints",
+    dependencies=(_dependencies.SMITHY_CORE,),
+)
 _ENDPOINT_BDD_TYPE: Final = TypeReference(
     "EndpointBdd",
     "smithy_core.endpoints",

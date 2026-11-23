@@ -14,6 +14,7 @@ from .. import models as _models
 from ..integrations import ClientIntegration, ClientMode, ClientNames, ConfigPlan
 from ..symbols import TypeReference
 from ._dependencies import SMITHY_AWS_CORE
+from ._endpoints import BuiltinField, builtin_fields, static_credentials
 
 if TYPE_CHECKING:
     from ..clients import ClientPlan
@@ -49,22 +50,28 @@ class AwsConfigIntegration(ClientIntegration):
         )
 
     def config_fields(self, service: _model.ServiceShape) -> Collection[str]:
-        del service
-        return _BASE_FIELDS
+        return _BASE_FIELDS | {field.name for _, field in builtin_fields(service)}
 
     def write_config(self, writer: PythonWriter, config: ConfigPlan) -> bool:
         _write_config(writer, config)
         return True
 
-    def endpoint_test_config(self, service: _model.ServiceShape) -> Mapping[str, str]:
-        del service
-        # AwsConfig requires a region. Static credentials keep the tests from
-        # reaching the credentials chain.
-        return {
-            "region": _quote("us-east-1"),
-            "aws_access_key_id": _quote("AKIDTEST"),
-            "aws_secret_access_key": _quote("secret"),
+    def endpoint_test_config(
+        self, service: _model.ServiceShape
+    ) -> Mapping[str, tuple[Part, ...]]:
+        # AwsConfig requires a region. Explicit values keep endpoint_uri, the
+        # credentials, and the built-in fields from being read from the
+        # environment.
+        config: dict[str, tuple[Part, ...]] = {
+            "region": (_quote("us-east-1"),),
+            "endpoint_uri": ("None",),
+            "aws_credentials_identity_resolver": static_credentials(),
         }
+        for _definition, field in builtin_fields(service):
+            config[field.name] = (
+                "None" if field.default is None else _quote(field.default),
+            )
+        return config
 
     def new_config(
         self, mode: ClientMode, config: TypeReference
@@ -188,13 +195,7 @@ def _write_config(writer: PythonWriter, config: ConfigPlan) -> None:
             "endpoint_resolver",
             (*endpoint_resolver, " | None"),
             "Resolves the endpoint of each operation.",
-            (
-                "default_factory=lambda: ",
-                _BDD_ENDPOINT_RESOLVER,
-                "(",
-                config.bdd,
-                ")",
-            ),
+            ("default_factory=lambda: ", *endpoints.default_resolver(config.bdd)),
         ),
         (
             "protocol",
@@ -238,6 +239,10 @@ def _write_config(writer: PythonWriter, config: ConfigPlan) -> None:
                 ("default=None",),
             )
             for field in endpoints.client_context_fields
+        ),
+        *(
+            _builtin_field(definition, field)
+            for definition, field in builtin_fields(service)
         ),
     ]
     overrides = f"_{mode.config}Overrides"
@@ -338,6 +343,33 @@ def _write_config(writer: PythonWriter, config: ConfigPlan) -> None:
             writer.line(")")
 
 
+def _builtin_field(
+    definition: Mapping[str, _model.Node], field: BuiltinField
+) -> tuple[str, tuple[Part, ...], str, tuple[Part, ...]]:
+    """A built-in's config field, typed and documented by its rules parameter."""
+    kind = definition.get("type")
+    python_type = (
+        "bool" if isinstance(kind, str) and kind.lower() == "boolean" else "str"
+    )
+    documentation = definition.get("documentation")
+    docs = (
+        documentation
+        if isinstance(documentation, str)
+        else f"The {definition.get('builtIn')} endpoint parameter."
+    )
+    if field.default is not None:
+        docs += f" Defaults to {field.default}."
+    spec: list[Part] = [
+        "default=",
+        "None" if field.default is None else _quote(field.default),
+        ", resolver=",
+        field.resolver,
+    ]
+    if field.validator is not None:
+        spec.extend((", validator=", field.validator))
+    return (field.name, (python_type, " | None"), docs, tuple(spec))
+
+
 def _default_auth_schemes(config: ConfigPlan) -> tuple[Part, ...]:
     parts: list[Part] = ["{"]
     for scheme in config.auth_schemes:
@@ -405,4 +437,3 @@ _USER_AGENT_INTERCEPTOR: Final = _aws("UserAgentInterceptor", "interceptors.user
 _SHAPE_ID: Final = _core("ShapeID", "shapes")
 _AUTH_SCHEME_RESOLVER: Final = _core("AuthSchemeResolver", "interfaces.auth")
 _DEFAULT_AUTH_RESOLVER: Final = _core("DefaultAuthResolver", "auth")
-_BDD_ENDPOINT_RESOLVER: Final = _core("BddEndpointResolver", "endpoints")

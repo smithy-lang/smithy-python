@@ -5,8 +5,12 @@ from typing import Any, ClassVar, Self, Unpack
 from smithy_aws_core.auth.sigv4 import SigV4AuthScheme
 from smithy_aws_core.config.aws_config import AwsConfig, AwsConfigOverrides
 from smithy_aws_core.config.filesystem import FileSystem
-from smithy_aws_core.config.resolvers import EndpointUriResolver
+from smithy_aws_core.config.resolvers import (
+    EndpointUriResolver,
+    resolve_use_fips_endpoint_program,
+)
 from smithy_aws_core.config.types import FieldSpec
+from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
 from smithy_core.auth import DefaultAuthResolver
 from smithy_core.endpoints import BddEndpointResolver
 from smithy_core.interceptors import Interceptor
@@ -52,6 +56,7 @@ class _FieldNotesConfigOverrides(AwsConfigOverrides, total=False):
     )
     stage: str | None
     force_path_style: bool | None
+    use_fips_endpoint: bool | None
 
 
 @dataclass(kw_only=True, repr=False, init=False)
@@ -89,13 +94,18 @@ class FieldNotesConfig(AwsConfig):
     force_path_style: bool | None = None
     "Forces path-style addressing."
 
+    use_fips_endpoint: bool | None = None
+    "Whether to use a FIPS endpoint."
+
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
         **AwsConfig._FIELDS,
         "endpoint_uri": FieldSpec(
             default=None, resolver=EndpointUriResolver("field_notes").program
         ),
         "endpoint_resolver": FieldSpec(
-            default_factory=lambda: BddEndpointResolver(BDD)
+            default_factory=lambda: BddEndpointResolver(
+                BDD, extensions=[AWS_RULES_EXTENSION]
+            )
         ),
         "protocol": FieldSpec(
             default_factory=lambda: RpcV2CborClientProtocol(_PROTOCOL_SETTINGS),
@@ -118,6 +128,9 @@ class FieldNotesConfig(AwsConfig):
         ),
         "stage": FieldSpec(default=None),
         "force_path_style": FieldSpec(default=None),
+        "use_fips_endpoint": FieldSpec(
+            default=None, resolver=resolve_use_fips_endpoint_program
+        ),
         "transport": FieldSpec(default_factory=lambda: Urllib3HTTPClient()),
     }
 

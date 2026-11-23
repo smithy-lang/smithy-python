@@ -14,6 +14,7 @@ from collections.abc import Collection, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from ._endpoints import RulesExtension
 from .symbols import TypeReference
 
 if TYPE_CHECKING:
@@ -23,7 +24,14 @@ if TYPE_CHECKING:
     from .generation import ClientSettings, GenerationContext
     from .writer import PythonWriter
 
-__all__ = ["ClientIntegration", "ClientMode", "ClientNames", "ConfigPlan", "Part"]
+__all__ = [
+    "ClientIntegration",
+    "ClientMode",
+    "ClientNames",
+    "ConfigPlan",
+    "Part",
+    "RulesExtension",
+]
 
 type Part = str | TypeReference
 """A piece of a generated line."""
@@ -130,14 +138,38 @@ class ClientIntegration:
         del mode, config
         return None
 
-    def endpoint_test_config(self, service: _model.ServiceShape) -> Mapping[str, str]:
-        """Config fields every generated endpoint test sets, as Python literals.
+    def rules_extensions(
+        self, service: _model.ServiceShape
+    ) -> tuple[RulesExtension, ...]:
+        """Rules extensions the default endpoint resolver uses.
+
+        Their functions join the standard library the rules may call.
+        """
+        del service
+        return ()
+
+    def endpoint_test_config(
+        self, service: _model.ServiceShape
+    ) -> Mapping[str, tuple[Part, ...]]:
+        """Config fields every generated endpoint test sets, as expressions.
 
         A config that resolves from the environment, for example, may need a
         region and credentials. A test case's own fields replace these.
         """
         del service
         return {}
+
+    def endpoint_test_builtin(
+        self, service: _model.ServiceShape, builtin: str, value: _model.Node
+    ) -> tuple[str, tuple[Part, ...]] | None:
+        """The config field and expression that set a built-in in an endpoint test.
+
+        None if the integration doesn't set the built-in. A test case that sets a
+        built-in no integration sets, to a value other than its default, is
+        skipped.
+        """
+        del service, builtin, value
+        return None
 
     def write_client_methods(
         self,

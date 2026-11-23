@@ -8,8 +8,12 @@ from smithy_aws_core.aio.config.aws_config import (
     AsyncAwsConfigOverrides,
 )
 from smithy_aws_core.aio.config.filesystem import AsyncFileSystem
-from smithy_aws_core.config.resolvers import EndpointUriResolver
+from smithy_aws_core.config.resolvers import (
+    EndpointUriResolver,
+    resolve_use_fips_endpoint_program,
+)
 from smithy_aws_core.config.types import FieldSpec
+from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
 from smithy_core.aio.interfaces import AsyncEndpointResolver
 from smithy_core.aio.interfaces.auth import AsyncAuthScheme
 from smithy_core.aio.interfaces.identity import AsyncIdentityResolver
@@ -57,6 +61,7 @@ class _AsyncFieldNotesConfigOverrides(AsyncAwsConfigOverrides, total=False):
     )
     stage: str | None
     force_path_style: bool | None
+    use_fips_endpoint: bool | None
 
 
 @dataclass(kw_only=True, repr=False, init=False)
@@ -94,13 +99,18 @@ class AsyncFieldNotesConfig(AsyncAwsConfig):
     force_path_style: bool | None = None
     "Forces path-style addressing."
 
+    use_fips_endpoint: bool | None = None
+    "Whether to use a FIPS endpoint."
+
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
         **AsyncAwsConfig._FIELDS,
         "endpoint_uri": FieldSpec(
             default=None, resolver=EndpointUriResolver("field_notes").program
         ),
         "endpoint_resolver": FieldSpec(
-            default_factory=lambda: BddEndpointResolver(BDD)
+            default_factory=lambda: BddEndpointResolver(
+                BDD, extensions=[AWS_RULES_EXTENSION]
+            )
         ),
         "protocol": FieldSpec(
             default_factory=lambda: AsyncRpcV2CborClientProtocol(_PROTOCOL_SETTINGS),
@@ -123,6 +133,9 @@ class AsyncFieldNotesConfig(AsyncAwsConfig):
         ),
         "stage": FieldSpec(default=None),
         "force_path_style": FieldSpec(default=None),
+        "use_fips_endpoint": FieldSpec(
+            default=None, resolver=resolve_use_fips_endpoint_program
+        ),
         "transport": FieldSpec(default_factory=lambda: AIOHTTPClient()),
     }
 

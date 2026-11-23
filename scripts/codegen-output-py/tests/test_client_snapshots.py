@@ -175,7 +175,8 @@ def test_generated_endpoint_tests_pass(aws_env: pytest.MonkeyPatch) -> None:
         check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "14 passed, 1 skipped" in result.stdout
+    assert "17 passed" in result.stdout
+    assert "skipped" not in result.stdout
 
 
 @pytest.fixture(scope="module")

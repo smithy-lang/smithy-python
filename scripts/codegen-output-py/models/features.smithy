@@ -28,6 +28,7 @@ use smithy.rules#staticContextParams
     parameters: {
         Endpoint: { type: "string", builtIn: "SDK::Endpoint", documentation: "A custom endpoint." }
         Region: { type: "string", builtIn: "AWS::Region", documentation: "The region." }
+        UseFIPS: { type: "boolean", builtIn: "AWS::UseFIPS", required: true, default: false, documentation: "Whether to use a FIPS endpoint." }
         Stage: { type: "string", documentation: "The deployment stage." }
         ForcePathStyle: { type: "boolean", required: true, default: false, documentation: "Forces path-style addressing." }
         Name: { type: "string", documentation: "The thing name." }
@@ -37,11 +38,6 @@ use smithy.rules#staticContextParams
         {
             conditions: [{ fn: "isSet", argv: [{ ref: "Endpoint" }] }]
             endpoint: { url: { ref: "Endpoint" } }
-            type: "endpoint"
-        }
-        {
-            conditions: [{ fn: "isSet", argv: [{ ref: "Region" }] }]
-            endpoint: { url: "https://{Region}.example.com" }
             type: "endpoint"
         }
         {
@@ -70,7 +66,31 @@ use smithy.rules#staticContextParams
             endpoint: { url: "https://{Stage}.example.com", properties: { kind: "{Kind}" } }
             type: "endpoint"
         }
-        { conditions: [], error: "No stage", type: "error" }
+        {
+            conditions: [
+                { fn: "isSet", argv: [{ ref: "Region" }] }
+                { fn: "aws.partition", argv: [{ ref: "Region" }], assign: "PartitionResult" }
+            ]
+            rules: [
+                {
+                    conditions: [{ fn: "booleanEquals", argv: [{ ref: "UseFIPS" }, true] }]
+                    endpoint: { url: "https://fieldnotes-fips.{Region}.{PartitionResult#dnsSuffix}" }
+                    type: "endpoint"
+                }
+                {
+                    conditions: []
+                    endpoint: {
+                        url: "https://fieldnotes.{Region}.{PartitionResult#dnsSuffix}"
+                        properties: {
+                            authSchemes: [{ name: "sigv4", signingName: "fieldnotes", signingRegion: "{Region}" }]
+                        }
+                    }
+                    type: "endpoint"
+                }
+            ]
+            type: "tree"
+        }
+        { conditions: [], error: "No region or stage", type: "error" }
     ]
 })
 @endpointTests({
@@ -146,24 +166,49 @@ use smithy.rules#staticContextParams
             documentation: "Region from the built-in"
             params: { Region: "us-west-2" }
             expect: {
-                endpoint: { url: "https://us-west-2.example.com" }
+                endpoint: {
+                    url: "https://fieldnotes.us-west-2.amazonaws.com"
+                    properties: {
+                        authSchemes: [{ name: "sigv4", signingName: "fieldnotes", signingRegion: "us-west-2" }]
+                    }
+                }
             }
             operationInputs: [
-                { operationName: "Ping", builtInParams: { "AWS::Region": "us-west-2" } }
+                { operationName: "PutNote", builtInParams: { "AWS::Region": "us-west-2" } }
             ]
         }
         {
-            documentation: "Missing stage"
-            params: {}
-            expect: { error: "No stage" }
+            documentation: "Partition from the region"
+            params: { Region: "cn-north-1" }
+            expect: {
+                endpoint: {
+                    url: "https://fieldnotes.cn-north-1.amazonaws.com.cn"
+                    properties: {
+                        authSchemes: [{ name: "sigv4", signingName: "fieldnotes", signingRegion: "cn-north-1" }]
+                    }
+                }
+            }
             operationInputs: [
-                { operationName: "Ping" }
+                { operationName: "Ping", builtInParams: { "AWS::Region": "cn-north-1" } }
             ]
         }
         {
-            documentation: "Missing stage"
-            params: { Kind: "put" }
-            expect: { error: "No stage" }
+            documentation: "FIPS from the built-in"
+            params: { Region: "us-east-1", UseFIPS: true }
+            expect: {
+                endpoint: { url: "https://fieldnotes-fips.us-east-1.amazonaws.com" }
+            }
+            operationInputs: [
+                {
+                    operationName: "Ping"
+                    builtInParams: { "AWS::Region": "us-east-1", "AWS::UseFIPS": true }
+                }
+            ]
+        }
+        {
+            documentation: "No region or stage"
+            params: {}
+            expect: { error: "No region or stage" }
         }
     ]
 })

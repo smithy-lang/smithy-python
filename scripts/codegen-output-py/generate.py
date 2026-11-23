@@ -104,7 +104,11 @@ def _format_output(output: Path) -> None:
     for command in ("check", "format"):
         args = [sys.executable, "-m", "ruff", command]
         if command == "check":
-            args.append("--fix")
+            # The staged tree is outside the repository, where the config's
+            # tests ignore doesn't reach, so apply it to the staged tests too.
+            args.extend(
+                ("--fix", "--extend-per-file-ignores", f"{output}/**/tests/*:S")
+            )
         subprocess.run(  # noqa: S603
             [*args, str(output), "--config", str(config), "--no-cache"],
             check=True,
