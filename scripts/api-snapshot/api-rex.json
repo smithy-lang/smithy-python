@@ -1332,6 +1332,7 @@
     "AwsConfigIntegration": "rex-class",
     "AwsEndpointsIntegration": "rex-class",
     "AwsSigV4Integration": "rex-class",
+    "REST_JSON": "rex-ProtocolContribution",
     "SMITHY_AWS_CORE": "rex-Dependency"
   },
   "smithy_python.cli": {

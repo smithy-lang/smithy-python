@@ -6,6 +6,25 @@
     "service": "example.features#FieldNotes",
     "version": "0.0.1"
   },
+  "rest-json-1-client": {
+    "description": "Python client for the rest-json-1 projection",
+    "model": "models/rest-json-1.json",
+    "omitOperations": [
+      "aws.protocoltests.restjson#DuplexStream",
+      "aws.protocoltests.restjson#DuplexStreamWithDistinctStreams",
+      "aws.protocoltests.restjson#DuplexStreamWithInitialMessages",
+      "aws.protocoltests.restjson#InputStream",
+      "aws.protocoltests.restjson#InputStreamWithInitialRequest",
+      "aws.protocoltests.restjson#OutputStream",
+      "aws.protocoltests.restjson#OutputStreamWithInitialResponse",
+      "aws.protocoltests.restjson#StreamingTraits",
+      "aws.protocoltests.restjson#StreamingTraitsRequireLength",
+      "aws.protocoltests.restjson#StreamingTraitsWithMediaType"
+    ],
+    "package": "restjson_client",
+    "service": "aws.protocoltests.restjson#RestJson",
+    "version": "0.0.1"
+  },
   "rpcv2-cbor-client": {
     "description": "Python client for the rpcv2-cbor projection",
     "model": "models/rpcv2-cbor.json",

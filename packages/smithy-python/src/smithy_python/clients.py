@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, replace
 from types import MappingProxyType
 
@@ -125,8 +125,13 @@ class ClientPlan:
         settings: _generation.ClientSettings,
         *,
         service_id: str | None = None,
+        protocols: Collection[_model.ShapeId] = _protocols.DEFAULT_PROTOCOLS,
     ) -> ClientPlan:
-        """Resolve a service, normalize its I/O, and plan in deterministic order."""
+        """Resolve a service, normalize its I/O, and plan in deterministic order.
+
+        :param protocols: The IDs of the protocols the client may use, whose
+            traits the service schema keeps.
+        """
         selection = _selection.select_shapes(
             model, service_id=service_id, require_service=True
         )
@@ -150,7 +155,7 @@ class ClientPlan:
             (*selection.shapes, *operations, service),
             symbols,
             retained_traits=(
-                *_protocols.DEFAULT_PROTOCOLS,
+                *protocols,
                 *(() if settings.protocol is None else (settings.protocol,)),
             ),
         )

@@ -171,21 +171,26 @@ those definitions out.
 
 A protocol registry maps modeled protocol IDs to protocol contributions. A
 contribution provides sync/async protocol and transport references and their
-dependencies. RPCv2 CBOR and RPCv2 JSON are built in. Tests can inject a registry.
+dependencies. RPCv2 CBOR and RPCv2 JSON are built in. The CLI uses
+`smithy_python.aws.AWS_PROTOCOLS`, which adds AWS restJson1. Tests can inject a
+registry. The plan keeps the registry's protocol traits in the service schema,
+even when the model omits their definitions.
 
 An explicit protocol selection must be modeled on the service and present in
 the registry. Without one, the generator selects the sole supported modeled
 protocol. Ambiguous or unsupported selections fail before publication.
 Selection is independent of hash and discovery order.
 
-The built-in contributions use these runtime protocols:
+The contributions use these runtime protocols:
 
-| Protocol | Sync | Async | `smithy-http` extra |
+| Protocol | Sync | Async | Runtime extra |
 | --- | --- | --- | --- |
-| `smithy.protocols#rpcv2Cbor` | `RpcV2CborClientProtocol` | `AsyncRpcV2CborClientProtocol` | `cbor` |
-| `smithy.protocols#rpcv2Json` | `RpcV2JsonClientProtocol` | `AsyncRpcV2JsonClientProtocol` | `json` |
+| `smithy.protocols#rpcv2Cbor` | `RpcV2CborClientProtocol` | `AsyncRpcV2CborClientProtocol` | `smithy-http[cbor]` |
+| `smithy.protocols#rpcv2Json` | `RpcV2JsonClientProtocol` | `AsyncRpcV2JsonClientProtocol` | `smithy-http[json]` |
+| `aws.protocols#restJson1` | `RestJsonClientProtocol` | `AsyncRestJsonClientProtocol` | `smithy-aws-core[json]` |
 
-Both also use:
+The restJson1 protocols come from `smithy-aws-core`, as in the Java generator.
+All also use:
 
 * `ProtocolSettings` with the service namespace, target, version, and schema.
 * `Urllib3HTTPClient` and `AIOHTTPClient` as default sync/async transports,
