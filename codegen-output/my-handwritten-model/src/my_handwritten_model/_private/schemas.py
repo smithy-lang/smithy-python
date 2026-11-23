@@ -54,6 +54,7 @@ _smit = "smithy.api#error"
 _se = "server"
 _TE = "ThrottlingEvent"
 _cl = "client"
+_smith = "smithy.api#retryable"
 _TEr = "TradeEvents"
 _a = "alpha"
 _b = "beta"
@@ -169,7 +170,14 @@ SUBSCRIBE_TO_EVENTS: StaticOperationSchema = (
 
 STREAM_SERVICE_ERROR: StaticSchema = (18, n0, _SSE, {_smit: _se}, (_me,), ((3, 0),))
 
-THROTTLING_EVENT: StaticSchema = (18, n0, _TE, {_smit: _cl}, (_me,), ((3, 0),))
+THROTTLING_EVENT: StaticSchema = (
+    18,
+    n0,
+    _TE,
+    {_smit: _cl, _smith: MappingProxyType({"throttling": True})},
+    (_me,),
+    ((3, 0),),
+)
 
 TRADE_EVENTS: StaticSchema = (
     19,

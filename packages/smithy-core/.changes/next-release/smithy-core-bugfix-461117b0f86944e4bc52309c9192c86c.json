@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed modeled errors with the `@retryable` trait not being retry-safe in generated clients."
+}

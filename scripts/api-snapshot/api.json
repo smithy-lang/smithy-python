@@ -629,6 +629,7 @@
     "OperationContextParamsTrait": "class",
     "RequiredTrait": "class",
     "RequiresLengthTrait": "class",
+    "RetryableTrait": "class",
     "RpcV2CborTrait": "class",
     "RpcV2JsonTrait": "class",
     "SensitiveTrait": "class",

@@ -335,6 +335,7 @@ _INCLUDED_TRAITS: Final = frozenset(
             "smithy.api#streaming",
             "smithy.api#endpoint",
             "smithy.api#error",
+            "smithy.api#retryable",
             "smithy.api#requiresLength",
             "smithy.api#eventHeader",
             "smithy.api#eventPayload",

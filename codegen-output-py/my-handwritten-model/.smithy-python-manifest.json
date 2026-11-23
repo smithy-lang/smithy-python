@@ -4,7 +4,7 @@
     "pyproject.toml": "7f629f025f463d2e7dc967cab569cc3c0e61c16738eeb1ac5ec0c97561487c10",
     "src/my_handwritten_model/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
     "src/my_handwritten_model/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "src/my_handwritten_model/_private/schemas.py": "dc76275b338c278172c30166e40c964952fdb5e9ae06f49dff33a37a58a39ff7",
+    "src/my_handwritten_model/_private/schemas.py": "c3078c36bcc780fd15ae3135bc22e8de2415713dadb2b1151a81fd0fd2ba5d0b",
     "src/my_handwritten_model/models.py": "ca3c2b4d5dab0e7da762ec0feceaeda02fd0656fdeb161e0417686a8b4279e24",
     "src/my_handwritten_model/models.pyi": "a01e010947193acad3008148301f76d2e5de0dbbe09b149f325d64582b0815a3",
     "src/my_handwritten_model/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"

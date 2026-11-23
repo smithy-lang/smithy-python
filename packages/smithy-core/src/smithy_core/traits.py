@@ -52,6 +52,7 @@ __all__ = [
     "OperationContextParamsTrait",
     "RequiredTrait",
     "RequiresLengthTrait",
+    "RetryableTrait",
     "RpcV2CborTrait",
     "RpcV2JsonTrait",
     "SensitiveTrait",
@@ -192,6 +193,21 @@ class ErrorTrait(Trait, id=ShapeID("smithy.api#error")):
         super().__init__(value)
         assert isinstance(self.document_value, str)
         object.__setattr__(self, "fault", ErrorFault(self.document_value))
+
+
+@dataclass(init=False, frozen=True)
+class RetryableTrait(Trait, id=ShapeID("smithy.api#retryable")):
+    """Indicates that an error may be retried by the client."""
+
+    def __post_init__(self) -> None:
+        assert self.document_value is None or isinstance(self.document_value, Mapping)
+
+    @property
+    def throttling(self) -> bool:
+        """Whether the error is a throttling error."""
+        if not isinstance(self.document_value, Mapping):
+            return False
+        return self.document_value.get("throttling") is True
 
 
 @dataclass(init=False, frozen=True)
