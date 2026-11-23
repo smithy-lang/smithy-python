@@ -49,4 +49,4 @@ jobs:
             --branch "$HEAD_REF" \
             --pr-number "$PR_NUMBER" \
             --run-id "$RUN_ID"
-        timeout-minutes: 45
+        timeout-minutes: 60
