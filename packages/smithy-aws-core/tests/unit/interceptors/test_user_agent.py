@@ -248,3 +248,76 @@ def test_registers_resolved_account_id(identity: Any, expected: str) -> None:
     if identity is not None:
         properties[RESOLVED_IDENTITY] = identity
     assert _transmit(_interceptor(), properties) == expected
+
+
+def _send(
+    generic: GenericUserAgentInterceptor,
+    interceptor: UserAgentInterceptor,
+    *,
+    add_component: UserAgentComponent | None = None,
+) -> str:
+    """Runs the User-Agent hooks of one call in pipeline order and returns the header."""
+    properties = TypedProperties()
+    generic.read_before_execution(InputContext(request=Mock(), properties=properties))
+    request: Any = HTTPRequest(
+        method="POST", destination=URI(host="example.com"), fields=Fields(), body=b""
+    )
+    context = RequestContext[Any, Any](
+        request=Mock(), transport_request=request, properties=properties
+    )
+    interceptor.read_after_serialization(context)
+    if add_component is not None:
+        properties[USER_AGENT].additional_metadata.append(add_component)
+    generic.modify_before_signing(context)
+    return interceptor.modify_before_transmit(context).fields["User-Agent"].as_string()
+
+
+def test_repeated_calls_send_the_same_user_agent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("AWS_EXECUTION_ENV", "AWS_Lambda_python3.12")
+    generic = GenericUserAgentInterceptor()
+    interceptor = UserAgentInterceptor(
+        ua_suffix="myframework/2.0",
+        ua_app_id="my-app",
+        sdk_version="1.0.0",
+        service_id="svc",
+    )
+
+    headers = [_send(generic, interceptor) for _ in range(3)]
+
+    assert headers[0] == headers[1] == headers[2]
+    assert headers[0].count("api/svc#1.0.0") == 1
+    assert headers[0].count("exec-env/AWS_Lambda_python3.12") == 1
+    assert headers[0].endswith(" app/my-app myframework/2.0")
+
+
+def test_components_added_by_other_interceptors_are_kept_for_that_call() -> None:
+    generic = GenericUserAgentInterceptor()
+    interceptor = _interceptor()
+
+    with_extra = _send(
+        generic, interceptor, add_component=UserAgentComponent("md", "plugin", "3")
+    )
+    without_extra = _send(generic, interceptor)
+
+    assert with_extra == f"{without_extra} md/plugin#3"
+    assert "md/plugin" not in without_extra
+
+
+def test_each_client_keeps_its_own_configuration() -> None:
+    generic = GenericUserAgentInterceptor()
+    first = UserAgentInterceptor(
+        ua_suffix=None, ua_app_id="first-app", sdk_version="1.0.0", service_id="svc"
+    )
+    second = UserAgentInterceptor(
+        ua_suffix=None, ua_app_id="second-app", sdk_version="2.0.0", service_id="other"
+    )
+
+    first_header = _send(generic, first)
+    second_header = _send(generic, second)
+
+    assert "app/first-app" in first_header and "api/svc#1.0.0" in first_header
+    assert "app/second-app" in second_header and "api/other#2.0.0" in second_header
+    assert "first-app" not in second_header
+    assert _send(generic, first) == first_header

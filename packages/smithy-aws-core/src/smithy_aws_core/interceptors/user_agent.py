@@ -59,28 +59,41 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
         self._service_id = service_id
         self._execution_env = os.environ.get("AWS_EXECUTION_ENV")
 
+        # These components depend only on this interceptor's configuration, so they're
+        # built once here and the same immutable objects are added to every request's
+        # UserAgent.
+        self._sdk_metadata = self._build_sdk_metadata()
+        self._api_component = UserAgentComponent(
+            "api", self._service_id, self._sdk_version
+        )
+        self._env_component = (
+            UserAgentComponent("exec-env", self._execution_env)
+            if self._execution_env
+            else None
+        )
+        self._additional_components: tuple[
+            UserAgentComponent | RawStringUserAgentComponent, ...
+        ] = tuple(
+            component
+            for component in (
+                UserAgentComponent("app", self._ua_app_id)
+                if self._ua_app_id is not None
+                else None,
+                RawStringUserAgentComponent(self._ua_suffix)
+                if self._ua_suffix is not None
+                else None,
+            )
+            if component is not None
+        )
+
     def read_after_serialization(self, context: RequestContext[Any, Any]) -> None:
         if USER_AGENT in context.properties:
             user_agent = context.properties[USER_AGENT]
-            user_agent.sdk_metadata = self._build_sdk_metadata()
-            user_agent.api_metadata.append(
-                UserAgentComponent("api", self._service_id, self._sdk_version)
-            )
-
-            if self._execution_env:
-                user_agent.env_metadata.append(
-                    UserAgentComponent("exec-env", self._execution_env)
-                )
-
-            if self._ua_app_id is not None:
-                user_agent.additional_metadata.append(
-                    UserAgentComponent("app", self._ua_app_id)
-                )
-
-            if self._ua_suffix is not None:
-                user_agent.additional_metadata.append(
-                    RawStringUserAgentComponent(self._ua_suffix)
-                )
+            user_agent.sdk_metadata = list(self._sdk_metadata)
+            user_agent.api_metadata.append(self._api_component)
+            if self._env_component is not None:
+                user_agent.env_metadata.append(self._env_component)
+            user_agent.additional_metadata.extend(self._additional_components)
 
         self._register_retry_mode(context.properties)
         self._register_endpoint_override(context.properties)

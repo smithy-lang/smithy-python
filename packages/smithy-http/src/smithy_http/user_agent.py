@@ -3,6 +3,7 @@
 #  pyright: reportMissingTypeStubs=false,reportUnknownMemberType=false
 
 from dataclasses import dataclass, field
+from functools import lru_cache
 from string import ascii_letters, digits
 
 __all__ = [
@@ -31,14 +32,7 @@ class UserAgentComponent:
 
     def __str__(self) -> str:
         """Create string like 'prefix/name#value' from a UserAgentComponent."""
-        clean_prefix = sanitize_user_agent_string_component(
-            self.prefix, allow_hash=True
-        )
-        clean_name = sanitize_user_agent_string_component(self.name, allow_hash=False)
-        if self.value is None or self.value == "":
-            return f"{clean_prefix}/{clean_name}"
-        clean_value = sanitize_user_agent_string_component(self.value, allow_hash=True)
-        return f"{clean_prefix}/{clean_name}#{clean_value}"
+        return _render_component(self.prefix, self.name, self.value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,3 +116,17 @@ def sanitize_user_agent_string_component(raw_str: str, allow_hash: bool = False)
         c if c in _USERAGENT_ALLOWED_CHARACTERS or (allow_hash and c == "#") else "-"
         for c in raw_str
     )
+
+
+# Components are immutable and mostly the same on every request (SDK, OS, language,
+# service, app ID), so their sanitized form is memoized instead of re-sanitizing them
+# character by character for every request and retry attempt. The cache is bounded so
+# that unusual, varying component values can't grow it without limit.
+@lru_cache(maxsize=256)
+def _render_component(prefix: str, name: str, value: str | None) -> str:
+    clean_prefix = sanitize_user_agent_string_component(prefix, allow_hash=True)
+    clean_name = sanitize_user_agent_string_component(name, allow_hash=False)
+    if value is None or value == "":
+        return f"{clean_prefix}/{clean_name}"
+    clean_value = sanitize_user_agent_string_component(value, allow_hash=True)
+    return f"{clean_prefix}/{clean_name}#{clean_value}"

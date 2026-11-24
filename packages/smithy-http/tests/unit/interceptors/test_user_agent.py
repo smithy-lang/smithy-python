@@ -1,9 +1,21 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import platform
+from typing import Any
+from unittest.mock import Mock
 
+import pytest
 import smithy_core
-from smithy_http.interceptors.user_agent import _UserAgentBuilder  # type: ignore
+from smithy_core import URI
+from smithy_core.interceptors import InputContext, RequestContext
+from smithy_core.types import TypedProperties
+from smithy_http import Fields, HTTPRequest
+from smithy_http.interceptors.user_agent import (
+    USER_AGENT,
+    UserAgentInterceptor,
+    _UserAgentBuilder,  # type: ignore
+)
+from smithy_http.user_agent import UserAgentComponent
 
 
 def test_from_environment(monkeypatch):  # type: ignore
@@ -89,3 +101,61 @@ def test_build_language_implementation():
     args = {"python_implementation": "CPython"}
     user_agent = _UserAgentBuilder(**{**defaults, **args}).build()
     assert "md/pyimpl#CPython" in str(user_agent)
+
+
+def _start_request(interceptor: UserAgentInterceptor) -> TypedProperties:
+    properties = TypedProperties()
+    interceptor.read_before_execution(
+        InputContext(request=Mock(), properties=properties)
+    )
+    return properties
+
+
+def _header(interceptor: UserAgentInterceptor, properties: TypedProperties) -> str:
+    request = HTTPRequest(
+        method="POST", destination=URI(host="example.com"), fields=Fields(), body=b""
+    )
+    context = RequestContext[Any, HTTPRequest](
+        request=Mock(), transport_request=request, properties=properties
+    )
+    return interceptor.modify_before_signing(context).fields["User-Agent"].as_string()
+
+
+def test_interceptor_reads_environment_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = 0
+
+    def system() -> str:
+        nonlocal calls
+        calls += 1
+        return "Linux"
+
+    monkeypatch.setattr(platform, "system", system)
+    interceptor = UserAgentInterceptor()
+
+    headers = [_header(interceptor, _start_request(interceptor)) for _ in range(3)]
+
+    assert calls == 1
+    assert headers == [str(_UserAgentBuilder.from_environment().build())] * 3
+
+
+def test_interceptor_gives_each_request_its_own_user_agent() -> None:
+    interceptor = UserAgentInterceptor()
+    first = _start_request(interceptor)
+    first[USER_AGENT].additional_metadata.append(UserAgentComponent("md", "first"))
+    first[USER_AGENT].os_metadata.clear()
+
+    second = _start_request(interceptor)
+
+    assert first[USER_AGENT] is not second[USER_AGENT]
+    assert "md/first" not in _header(interceptor, second)
+    assert second[USER_AGENT].os_metadata
+
+
+def test_interceptor_keeps_components_added_during_the_request() -> None:
+    interceptor = UserAgentInterceptor()
+    properties = _start_request(interceptor)
+    properties[USER_AGENT].additional_metadata.append(
+        UserAgentComponent("md", "my framework", "1.0")
+    )
+
+    assert _header(interceptor, properties).endswith(" md/my-framework#1.0")

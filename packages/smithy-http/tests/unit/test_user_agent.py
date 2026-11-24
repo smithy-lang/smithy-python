@@ -60,6 +60,34 @@ def test_user_agent_component_sanitization():
     assert str(component) == "md-/test!#123#"
 
 
+@pytest.mark.parametrize(
+    "prefix, name, value",
+    [
+        ("md", "test", None),
+        ("md", "test", ""),
+        ("md", "test", "123"),
+        ("md@", "te#st!", "1#2 3"),
+        ("os", "other", "øß©"),
+        ("api", "My Service", "1.0.0"),
+    ],
+)
+def test_user_agent_component_renders_sanitized_parts(
+    prefix: str, name: str, value: str | None
+):
+    clean_prefix = sanitize_user_agent_string_component(prefix, allow_hash=True)
+    clean_name = sanitize_user_agent_string_component(name, allow_hash=False)
+    expected = f"{clean_prefix}/{clean_name}"
+    if value:
+        expected += "#" + sanitize_user_agent_string_component(value, allow_hash=True)
+
+    component = UserAgentComponent(prefix=prefix, name=name, value=value)
+
+    # Rendered results are memoized, so the second rendering must match the first.
+    assert str(component) == expected
+    assert str(component) == expected
+    assert str(UserAgentComponent(prefix=prefix, name=name, value=value)) == expected
+
+
 # Test cases for RawStringUserAgentComponent
 def test_raw_string_user_agent_component():
     component = RawStringUserAgentComponent(value="raw/string#123")

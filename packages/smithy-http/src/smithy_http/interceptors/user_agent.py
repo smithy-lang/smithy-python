@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import platform
+from dataclasses import fields
 from typing import Any, Self
 
 import smithy_core
@@ -21,8 +22,17 @@ class UserAgentInterceptor(Interceptor[Any, Any, HTTPRequest, None]):
     """Adds interceptors that initialize UserAgent in the context and add the user-agent
     header."""
 
+    def __init__(self) -> None:
+        # The environment components (SDK, OS, architecture, language) don't change
+        # for the life of the process, so they're built once, on first use, and copied
+        # into each request's UserAgent.
+        self._base_user_agent: UserAgent | None = None
+
     def read_before_execution(self, context: InputContext[Any]) -> None:
-        context.properties[USER_AGENT] = _UserAgentBuilder.from_environment().build()
+        base = self._base_user_agent
+        if base is None:
+            base = self._base_user_agent = _UserAgentBuilder.from_environment().build()
+        context.properties[USER_AGENT] = _copy_user_agent(base)
 
     def modify_before_signing(
         self, context: RequestContext[Any, HTTPRequest]
@@ -31,6 +41,19 @@ class UserAgentInterceptor(Interceptor[Any, Any, HTTPRequest, None]):
         request = context.transport_request
         request.fields.set_field(Field(name="User-Agent", values=[str(user_agent)]))
         return context.transport_request
+
+
+_USER_AGENT_FIELDS = tuple(f.name for f in fields(UserAgent))
+
+
+def _copy_user_agent(user_agent: UserAgent) -> UserAgent:
+    """Copy a UserAgent so each request can add to its own lists.
+
+    The components themselves are immutable and are shared, not copied.
+    """
+    return UserAgent(
+        **{name: list(getattr(user_agent, name)) for name in _USER_AGENT_FIELDS}
+    )
 
 
 _USERAGENT_ALLOWED_OS_NAMES = (

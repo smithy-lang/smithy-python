@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "The AWS User-Agent interceptor now builds its SDK, API, execution-environment, app ID and suffix components once, when it's created, instead of on every request. The header is unchanged."
+}

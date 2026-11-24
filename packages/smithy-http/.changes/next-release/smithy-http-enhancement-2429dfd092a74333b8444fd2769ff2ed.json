@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Building the User-Agent header is now cheaper: the environment components are built once per interceptor, and each component's sanitized text is cached, instead of being rebuilt and re-sanitized on every request and retry attempt. The header is unchanged."
+}
