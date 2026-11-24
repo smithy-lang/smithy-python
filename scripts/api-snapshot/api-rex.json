@@ -1377,7 +1377,7 @@
     "AWS_JSON_11": "rex-ProtocolContribution",
     "AwsConfigIntegration": "rex-class",
     "AwsEndpointsIntegration": "rex-class",
-    "AwsSigV4Integration": "rex-class",
+    "AwsIdentityIntegration": "rex-class",
     "REST_JSON": "rex-ProtocolContribution",
     "SMITHY_AWS_CORE": "rex-Dependency"
   },

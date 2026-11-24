@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from typing import Unpack, cast, overload
 
+from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.chain.resolver import IdentityChain
 from smithy_aws_core.identity.components import AWSCredentialsIdentity
 from smithy_core.client import Client
 from smithy_core.pagination import ItemPaginator
+from smithy_http.identity import TokenIdentity
+from smithy_http.identity.token import StaticTokenResolver
 from smithy_http.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
 
@@ -21,7 +24,7 @@ class FieldNotesClient(Client[FieldNotesConfig]):
 
     Its endpoint rules read config, input, and operation values. Its
     operations
-    use SigV4, API key auth, optional auth, and no auth.
+    use SigV4, bearer token auth, API key auth, optional auth, and no auth.
     """
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
@@ -56,6 +59,40 @@ class FieldNotesClient(Client[FieldNotesConfig]):
         return self._invoke(
             self._select_input(models.ECHO, args, kwargs),
             models.ECHO,
+            [],
+            plugins,
+        )
+
+    @overload
+    def get_note(
+        self,
+        request: models.GetNoteInput | models.GetNoteInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.GetNoteOutput: ...
+
+    @overload
+    def get_note(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.GetNoteInputDict],
+    ) -> models.GetNoteOutput:
+        """
+        Reads a note, with a bearer token.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    def get_note(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.GetNoteOutput:
+        return self._invoke(
+            self._select_input(models.GET_NOTE, args, kwargs),
+            models.GET_NOTE,
             [],
             plugins,
         )
@@ -293,13 +330,7 @@ class FieldNotesClient(Client[FieldNotesConfig]):
 
     def _post_setup(self, config: FieldNotesConfig) -> None:
         if config.aws_credentials_identity_resolver is None:
-            config_context = config.resolution_context()
-            config_file = None
-            profile_name = None
-            if config_context is not None:
-                config_file = config_context.parsed_profiles()
-                if config_context.profile_source is ConfigSource.OVERRIDE:
-                    profile_name = config_context.profile_name
+            config_file, profile_name = self._profile_overrides(config)
             config.aws_credentials_identity_resolver = IdentityChain.create(
                 AWSCredentialsIdentity,
                 config_file=config_file,
@@ -307,3 +338,28 @@ class FieldNotesClient(Client[FieldNotesConfig]):
                 region_override=config.region,
                 http_client=cast(HTTPClient | None, config.transport),
             )
+
+        if config.token_identity_resolver is None:
+            if config.token is not None:
+                config.token_identity_resolver = StaticTokenResolver()
+            else:
+                config_file, profile_name = self._profile_overrides(config)
+                config.token_identity_resolver = IdentityChain.create(
+                    TokenIdentity,
+                    config_file=config_file,
+                    profile_name=profile_name,
+                    region_override=config.region,
+                    http_client=cast(HTTPClient | None, config.transport),
+                )
+
+    def _profile_overrides(
+        self, config: FieldNotesConfig
+    ) -> tuple[MergedConfig | None, str | None]:
+        config_context = config.resolution_context()
+        config_file = None
+        profile_name = None
+        if config_context is not None:
+            config_file = config_context.parsed_profiles()
+            if config_context.profile_source is ConfigSource.OVERRIDE:
+                profile_name = config_context.profile_name
+        return config_file, profile_name

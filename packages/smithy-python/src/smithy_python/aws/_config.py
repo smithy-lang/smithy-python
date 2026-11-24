@@ -301,6 +301,22 @@ def _write_config(writer: PythonWriter, config: ConfigPlan) -> None:
                 "()),",
             )
         writer.line("}")
+        # Identity resolvers added by auth schemes hold caches and locks, so a
+        # deep copy of the config must share them like the base resolvers.
+        shared = sorted(
+            field.name
+            for field in auth_fields
+            if field.name.endswith("_identity_resolver")
+            and field.name not in _BASE_FIELDS
+        )
+        if shared:
+            writer.line()
+            writer.line("_SHARED_FIELDS: ", _CLASS_VAR, "[tuple[str, ...]] = (")
+            with writer.indent():
+                writer.line("*", base, "._SHARED_FIELDS,")
+                for name in shared:
+                    writer.line(_quote(name), ",")
+            writer.line(")")
         if config.auth_schemes:
             writer.line()
             writer.line(

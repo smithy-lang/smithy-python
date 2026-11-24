@@ -283,16 +283,19 @@ dependency group adds `pytest`, `pytest-asyncio`, and `smithy-test`.
 An auth registry maps auth trait IDs to auth contributions. A contribution
 provides the sync and async runtime auth schemes, builds each from the service's
 auth trait value, and declares the config fields its identity resolver reads.
-`smithy.api#httpApiKeyAuth` is built in:
+`smithy.api#httpApiKeyAuth` and `smithy.api#httpBearerAuth` are built in:
 
 | Part | Sync | Async |
 | --- | --- | --- |
-| Scheme | `APIKeyAuthScheme` | `AsyncAPIKeyAuthScheme` |
+| API key scheme | `APIKeyAuthScheme` | `AsyncAPIKeyAuthScheme` |
 | `api_key_identity_resolver` default | `APIKeyIdentityResolver` | `AsyncAPIKeyIdentityResolver` |
+| Bearer scheme | `BearerAuthScheme` | `AsyncBearerAuthScheme` |
+| `token_identity_resolver` default | `StaticTokenResolver` | `AsyncStaticTokenResolver` |
 
-The scheme takes the trait's `name`, `in`, and `scheme`. Both configs also get
-an `api_key` field. The fields, the `auth_schemes` default, and a
-`set_auth_scheme` method match the Java generator's.
+The API key scheme takes the trait's `name`, `in`, and `scheme`, and both
+configs also get an `api_key` field. The bearer scheme takes no arguments, and
+both configs also get a `token` field. The fields, the `auth_schemes` default,
+and a `set_auth_scheme` method match the Java generator's.
 
 Both configs keep `DefaultAuthResolver`. It returns each operation's effective
 auth scheme IDs in order, and the runtime signs with the first one in
@@ -345,6 +348,8 @@ config:
   `endpoint_resolver`, `protocol`, `auth_schemes`, `auth_scheme_resolver`, auth
   scheme fields, and client context fields. `endpoint_uri` also reads
   `AWS_ENDPOINT_URL_<SDK_ID>` and the profile's service section.
+* Identity resolvers an auth scheme adds join the config's `_SHARED_FIELDS`, so
+  a deep copy of the config shares them like the base credentials resolver.
 * A typed `Unpack` overrides dictionary covers the added fields.
 * Clients apply `aws_user_agent_plugin`, which adds `UserAgentInterceptor`
   with the SDK ID, the package version, `sdk_ua_app_id`, and
@@ -353,17 +358,26 @@ config:
 The generated package depends on `smithy-aws-core`. A client context field may
 not take an `AwsConfig` field name.
 
-`AwsSigV4Integration` matches a service with both `aws.api#service` and
-`aws.auth#sigv4`, and follows the Java generator:
+`AwsIdentityIntegration` matches a service that has `aws.api#service` and at
+least one of `aws.auth#sigv4` and `smithy.api#httpBearerAuth`, and follows the
+Java generator:
 
-* Both configs default `auth_schemes` to `SigV4AuthScheme` or
-  `AsyncSigV4AuthScheme` for the trait's signing name. `AwsConfig` already
-  declares the credential fields and `aws_credentials_identity_resolver`.
-* A client's `_post_setup` sets the default AWS credentials chain when the
-  config has no credentials resolver. The chain reads the config's profile,
-  region, and transport.
+* Both configs default `auth_schemes` to one scheme per auth trait the service
+  has: `SigV4AuthScheme` (`AsyncSigV4AuthScheme`) for the trait's signing name,
+  and `BearerAuthScheme` (`AsyncBearerAuthScheme`). `AwsConfig` already declares
+  the credential fields and `aws_credentials_identity_resolver`. The bearer
+  fields are the generic generator's `token` and `token_identity_resolver`,
+  except that the resolver has no default.
+* A client's `_post_setup` fills each resolver the config leaves unset. The
+  credentials resolver becomes the default AWS credentials chain. The token
+  resolver becomes the static resolver when the config has a `token`, and
+  otherwise the default AWS token provider chain. Both chains read the config's
+  region and transport, and take the parsed config file and profile override
+  from a `_profile_overrides` helper.
 * A service with `aws.auth#sigv4` but not `aws.api#service` fails generation,
-  because SigV4 needs the AWS config.
+  because SigV4 needs the AWS config. A service with `smithy.api#httpBearerAuth`
+  but not `aws.api#service` gets the generic generator's bearer auth, whose
+  resolver defaults to the static resolver.
 
 S3 signing properties come later with S3 support.
 
@@ -445,9 +459,10 @@ runtime metadata. It covers `self`, `plugins`, defaults, and idempotency tokens.
 ## Supported Features
 
 The generator supports non-streaming RPCv2 CBOR and RPCv2 JSON operations that
-are unsigned or use API key auth or SigV4, and whose endpoint rules use the
-standard library. Models that require other auth schemes or event or data
-streams fail generation with a diagnostic naming the operation and feature.
+are unsigned or use API key auth, bearer token auth, or SigV4, and whose
+endpoint rules use the standard library. Models that require other auth
+schemes or event or data streams fail generation with a diagnostic naming the
+operation and feature.
 
 Authentication and endpoint extension points are provider-neutral. AWS config
 resolution, the AWS user agent, SigV4, and AWS endpoint functions are AWS
@@ -473,6 +488,7 @@ model assembled by Smithy with its ruleset compiled by `CompileBdd`:
 | Endpoint rules | Client context fields, `SDK::Endpoint`, `AWS::Region`, `AWS::UseFIPS`, `aws.partition`, an endpoint auth scheme, an input context parameter, and static context parameters |
 | Endpoint tests | Rules and client cases, run by the snapshot tests |
 | SigV4 | The service's default auth |
+| Bearer token auth | An operation with `@auth([httpBearerAuth])` |
 | API key auth | Operations with `@auth([httpApiKeyAuth])`, one also `@optionalAuth` |
 | No auth | Operations with `@auth([])` |
 | AWS config | `aws.api#service`, with the SDK ID `Field Notes` |
@@ -481,8 +497,10 @@ Its tests check which requests carry the API key and that a missing key fails
 the call. They resolve the endpoint from `AWS_ENDPOINT_URL_<SDK_ID>` and from a
 profile, check the AWS user agent, check that unknown fields and direct
 construction fail, and check SigV4 signing with configured credentials and with
-credentials from the default chain. The core config is covered by the
-`rpcv2-cbor-client` and `rpcv2-json-client` snapshots and by unit tests.
+credentials from the default chain. They check that a configured token is sent
+as a bearer token and that, without one, the token provider chain is consulted.
+The core config is covered by the `rpcv2-cbor-client` and `rpcv2-json-client`
+snapshots and by unit tests.
 
 Client snapshots sit alongside the types snapshots and cover the
 provider-neutral RPCv2 CBOR and RPCv2 JSON projections. Checks cover deterministic

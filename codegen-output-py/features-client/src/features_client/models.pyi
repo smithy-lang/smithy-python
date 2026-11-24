@@ -10,6 +10,7 @@ from smithy_core.serializers import ShapeSerializer
 
 __all__ = [
     "ECHO",
+    "GET_NOTE",
     "GET_THING",
     "LIST_NOTES",
     "PING",
@@ -17,6 +18,8 @@ __all__ = [
     "PUT_THING",
     "EchoInput",
     "EchoOutput",
+    "GetNoteInput",
+    "GetNoteOutput",
     "GetThingInput",
     "GetThingOutput",
     "ListNotesInput",
@@ -43,6 +46,31 @@ class ServiceError(ModeledError):
 
     Some exceptions do not extend from this class, including synthetic,
     implicit, and shared exception types.
+    """
+
+@dataclass(kw_only=True)
+class GetNoteInput(_SerdeShape):
+    "Dataclass for GetNoteInput structure."
+
+    id: str | None = ...
+
+class GetNoteInputDict(TypedDict, total=False):
+    "Dictionary form of `GetNoteInput`."
+
+    id: str | None
+
+@dataclass(kw_only=True)
+class GetNoteOutput(_SerdeShape):
+    "Dataclass for GetNoteOutput structure."
+
+    text: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
     """
 
 @dataclass(kw_only=True)
@@ -205,6 +233,7 @@ class PutThingOutput(_SerdeShape):
     """
 
 ECHO: APIOperation[EchoInput, EchoOutput]
+GET_NOTE: APIOperation[GetNoteInput, GetNoteOutput]
 GET_THING: APIOperation[GetThingInput, GetThingOutput]
 LIST_NOTES: APIOperation[ListNotesInput, ListNotesOutput]
 PING: APIOperation[PingInput, PingOutput]

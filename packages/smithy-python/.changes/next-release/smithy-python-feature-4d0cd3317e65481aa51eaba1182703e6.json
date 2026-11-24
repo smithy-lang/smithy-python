@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Generate clients for services with `httpBearerAuth`. Configs get `token` and `token_identity_resolver` fields and default to the bearer token auth scheme. AWS clients fall back to the default AWS token provider chain when the config has no token, and share the identity resolvers their auth schemes add across deep copies."
+}
