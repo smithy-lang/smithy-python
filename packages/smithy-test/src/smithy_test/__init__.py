@@ -10,6 +10,9 @@ from .http_mock import HTTPMockError as HTTPMockError
 from .http_mock import HTTPMockExpectation as HTTPMockExpectation
 from .http_mock import HTTPMockMismatchError as HTTPMockMismatchError
 from .http_mock import mock as mock
+from .http_record import HTTPRecorder as HTTPRecorder
+from .http_record import HTTPRecordError as HTTPRecordError
+from .http_record import instrument as instrument
 
 __version__ = "0.5.0"
 __all__ = (
@@ -18,8 +21,11 @@ __all__ = (
     "HTTPMockError",
     "HTTPMockExpectation",
     "HTTPMockMismatchError",
+    "HTTPRecordError",
+    "HTTPRecorder",
     "check_rules_case",
     "deep_equal",
+    "instrument",
     "mock",
     "verify_models",
     "xml_equal",

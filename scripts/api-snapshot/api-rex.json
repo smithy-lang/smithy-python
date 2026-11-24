@@ -1420,17 +1420,24 @@
     "HTTPMockError": "rex-exception",
     "HTTPMockExpectation": "rex-class",
     "HTTPMockMismatchError": "rex-exception",
+    "HTTPRecordError": "rex-exception",
+    "HTTPRecorder": "rex-class",
     "check_rules_case": "rex-function",
     "deep_equal": "rex-function",
     "http_mock": "rex-module",
+    "http_record": "rex-module",
+    "instrument": "rex-function",
     "mock": "rex-function",
     "verify_models": "rex-function",
     "xml_equal": "rex-function"
   },
   "smithy_test.aio": {
     "AsyncHTTPMockController": "rex-class[async]",
+    "AsyncHTTPRecorder": "rex-class[async]",
     "check_client_case_async": "rex-function[async]",
     "http_mock": "rex-module",
+    "http_record": "rex-module",
+    "instrument_async": "rex-function[async]",
     "mock_async": "rex-function[async]"
   },
   "smithy_test.aio.http_mock": {
@@ -1445,7 +1452,29 @@
     "HTTPResponse": "rex-class",
     "NoResponse": "rex-exception",
     "read_streaming_blob_async": "rex-function[async]",
-    "take_over": "rex-function"
+    "take_over": "rex-function",
+    "track_operation": "rex-function"
+  },
+  "smithy_test.aio.http_record": {
+    "AsyncBytesProvider": "rex-class[async]",
+    "AsyncBytesReader": "rex-class[async]",
+    "AsyncClient": "rex-class[async]",
+    "AsyncHTTPMockController": "rex-class[async]",
+    "HTTPRecordError": "rex-exception",
+    "HTTPRequest": "rex-protocol",
+    "HTTPRequestConfiguration": "rex-class",
+    "HTTPResponse": "rex-class",
+    "RecordMode": "rex-type_alias",
+    "ResponseLog": "rex-class",
+    "TextScrubber": "rex-type_alias",
+    "close_async": "rex-function[async]",
+    "default_recording_path": "rex-function",
+    "load_installer": "rex-function",
+    "mock_async": "rex-function[async]",
+    "read_streaming_blob_async": "rex-function[async]",
+    "resolve_mode": "rex-function",
+    "take_over": "rex-function",
+    "track_operation": "rex-function"
   },
   "smithy_test.http_mock": {
     "AnyStreamingBlob": "rex-type_alias",
@@ -1460,7 +1489,26 @@
     "SmithyError": "rex-exception",
     "mismatches": "rex-function",
     "read_streaming_blob": "rex-function",
-    "take_over": "rex-function"
+    "take_over": "rex-function",
+    "track_operation": "rex-function"
+  },
+  "smithy_test.http_record": {
+    "Client": "rex-class",
+    "HTTPMockController": "rex-class",
+    "HTTPRecordError": "rex-exception",
+    "HTTPRequest": "rex-protocol",
+    "HTTPRequestConfiguration": "rex-class",
+    "HTTPResponse": "rex-class",
+    "RecordMode": "rex-type_alias",
+    "ResponseLog": "rex-class",
+    "TextScrubber": "rex-type_alias",
+    "default_recording_path": "rex-function",
+    "load_installer": "rex-function",
+    "mock": "rex-function",
+    "read_streaming_blob": "rex-function",
+    "resolve_mode": "rex-function",
+    "take_over": "rex-function",
+    "track_operation": "rex-function"
   },
   "smithy_xml": {
     "BytesReader": "rex-protocol",

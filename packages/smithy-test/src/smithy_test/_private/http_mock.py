@@ -4,6 +4,7 @@
 import inspect
 import re
 from collections.abc import Callable, Iterable, Iterator, Mapping
+from contextvars import ContextVar
 from copy import deepcopy
 from typing import Any, Protocol, cast
 from urllib.parse import parse_qsl
@@ -13,6 +14,23 @@ from smithy_core.exceptions import SmithyError
 from smithy_http.interfaces import HTTPRequest
 
 MOCK_CREDENTIAL = "HTTP_MOCK"
+
+CURRENT_OPERATION: ContextVar[str | None] = ContextVar(
+    "smithy_test_current_operation", default=None
+)
+"""The operation whose call is in flight, set by the invoke wrapper of a mocked or
+recording client so that transports can tell operations apart."""
+
+
+_MISSING = object()
+
+_CLIENT_ATTRIBUTES = ("_setup_done", "_config", "_transport")
+_CLIENT_HOOKS = {
+    "_post_setup": ("config",),
+    "_build_call": ("input", "operation", "config", "retry_strategy"),
+    "_invoke": ("input", "operation", "default_plugins", "plugins"),
+}
+_CREDENTIAL_FIELDS = ("aws_access_key_id", "aws_secret_access_key", "aws_session_token")
 
 
 class MockTransport(Protocol):
@@ -27,13 +45,17 @@ class NoResponse(SmithyError):
 
 def take_over(
     client: ClientBase[Any],
-    transport: MockTransport,
+    transport: Any,
     wrap_invoke: Callable[[Callable[..., Any]], Callable[..., Any]],
+    install: Callable[[Any, Any], None] | None = None,
 ) -> None:
-    """Route the client's calls to the transport and replace its credentials.
+    """Route the client's calls to the transport.
 
+    :param install: Puts the transport into a config. Defaults to replacing the
+        config's transport and credentials, as a mock does.
     :raises TypeError: If the client's internals aren't the ones this relies on.
     """
+    _scrub = install or _scrub_config
     _check_client(client)
     # Typed as Any so instance attributes can shadow the client's methods.
     target: Any = client
@@ -86,15 +108,23 @@ def mismatches(
     return failures, cause
 
 
-_MISSING = object()
+def track_operation(invoke: Callable[..., Any]) -> Callable[..., Any]:
+    """Wrap ``_invoke`` so transports can tell which operation is being called."""
 
-_CLIENT_ATTRIBUTES = ("_setup_done", "_config", "_transport")
-_CLIENT_HOOKS = {
-    "_post_setup": ("config",),
-    "_build_call": ("input", "operation", "config", "retry_strategy"),
-    "_invoke": ("input", "operation", "default_plugins", "plugins"),
-}
-_CREDENTIAL_FIELDS = ("aws_access_key_id", "aws_secret_access_key", "aws_session_token")
+    def _invoke(*args: Any, **kwargs: Any) -> Any:
+        token = CURRENT_OPERATION.set(operation_name(invoke, args, kwargs))
+        try:
+            return invoke(*args, **kwargs)
+        finally:
+            CURRENT_OPERATION.reset(token)
+
+    return _invoke
+
+
+def operation_name(invoke: Callable[..., Any], args: Any, kwargs: Any) -> str:
+    """Find the name of the operation among the arguments of an ``_invoke`` call."""
+    operation = inspect.signature(invoke).bind(*args, **kwargs).arguments["operation"]
+    return operation.schema.id.name
 
 
 def _check_client(client: ClientBase[Any]) -> None:
@@ -127,7 +157,7 @@ def _check_config(config: Any) -> None:
         )
 
 
-def _scrub(config: Any, transport: MockTransport) -> None:
+def _scrub_config(config: Any, transport: MockTransport) -> None:
     _check_config(config)
     source_of = getattr(config, "source_of", None)
     # A default transport belongs to the config, so the mock closes it in its place.
