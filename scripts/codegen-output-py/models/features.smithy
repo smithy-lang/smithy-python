@@ -214,7 +214,7 @@ use smithy.rules#staticContextParams
 })
 service FieldNotes {
     version: "2026-11-20"
-    operations: [Echo, GetThing, Ping, PutNote, PutThing]
+    operations: [Echo, GetThing, ListNotes, Ping, PutNote, PutThing]
 }
 
 /// Uses API key auth, but sends no key when it has none.
@@ -231,6 +231,25 @@ operation GetThing {
     output := {
         value: String
     }
+}
+
+/// Lists notes a page at a time. Needs no auth.
+@auth([])
+@paginated(inputToken: "nextToken", outputToken: "nextToken", items: "items", pageSize: "pageSize")
+@staticContextParams(Kind: { value: "list" })
+operation ListNotes {
+    input := {
+        nextToken: String
+        pageSize: Integer
+    }
+    output := {
+        items: NoteList
+        nextToken: String
+    }
+}
+
+list NoteList {
+    member: String
 }
 
 /// Needs no auth.

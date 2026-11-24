@@ -69,6 +69,9 @@ Dual-mode symbols (async in aio, sync twin outside):
           AsyncEventReceiver   EventReceiver
         identity.py
           AsyncIdentityResolver  IdentityResolver
+      pagination.py
+        AsyncItemPaginator  ItemPaginator
+        AsyncPaginator      Paginator
       program.py
         run_program_async  run_program
       types.py
@@ -105,4 +108,4 @@ Dual-mode symbols (async in aio, sync twin outside):
       http_mock.py
         AsyncHTTPMockController  HTTPMockController
         mock_async               mock
-53 dual-mode symbol(s).
+55 dual-mode symbol(s).

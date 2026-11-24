@@ -7,7 +7,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Final
 
-from . import _auth, _endpoint_tests, _endpoints, _package
+from . import _auth, _endpoint_tests, _endpoints, _package, _pagination
 from . import dependencies as _dependencies
 from . import exceptions as _exceptions
 from . import model as _model
@@ -89,6 +89,7 @@ def write_client(
     plan: ClientPlan,
     protocol: _protocols.ProtocolContribution,
     endpoints: _endpoints.EndpointPlan,
+    paginators: tuple[_pagination.PaginatorPlan | None, ...],
     integrations: Sequence[ClientIntegration] = (),
 ) -> None:
     """Register client, config, endpoints, and package modules for both modes.
@@ -142,6 +143,7 @@ def write_client(
             mode,
             f"{module}config",
             service,
+            paginators,
             integrations,
         )
     for integration in integrations:
@@ -571,6 +573,7 @@ def _write_client(
     mode: ClientMode,
     config_module: str,
     service: _model.ServiceShape,
+    paginators: tuple[_pagination.PaginatorPlan | None, ...],
     integrations: Sequence[ClientIntegration],
 ) -> None:
     config = TypeReference(mode.config, config_module)
@@ -592,10 +595,21 @@ def _write_client(
             )
         ]
         writer.line("_client_plugins = (", *_items((*plugins, _USER_AGENT_PLUGIN)), ")")
-        for operation, export in zip(
-            plan.operations, plan.models.operations, strict=True
+        for operation, export, paginator in zip(
+            plan.operations, plan.models.operations, paginators, strict=True
         ):
             _write_operation(writer, plan, mode, operation, export.name, models, plugin)
+            if paginator is not None:
+                _write_paginator(
+                    writer,
+                    plan,
+                    mode,
+                    operation,
+                    export.name,
+                    models,
+                    plugin,
+                    paginator,
+                )
         writer.line()
         create = _new_config(mode, config, integrations)
         define = "async def " if create[0] == "await " else "def "
@@ -670,3 +684,162 @@ def _write_operation(
             writer.line("[],")
             writer.line("plugins,")
         writer.line(")")
+
+
+def _write_paginator(
+    writer: PythonWriter,
+    plan: ClientPlan,
+    mode: ClientMode,
+    operation: OperationPlan,
+    constant: str,
+    models: TypeReference,
+    plugin: TypeReference,
+    paginator: _pagination.PaginatorPlan,
+) -> None:
+    # A plain def in both modes: the async paginator is iterated, not awaited.
+    name = paginator.method_name
+    dict_name = plan.models.input_dict_names[operation.operation.input]
+    page: tuple[str | TypeReference, ...] = (models, ".", operation.output_name)
+    if paginator.item_type is None:
+        runtime = _core(
+            "AsyncPaginator" if mode.is_async else "Paginator",
+            "aio.pagination" if mode.is_async else "pagination",
+        )
+        result: tuple[str | TypeReference, ...] = (runtime, "[", *page, "]")
+    else:
+        runtime = _core(
+            "AsyncItemPaginator" if mode.is_async else "ItemPaginator",
+            "aio.pagination" if mode.is_async else "pagination",
+        )
+        item = _lazy_type(paginator.item_type, models)
+        result = (runtime, "[", *page, ", ", *item, "]")
+    plugins: tuple[str | TypeReference, ...] = (
+        "plugins: list[",
+        plugin,
+        "] | None = None",
+    )
+    # An SDK option, never sent to the service.
+    stop = "stop_on_same_token: bool = True"
+    docs = (
+        f"Iterates the pages of the {operation.operation.id.name} operation.\n\n"
+        "Each page is the output of one call, sent as iteration reaches it. "
+        "The request's token starts the first page. Pagination ends at a page "
+        "with no token or an empty one. By default, it also ends, normally, at a "
+        "page whose token equals the one its request sent, including the starting "
+        "token."
+    )
+    if paginator.items is not None:
+        docs += " ``items()`` iterates the items of each page instead."
+    docs += (
+        "\n\n:param plugins: Callables that change the configuration for each call "
+        "of this traversal only."
+        "\n:param stop_on_same_token: Whether to end pagination at a page whose "
+        "token equals, by value, the one its request sent. Set to False to keep "
+        "requesting pages when tokens repeat, such as when polling for new results. "
+        "A page with no token, or an empty one, still ends pagination. This option "
+        "is not sent to the service."
+    )
+    writer.line()
+    writer.line("@", _OVERLOAD)
+    writer.line("def ", name, "(")
+    with writer.indent():
+        writer.line("self,")
+        writer.line(
+            "request: ",
+            models,
+            ".",
+            operation.input_name,
+            " | ",
+            models,
+            ".",
+            dict_name,
+            ",",
+        )
+        writer.line("/,")
+        writer.line("*,")
+        writer.line(*plugins, ",")
+        writer.line(stop, ",")
+    writer.line(") -> ", *result, ": ...")
+    writer.line()
+    writer.line("@", _OVERLOAD)
+    writer.line("def ", name, "(")
+    with writer.indent():
+        writer.line("self,")
+        writer.line("/,")
+        writer.line("*,")
+        writer.line(*plugins, ",")
+        writer.line(stop, ",")
+        writer.line("**kwargs: ", _UNPACK, "[", models, ".", dict_name, "],")
+    writer.line(") -> ", *result, ":")
+    with writer.indent():
+        _models._write_docstring(writer, docs)  # pyright: ignore[reportPrivateUsage]
+    writer.line()
+    writer.line("def ", name, "(")
+    with writer.indent():
+        writer.line("self,")
+        writer.line("/,")
+        writer.line("*args: object,")
+        writer.line(*plugins, ",")
+        writer.line(stop, ",")
+        writer.line("**kwargs: object,")
+    writer.line(") -> ", *result, ":")
+    with writer.indent():
+        writer.line("return ", runtime, "(")
+        with writer.indent():
+            writer.line("self._build_input(")
+            with writer.indent():
+                writer.line(
+                    "self._select_input(", models, ".", constant, ", args, kwargs),"
+                )
+                writer.line(models, ".", constant, ",")
+            writer.line("),")
+            writer.line("self.", operation.method_name, ",")
+            writer.line("plugins,")
+            writer.line(
+                "input_token=",
+                _models._quote(paginator.input_token),  # pyright: ignore[reportPrivateUsage]
+                ",  # noqa: S106 - a member name, not a secret",
+            )
+            writer.line("output_token=", _path(paginator.output_token), ",")
+            if paginator.items is not None:
+                writer.line("items=", _path(paginator.items), ",")
+            writer.line("stop_on_same_token=stop_on_same_token,")
+        writer.line(")")
+
+
+def _path(names: tuple[str, ...]) -> str:
+    quoted = [_models._quote(name) for name in names]  # pyright: ignore[reportPrivateUsage]
+    return f"({quoted[0]},)" if len(quoted) == 1 else f"({', '.join(quoted)})"
+
+
+def _lazy_type(
+    reference: TypeReference, models: TypeReference
+) -> tuple[str | TypeReference, ...]:
+    """Write a type with model types as attributes of the lazily loaded models."""
+    models_module = f"{models.module}.{models.name}"
+    parts: list[str | TypeReference] = []
+    pending: list[str | TypeReference] = [reference]
+    while pending:
+        part = pending.pop()
+        if isinstance(part, str):
+            parts.append(part)
+            continue
+        if part.module is None:
+            parts.append("None")
+            continue
+        if part.module == models_module:
+            parts.extend((models, ".", part.name))
+        else:
+            parts.append(
+                TypeReference(part.name, part.module, dependencies=part.dependencies)
+            )
+        if part.nullable:
+            pending.append(" | None")
+        if part.arguments:
+            pending.append("]")
+            for index in range(len(part.arguments) - 1, -1, -1):
+                pending.append(part.arguments[index])
+                if index:
+                    pending.append(", ")
+            pending.append("[")
+    return tuple(parts)

@@ -13,6 +13,8 @@ __all__ = [
     "Gamma",
     "GammaPayload",
     "HeartbeatEvent",
+    "ListItemsInput",
+    "ListItemsOutput",
     "LogEvent",
     "MetricEvent",
     "NotificationEvent",
@@ -90,6 +92,28 @@ class HeartbeatEvent(_SerdeShape):
     "Dataclass for HeartbeatEvent structure."
 
     timestamp: datetime | None = ...
+
+@dataclass(kw_only=True)
+class ListItemsInput(_SerdeShape):
+    "Dataclass for ListItemsInput structure."
+
+    next_token: str | None = ...
+    page_size: int | None = ...
+
+@dataclass(kw_only=True)
+class ListItemsOutput(_SerdeShape):
+    "Dataclass for ListItemsOutput structure."
+
+    items: list[str] | None = ...
+    next_token: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
 
 @dataclass(kw_only=True)
 class LogEvent(_SerdeShape):

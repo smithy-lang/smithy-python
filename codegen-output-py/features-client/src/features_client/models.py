@@ -16,6 +16,8 @@ class ServiceError(ModeledError):
 _MODEL_INDEX = {
     "GetThingInput": "GET_THING_INPUT",
     "GetThingOutput": "GET_THING_OUTPUT",
+    "ListNotesInput": "LIST_NOTES_INPUT",
+    "ListNotesOutput": "LIST_NOTES_OUTPUT",
     "PutNoteInput": "PUT_NOTE_INPUT",
     "PutNoteOutput": "PUT_NOTE_OUTPUT",
     "PutThingInput": "PUT_THING_INPUT",
@@ -39,6 +41,10 @@ _OPERATIONS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "GET_THING": (
         (),
         ("smithy.api#httpApiKeyAuth",),
+    ),
+    "LIST_NOTES": (
+        (),
+        ("smithy.api#noAuth",),
     ),
     "PING": (
         (),
@@ -69,6 +75,8 @@ _registry = ModelRegistry(
             "EchoOutput",
             "GetThingInput",
             "GetThingOutput",
+            "ListNotesInput",
+            "ListNotesOutput",
             "PingInput",
             "PingOutput",
             "PutNoteInput",

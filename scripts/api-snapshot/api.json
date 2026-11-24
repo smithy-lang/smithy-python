@@ -390,6 +390,10 @@
   "smithy_core.aio.interfaces.identity": {
     "AsyncIdentityResolver": "protocol[async]"
   },
+  "smithy_core.aio.pagination": {
+    "AsyncItemPaginator": "class[async]",
+    "AsyncPaginator": "class[async]"
+  },
   "smithy_core.aio.program": {
     "run_program_async": "function[async]"
   },
@@ -439,6 +443,7 @@
     "ExpectationNotMetError": "exception",
     "MissingDependencyError": "exception",
     "ModeledError": "exception",
+    "PaginationError": "exception",
     "ResourceLifecycleError": "exception",
     "RetryError": "exception",
     "SerializationError": "exception",
@@ -503,6 +508,10 @@
     "RetryBackoffStrategy": "protocol",
     "RetryStrategy": "protocol",
     "RetryToken": "protocol"
+  },
+  "smithy_core.pagination": {
+    "ItemPaginator": "class",
+    "Paginator": "class"
   },
   "smithy_core.prelude": {
     "BIG_DECIMAL": "Schema",

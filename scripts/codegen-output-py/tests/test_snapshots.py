@@ -37,7 +37,7 @@ _COUNTS = {
     "aws-query": (73, 44),
     "ec2-query": (56, 35),
     "my-handwritten-json-model": (10, 17),
-    "my-handwritten-model": (20, 33),
+    "my-handwritten-model": (23, 35),
     "non-query-compatible-rpcv2-cbor": (0, 1),
     "partitioned-types": (270, 276),
     "query-compatible-aws-json-1-0": (2, 3),

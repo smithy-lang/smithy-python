@@ -11,6 +11,7 @@ from smithy_core.aio.eventstream import (
     AsyncInputEventStream,
     AsyncOutputEventStream,
 )
+from smithy_core.aio.pagination import AsyncItemPaginator
 from smithy_http.plugins import user_agent_plugin
 
 from .. import models as _models
@@ -27,6 +28,11 @@ from ..models import (
 from .config import AsyncConfig, Plugin
 from .user_agent import aws_user_agent_plugin
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..models import ListItemsOutput
+
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +41,107 @@ class AsyncMyHandwrittenModel(AsyncClient[AsyncConfig]):
     """Client for MyHandwrittenModel"""
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
+
+    @_overload
+    async def list_items(
+        self,
+        request: _models.ListItemsInput | _models.ListItemsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> ListItemsOutput: ...
+
+    @_overload
+    async def list_items(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.ListItemsInputDict],
+    ) -> ListItemsOutput:
+        """
+        Lists items a page at a time.
+
+        Args:
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `ListItemsOutput`.
+        """
+
+    async def list_items(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> ListItemsOutput:
+        return await self._invoke(
+            self._select_input(_models.LIST_ITEMS, args, kwargs),
+            _models.LIST_ITEMS,
+            [],
+            plugins,
+        )
+
+    @_overload
+    def paginate_list_items(
+        self,
+        request: _models.ListItemsInput | _models.ListItemsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        stop_on_same_token: bool = True,
+    ) -> AsyncItemPaginator[_models.ListItemsOutput, str]: ...
+
+    @_overload
+    def paginate_list_items(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        stop_on_same_token: bool = True,
+        **kwargs: _Unpack[_models.ListItemsInputDict],
+    ) -> AsyncItemPaginator[_models.ListItemsOutput, str]:
+        """
+        Iterates the pages of the ListItems operation.
+
+        Takes the same request as `list_items`, and checks it now, but sends nothing until iteration starts. Each page is the output of one call. The request's token, if any, starts the first page. Pagination ends at a page with no token or an empty one. By default, it also ends, normally, at a page whose token equals the one its request sent, including the starting token. `items()` iterates the items of each page instead.
+
+        Args:
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                They apply to each call of this iteration only, and will not
+                affect any other operation invocations.
+            stop_on_same_token:
+                Whether to end pagination at a page whose token equals, by
+                value, the one its request sent. Set to False to keep requesting
+                pages when tokens repeat, such as when polling for new results.
+                A page with no token, or an empty one, still ends pagination.
+                This option is not sent to the service.
+
+        Returns:
+            An iterator of `ListItemsOutput` pages.
+        """
+
+    def paginate_list_items(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        stop_on_same_token: bool = True,
+        **kwargs: object,
+    ) -> AsyncItemPaginator[_models.ListItemsOutput, str]:
+        return AsyncItemPaginator(
+            self._build_input(
+                self._select_input(_models.LIST_ITEMS, args, kwargs), _models.LIST_ITEMS
+            ),
+            self.list_items,
+            plugins,
+            input_token="next_token",
+            output_token=("next_token",),
+            items=("items",),
+            stop_on_same_token=stop_on_same_token,
+        )
 
     @_overload
     async def publish_events(

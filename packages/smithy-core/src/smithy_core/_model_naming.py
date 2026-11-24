@@ -27,10 +27,15 @@ _RESERVED_ERROR_MEMBERS = frozenset(
 )
 _ERROR_MESSAGE_MEMBER_NAMES = frozenset({"errormessage", "error_message", "message"})
 _RESPONSE_METADATA_MEMBER = "response_metadata"
-# The names every generated client method uses besides its input members: the
-# parameters it declares, and the models module alias its body references.
-# CAUTION: mirrors PythonSymbolProvider.OPERATION_PARAMETER_NAMES.
-_RESERVED_INPUT_MEMBERS = frozenset({"self", "plugins", "_models"})
+# The names generated client methods use besides their input members: the
+# parameters they declare, and the models module alias their bodies reference.
+# ``stop_on_same_token`` is declared only by paginator methods, but is reserved on
+# every operation input so that an input's names don't depend on its pagination.
+# CAUTION: mirrors PythonSymbolProvider.OPERATION_PARAMETER_NAMES and
+# smithy_python.symbols._OPERATION_PARAMETER_NAMES.
+_RESERVED_INPUT_MEMBERS = frozenset(
+    {"self", "plugins", "_models", "stop_on_same_token"}
+)
 
 
 def to_snake_case(word: str) -> str:
@@ -75,9 +80,9 @@ def member_field_name(
 def escape_input_member_names(names: Sequence[str]) -> tuple[str, ...]:
     """Escape the member names of an operation input that a client method reserves.
 
-    An operation's input members are the keyword parameters of its client method,
-    so a member named like one of the method's own parameters, or like a module
-    alias its body uses, gets a trailing underscore, and more of them while that
+    An operation's input members are the keyword parameters of its client
+    methods, so a member named like one of their own parameters, or like a module
+    alias their bodies use, gets a trailing underscore, and more of them while that
     collides with another member.
 
     CAUTION: mirrors PythonSymbolProvider.escapeOperationParameter.

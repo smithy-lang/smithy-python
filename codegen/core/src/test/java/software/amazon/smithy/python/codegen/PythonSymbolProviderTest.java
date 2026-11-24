@@ -145,6 +145,8 @@ public class PythonSymbolProviderTest {
         assertEquals("plugins_", memberName(provider, model, "CreateThingInput$plugins"));
         assertEquals("self_", memberName(provider, model, "CreateThingInput$self"));
         assertEquals("_models_", memberName(provider, model, "CreateThingInput$_models"));
+        // Paginators' SDK option, reserved even on an operation that doesn't paginate.
+        assertEquals("stop_on_same_token_", memberName(provider, model, "CreateThingInput$stopOnSameToken"));
         assertEquals("name", memberName(provider, model, "CreateThingInput$name"));
     }
 
@@ -159,6 +161,8 @@ public class PythonSymbolProviderTest {
         assertEquals("_models", memberName(provider, model, "Thing$_models"));
         assertEquals("plugins", memberName(provider, model, "CreateThingOutput$plugins"));
         assertEquals("_models", memberName(provider, model, "CreateThingOutput$_models"));
+        assertEquals("stop_on_same_token", memberName(provider, model, "Thing$stopOnSameToken"));
+        assertEquals("stop_on_same_token", memberName(provider, model, "CreateThingOutput$stopOnSameToken"));
     }
 
     @Test
@@ -183,9 +187,14 @@ public class PythonSymbolProviderTest {
                     self: String
                     _models: String
                     _models_: String
+                    stopOnSameToken: String
+                    stop_on_same_token_: String
                 }
                 """);
         PythonSymbolProvider provider = createProvider(model);
+
+        assertEquals("stop_on_same_token__", memberName(provider, model, "CreateThingInput$stopOnSameToken"));
+        assertEquals("stop_on_same_token_", memberName(provider, model, "CreateThingInput$stop_on_same_token_"));
 
         assertEquals("plugins___", memberName(provider, model, "CreateThingInput$plugins"));
         assertEquals("plugins_", memberName(provider, model, "CreateThingInput$plugins_"));
@@ -213,6 +222,7 @@ public class PythonSymbolProviderTest {
                 plugins: String
                 self: String
                 _models: String
+                stopOnSameToken: String
                 name: String
                 thing: Thing
             }
@@ -220,12 +230,14 @@ public class PythonSymbolProviderTest {
             structure CreateThingOutput {
                 plugins: String
                 _models: String
+                stopOnSameToken: String
             }
 
             structure Thing {
                 plugins: String
                 self: String
                 _models: String
+                stopOnSameToken: String
             }
             """;
 
