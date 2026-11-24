@@ -29,9 +29,7 @@ class SharedConfigProvider:
         """Load and select the active profile for every identity type.
 
         This step registers no resolvers; it only makes the shared config and the
-        active profile name available to the profile-based providers that follow it,
-        whatever identity type the chain resolves (for example ``TokenIdentity``
-        chains read ``sso_session`` from the same profile).
+        active profile name available to the profile-based providers that follow it.
         """
         return setup._run(self._setup(setup))  # pyright: ignore[reportPrivateUsage]
 
