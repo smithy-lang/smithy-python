@@ -122,10 +122,12 @@ await client.wait_until_table_exists(
 )
 ```
 
-All three values are seconds as floats. Invalid values, such as a `min_delay`
-above `max_delay`, raise `ValueError` before any request is sent. Near the
-limit, the waiter sleeps until the limit and makes one last attempt. That
-attempt's response is still checked against the acceptors.
+All three values are seconds as floats. Delays may include fractions of a
+second, where the specification uses whole seconds. Callers can pass fractional
+bounds, which whole-second delays can't honor. Invalid values, such as a
+`min_delay` above `max_delay`, raise `ValueError` before any request is sent.
+Near the limit, the waiter sleeps until the limit and makes one last attempt.
+That attempt's response is still checked against the acceptors.
 
 The waiter doesn't cancel a request in flight at the limit, because the
 specification schedules the last attempt at that moment. Async callers that need
@@ -143,10 +145,10 @@ map to a predictable wait.
 Waiters raise an exception for every outcome other than success. Both waiter
 exceptions are in `smithy_core.exceptions` and inherit from `WaiterError`:
 
-* `WaiterFailureError` means an acceptor moved the waiter to its failure state.
-  For example, an EC2 instance terminated while the caller waited for it to run.
-  When the acceptor has a `message` expression, the exception message includes
-  its result.
+* `WaiterFailureError` means the waiter reached its failure state through a
+  failure acceptor or an error that no acceptor matched. For example, an EC2
+  instance terminated while the caller waited for it to run. When the acceptor
+  has a `message` expression, the exception message includes its result.
 * `WaiterTimeoutError` means the limit passed before any acceptor reported
   success or failure.
 
@@ -165,10 +167,10 @@ except WaiterFailureError as error:
     print(f"The instance failed to start after {error.attempts} attempts.")
 ```
 
-An error that no acceptor matches ends the wait and propagates unchanged, as it
-would from the operation. This includes permission and credential errors, such
-as a 403. The waiter keeps polling through an error only when a retry acceptor
-names it.
+An error that no acceptor matches ends the wait with `WaiterFailureError`, which
+holds the error in `last_error`. This includes permission and credential errors,
+such as a 403. The waiter keeps polling through an error only when a retry
+acceptor names it.
 
 ### Runtime
 
