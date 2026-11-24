@@ -5,8 +5,10 @@
 package software.amazon.smithy.python.aws.codegen;
 
 import java.util.List;
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.aws.traits.auth.SigV4Trait;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.traits.HttpBearerAuthTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
@@ -22,10 +24,10 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 /**
  * Sets up the default identity resolvers during client setup.
  *
- * <p>For services using SigV4 this wires the default AWS credentials identity chain.
- * For services using {@code smithy.api#httpBearerAuth} it wires a static token
- * resolver when a {@code token} is configured, matching the generic client config,
- * and the default token identity chain otherwise.
+ * <p>For AWS services using SigV4 this wires the default AWS credentials identity
+ * chain. For AWS services using {@code smithy.api#httpBearerAuth} it wires a static
+ * token resolver when a {@code token} is configured, matching the generic client
+ * config, and the default token identity chain otherwise.
  */
 @SmithyInternalApi
 public class AwsIdentityIntegration implements PythonIntegration {
@@ -35,12 +37,27 @@ public class AwsIdentityIntegration implements PythonIntegration {
             GenerationContext context
     ) {
         var service = context.settings().service(context.model());
-        var hasSigV4 = service.hasTrait(SigV4Trait.class);
-        var hasBearer = service.hasTrait(HttpBearerAuthTrait.class);
-        if (!hasSigV4 && !hasBearer) {
+        if (!appliesTo(service)) {
             return List.of();
         }
-        return List.of(new IdentitySetupInterceptor(hasSigV4, hasBearer));
+        return List.of(new IdentitySetupInterceptor(
+                service.hasTrait(SigV4Trait.class),
+                service.hasTrait(HttpBearerAuthTrait.class)));
+    }
+
+    /**
+     * Whether the identity chains apply to a service.
+     *
+     * <p>The chains read the profile and region of an AWS config, so a service outside
+     * AWS keeps the core generator's static token resolver even when it uses bearer
+     * auth.
+     *
+     * @param service The service being generated.
+     * @return true if the service is an AWS service with SigV4 or bearer auth.
+     */
+    static boolean appliesTo(ServiceShape service) {
+        return service.hasTrait(ServiceTrait.class)
+                && (service.hasTrait(SigV4Trait.class) || service.hasTrait(HttpBearerAuthTrait.class));
     }
 
     /**
