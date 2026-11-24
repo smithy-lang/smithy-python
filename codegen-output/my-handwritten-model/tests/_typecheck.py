@@ -10,6 +10,9 @@ from my_handwritten_model.models import (
     Gamma,
     GammaPayload,
     HeartbeatEvent,
+    ListItemsInput,
+    ListItemsInputDict,
+    ListItemsOutput,
     LogEvent,
     MetricEvent,
     NotificationEvent,
@@ -38,6 +41,8 @@ DifferentShapeName()
 Gamma()
 GammaPayload()
 HeartbeatEvent()
+ListItemsInput()
+ListItemsOutput()
 LogEvent()
 MetricEvent()
 NotificationEvent()
@@ -47,9 +52,10 @@ SubscribeToEventsInput()
 SubscribeToEventsOutput()
 TradeEventStreamInput()
 TradeEventStreamOutput()
-_params_0: PublishEventsInputDict = {}
-_params_1: SubscribeToEventsInputDict = {}
-_params_2: TradeEventStreamInputDict = {}
+_params_0: ListItemsInputDict = {}
+_params_1: PublishEventsInputDict = {}
+_params_2: SubscribeToEventsInputDict = {}
+_params_3: TradeEventStreamInputDict = {}
 
 
 def _request[T](form: type[T]) -> T:
@@ -58,6 +64,10 @@ def _request[T](form: type[T]) -> T:
 
 async def check_async_calls(client: AsyncMyHandwrittenModel) -> None:
     pass
+    await client.list_items()
+    await client.list_items(**_request(ListItemsInputDict))
+    await client.list_items(_request(ListItemsInput))
+    await client.list_items(_request(ListItemsInputDict))
     await client.publish_events()
     await client.publish_events(**_request(PublishEventsInputDict))
     await client.publish_events(_request(PublishEventsInput))
@@ -74,3 +84,7 @@ async def check_async_calls(client: AsyncMyHandwrittenModel) -> None:
 
 def check_sync_calls(client: MyHandwrittenModel) -> None:
     pass
+    client.list_items()
+    client.list_items(**_request(ListItemsInputDict))
+    client.list_items(_request(ListItemsInput))
+    client.list_items(_request(ListItemsInputDict))

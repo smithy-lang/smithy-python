@@ -11,6 +11,7 @@ from smithy_core.serializers import ShapeSerializer
 __all__ = [
     "ECHO",
     "GET_THING",
+    "LIST_NOTES",
     "PING",
     "PUT_NOTE",
     "PUT_THING",
@@ -18,6 +19,8 @@ __all__ = [
     "EchoOutput",
     "GetThingInput",
     "GetThingOutput",
+    "ListNotesInput",
+    "ListNotesOutput",
     "PingInput",
     "PingOutput",
     "PutNoteInput",
@@ -58,6 +61,34 @@ class GetThingOutput(_SerdeShape):
     "Dataclass for GetThingOutput structure."
 
     value: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class ListNotesInput(_SerdeShape):
+    "Dataclass for ListNotesInput structure."
+
+    next_token: str | None = ...
+    page_size: int | None = ...
+
+class ListNotesInputDict(TypedDict, total=False):
+    "Dictionary form of `ListNotesInput`."
+
+    next_token: str | None
+    page_size: int | None
+
+@dataclass(kw_only=True)
+class ListNotesOutput(_SerdeShape):
+    "Dataclass for ListNotesOutput structure."
+
+    items: list[str] | None = ...
+    next_token: str | None = ...
     response_metadata: ResponseMetadata = ...
     """
     Metadata about the response that produced this output.
@@ -175,6 +206,7 @@ class PutThingOutput(_SerdeShape):
 
 ECHO: APIOperation[EchoInput, EchoOutput]
 GET_THING: APIOperation[GetThingInput, GetThingOutput]
+LIST_NOTES: APIOperation[ListNotesInput, ListNotesOutput]
 PING: APIOperation[PingInput, PingOutput]
 PUT_NOTE: APIOperation[PutNoteInput, PutNoteOutput]
 PUT_THING: APIOperation[PutThingInput, PutThingOutput]

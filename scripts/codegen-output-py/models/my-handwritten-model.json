@@ -178,6 +178,58 @@
         "target": "smithy.api#Integer"
       }
     },
+    "smithy.python.tests.handwritten#ItemList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.api#String"
+      }
+    },
+    "smithy.python.tests.handwritten#ListItems": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.python.tests.handwritten#ListItemsInput"
+      },
+      "output": {
+        "target": "smithy.python.tests.handwritten#ListItemsOutput"
+      },
+      "traits": {
+        "smithy.api#documentation": "Lists items a page at a time.",
+        "smithy.api#paginated": {
+          "inputToken": "nextToken",
+          "outputToken": "nextToken",
+          "items": "items",
+          "pageSize": "pageSize"
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#ListItemsInput": {
+      "type": "structure",
+      "members": {
+        "nextToken": {
+          "target": "smithy.api#String"
+        },
+        "pageSize": {
+          "target": "smithy.api#Integer"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "smithy.python.tests.handwritten#ListItemsOutput": {
+      "type": "structure",
+      "members": {
+        "items": {
+          "target": "smithy.python.tests.handwritten#ItemList"
+        },
+        "nextToken": {
+          "target": "smithy.api#String"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
     "smithy.python.tests.handwritten#LogEvent": {
       "type": "structure",
       "members": {
@@ -204,6 +256,9 @@
       "type": "service",
       "version": "2020-07-14",
       "operations": [
+        {
+          "target": "smithy.python.tests.handwritten#ListItems"
+        },
         {
           "target": "smithy.python.tests.handwritten#PublishEvents"
         },
