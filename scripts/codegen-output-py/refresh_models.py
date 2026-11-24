@@ -110,14 +110,18 @@ _DECIMAL = re.compile(r'"\\u0000decimal:([^"]*)"')
 
 
 def _dumps_exact(value: object) -> str:
-    """JSON with each Decimal written as the number literal it was parsed from."""
+    """JSON with each Decimal written as the number literal it was parsed from.
+
+    Keys keep their model order, since some protocols serialize map entries in
+    order.
+    """
 
     def default(item: object) -> str:
         if isinstance(item, Decimal):
             return f"\u0000decimal:{item}"
         raise TypeError(f"Cannot encode {type(item).__name__}")
 
-    text = json.dumps(value, indent=2, sort_keys=True, default=default)
+    text = json.dumps(value, indent=2, default=default)
     return _DECIMAL.sub(r"\1", text) + "\n"
 
 

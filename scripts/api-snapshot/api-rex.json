@@ -1344,6 +1344,7 @@
     "AwsEndpointsIntegration": "rex-class",
     "AwsSigV4Integration": "rex-class",
     "REST_JSON": "rex-ProtocolContribution",
+    "REST_XML": "rex-ProtocolContribution",
     "SMITHY_AWS_CORE": "rex-Dependency"
   },
   "smithy_python.cli": {

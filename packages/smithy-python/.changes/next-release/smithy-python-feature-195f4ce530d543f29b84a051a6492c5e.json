@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `aws.protocols#restXml` support to generated clients, using the `smithy-aws-core` REST XML protocol."
+}
