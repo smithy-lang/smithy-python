@@ -165,8 +165,10 @@ except WaiterFailureError as error:
     print(f"The instance failed to start after {error.attempts} attempts.")
 ```
 
-An error that no acceptor matches ends the wait. It propagates unchanged, as it
-would from the operation.
+An error that no acceptor matches ends the wait and propagates unchanged, as it
+would from the operation. This includes permission and credential errors, such
+as a 403. The waiter keeps polling through an error only when a retry acceptor
+names it.
 
 ### Runtime
 
