@@ -20,46 +20,52 @@ _s13 = "smithy.api#eventHeader"
 _s14 = "payload"
 _s15 = "smithy.api#eventPayload"
 _s16 = "HeartbeatEvent"
-_s17 = "LogEvent"
-_s18 = "level"
-_s19 = "MetricEvent"
-_s20 = "value"
-_s21 = "NotificationEvent"
-_s22 = "topic"
-_s23 = "PublishEventStream"
-_s24 = "smithy.api#streaming"
-_s25 = "log"
-_s26 = "metric"
-_s27 = "PublishEventsInput"
-_s28 = "smithy.api#input"
-_s29 = "channel"
-_s30 = "events"
-_s31 = "PublishEventsOutput"
-_s32 = "smithy.api#output"
-_s33 = "eventCount"
-_s34 = "StreamServiceError"
-_s35 = "smithy.api#error"
-_s36 = "server"
-_s37 = "SubscribeEventStream"
-_s38 = "notification"
-_s39 = "heartbeat"
-_s40 = "SubscribeToEventsInput"
-_s41 = "maxEvents"
-_s42 = "SubscribeToEventsOutput"
-_s43 = "subscriptionId"
-_s44 = "ThrottlingEvent"
-_s45 = "client"
-_s46 = "smithy.api#retryable"
-_s47 = "TradeEvents"
-_s48 = "alpha"
-_s49 = "beta"
-_s50 = "gamma"
-_s51 = "delta"
-_s52 = "throttle"
-_s53 = "TradeEventStreamInput"
-_s54 = "sessionId"
-_s55 = "TradeEventStreamOutput"
-_s56 = "greeting"
+_s17 = "ItemList"
+_s18 = "ListItemsInput"
+_s19 = "smithy.api#input"
+_s20 = "nextToken"
+_s21 = "pageSize"
+_s22 = "ListItemsOutput"
+_s23 = "smithy.api#output"
+_s24 = "items"
+_s25 = "LogEvent"
+_s26 = "level"
+_s27 = "MetricEvent"
+_s28 = "value"
+_s29 = "NotificationEvent"
+_s30 = "topic"
+_s31 = "PublishEventStream"
+_s32 = "smithy.api#streaming"
+_s33 = "log"
+_s34 = "metric"
+_s35 = "PublishEventsInput"
+_s36 = "channel"
+_s37 = "events"
+_s38 = "PublishEventsOutput"
+_s39 = "eventCount"
+_s40 = "StreamServiceError"
+_s41 = "smithy.api#error"
+_s42 = "server"
+_s43 = "SubscribeEventStream"
+_s44 = "notification"
+_s45 = "heartbeat"
+_s46 = "SubscribeToEventsInput"
+_s47 = "maxEvents"
+_s48 = "SubscribeToEventsOutput"
+_s49 = "subscriptionId"
+_s50 = "ThrottlingEvent"
+_s51 = "client"
+_s52 = "smithy.api#retryable"
+_s53 = "TradeEvents"
+_s54 = "alpha"
+_s55 = "beta"
+_s56 = "gamma"
+_s57 = "delta"
+_s58 = "throttle"
+_s59 = "TradeEventStreamInput"
+_s60 = "sessionId"
+_s61 = "TradeEventStreamOutput"
+_s62 = "greeting"
 
 ALPHA: StaticSchema = (
     18,
@@ -115,65 +121,92 @@ HEARTBEAT_EVENT: StaticSchema = (
     ((4, 0),),
 )
 
-LOG_EVENT: StaticSchema = (
-    18,
+ITEM_LIST: StaticSchema = (
+    16,
     n0,
     _s17,
     0,
-    (_s18, _s9),
+    (_s7,),
+    ((3, 0),),
+)
+
+LIST_ITEMS_INPUT: StaticSchema = (
+    18,
+    n0,
+    _s18,
+    {_s19: None},
+    (_s20, _s21),
+    ((3, 0), (7, 0)),
+)
+
+LIST_ITEMS_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _s22,
+    {_s23: None},
+    (_s24, _s20),
+    ((ITEM_LIST, 0), (3, 0)),
+)
+
+LOG_EVENT: StaticSchema = (
+    18,
+    n0,
+    _s25,
+    0,
+    (_s26, _s9),
     ((3, 0), (3, 0)),
 )
 
 METRIC_EVENT: StaticSchema = (
     18,
     n0,
-    _s19,
+    _s27,
     0,
-    (_s4, _s20),
+    (_s4, _s28),
     ((3, 0), (10, 0)),
 )
 
 NOTIFICATION_EVENT: StaticSchema = (
     18,
     n0,
-    _s21,
+    _s29,
     0,
-    (_s22, _s14),
+    (_s30, _s14),
     ((3, 0), (3, 0)),
 )
 
 PUBLISH_EVENT_STREAM: StaticSchema = (
     19,
     n0,
-    _s23,
-    {_s24: None},
-    (_s25, _s26),
+    _s31,
+    {_s32: None},
+    (_s33, _s34),
     ((LOG_EVENT, 0), (METRIC_EVENT, 0)),
 )
 
 PUBLISH_EVENTS_INPUT: StaticSchema = (
     18,
     n0,
-    _s27,
-    {_s28: None},
-    (_s29, _s30),
+    _s35,
+    {_s19: None},
+    (_s36, _s37),
     ((3, 0), (PUBLISH_EVENT_STREAM, 0)),
 )
 
 PUBLISH_EVENTS_OUTPUT: StaticSchema = (
     18,
     n0,
-    _s31,
-    {_s32: None},
-    (_s33, _s9),
+    _s38,
+    {_s23: None},
+    (_s39, _s9),
     ((7, 0), (3, 0)),
 )
 
 STREAM_SERVICE_ERROR: StaticSchema = (
     18,
     n0,
-    _s34,
-    {_s35: _s36},
+    _s40,
+    {_s41: _s42},
     (_s9,),
     ((3, 0),),
 )
@@ -181,35 +214,35 @@ STREAM_SERVICE_ERROR: StaticSchema = (
 SUBSCRIBE_EVENT_STREAM: StaticSchema = (
     19,
     n0,
-    _s37,
-    {_s24: None},
-    (_s38, _s39),
+    _s43,
+    {_s32: None},
+    (_s44, _s45),
     ((NOTIFICATION_EVENT, 0), (HEARTBEAT_EVENT, 0)),
 )
 
 SUBSCRIBE_TO_EVENTS_INPUT: StaticSchema = (
     18,
     n0,
-    _s40,
-    {_s28: None},
-    (_s29, _s41),
+    _s46,
+    {_s19: None},
+    (_s36, _s47),
     ((3, 0), (7, 0)),
 )
 
 SUBSCRIBE_TO_EVENTS_OUTPUT: StaticSchema = (
     18,
     n0,
-    _s42,
-    {_s32: None},
-    (_s43, _s30),
+    _s48,
+    {_s23: None},
+    (_s49, _s37),
     ((3, 0), (SUBSCRIBE_EVENT_STREAM, 0)),
 )
 
 THROTTLING_EVENT: StaticSchema = (
     18,
     n0,
-    _s44,
-    {_s35: _s45, _s46: MappingProxyType({"throttling": True})},
+    _s50,
+    {_s41: _s51, _s52: MappingProxyType({"throttling": True})},
     (_s9,),
     ((3, 0),),
 )
@@ -217,26 +250,26 @@ THROTTLING_EVENT: StaticSchema = (
 TRADE_EVENTS: StaticSchema = (
     19,
     n0,
-    _s47,
-    {_s24: None},
-    (_s48, _s49, _s50, _s51, _s52),
+    _s53,
+    {_s32: None},
+    (_s54, _s55, _s56, _s57, _s58),
     ((ALPHA, 0), (-1, 0), (GAMMA, 0), (DIFFERENT_SHAPE_NAME, 0), (THROTTLING_EVENT, 0)),
 )
 
 TRADE_EVENT_STREAM_INPUT: StaticSchema = (
     18,
     n0,
-    _s53,
-    {_s28: None},
-    (_s54, _s30),
+    _s59,
+    {_s19: None},
+    (_s60, _s37),
     ((3, 0), (TRADE_EVENTS, 0)),
 )
 
 TRADE_EVENT_STREAM_OUTPUT: StaticSchema = (
     18,
     n0,
-    _s55,
-    {_s32: None},
-    (_s56, _s30),
+    _s61,
+    {_s23: None},
+    (_s62, _s37),
     ((3, 0), (TRADE_EVENTS, 0)),
 )

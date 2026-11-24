@@ -6,6 +6,7 @@ from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.chain.resolver import IdentityChain
 from smithy_aws_core.identity.components import AWSCredentialsIdentity
 from smithy_core.client import Client
+from smithy_core.pagination import ItemPaginator
 from smithy_http.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
 
@@ -91,6 +92,98 @@ class FieldNotesClient(Client[FieldNotesConfig]):
             models.GET_THING,
             [],
             plugins,
+        )
+
+    @overload
+    def list_notes(
+        self,
+        request: models.ListNotesInput | models.ListNotesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.ListNotesOutput: ...
+
+    @overload
+    def list_notes(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.ListNotesInputDict],
+    ) -> models.ListNotesOutput:
+        """
+        Lists notes a page at a time. Needs no auth.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    def list_notes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.ListNotesOutput:
+        return self._invoke(
+            self._select_input(models.LIST_NOTES, args, kwargs),
+            models.LIST_NOTES,
+            [],
+            plugins,
+        )
+
+    @overload
+    def paginate_list_notes(
+        self,
+        request: models.ListNotesInput | models.ListNotesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        stop_on_same_token: bool = True,
+    ) -> ItemPaginator[models.ListNotesOutput, str]: ...
+
+    @overload
+    def paginate_list_notes(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        stop_on_same_token: bool = True,
+        **kwargs: Unpack[models.ListNotesInputDict],
+    ) -> ItemPaginator[models.ListNotesOutput, str]:
+        """
+        Iterates the pages of the ListNotes operation.
+
+        Each page is the output of one call, sent as iteration reaches it. The
+        request's token starts the first page. Pagination ends at a page with no
+        token or an empty one. By default, it also ends, normally, at a page
+        whose token equals the one its request sent, including the starting
+        token. ``items()`` iterates the items of each page instead.
+
+        :param plugins: Callables that change the configuration for each call of
+        this traversal only.
+        :param stop_on_same_token: Whether to end pagination at a page whose
+        token equals, by value, the one its request sent. Set to False to keep
+        requesting pages when tokens repeat, such as when polling for new
+        results. A page with no token, or an empty one, still ends pagination.
+        This option is not sent to the service.
+        """
+
+    def paginate_list_notes(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        stop_on_same_token: bool = True,
+        **kwargs: object,
+    ) -> ItemPaginator[models.ListNotesOutput, str]:
+        return ItemPaginator(
+            self._build_input(
+                self._select_input(models.LIST_NOTES, args, kwargs),
+                models.LIST_NOTES,
+            ),
+            self.list_notes,
+            plugins,
+            input_token="next_token",  # noqa: S106 - a member name, not a secret
+            output_token=("next_token",),
+            items=("items",),
+            stop_on_same_token=stop_on_same_token,
         )
 
     @overload

@@ -63,6 +63,34 @@ class HeartbeatEvent(_SerdeShape):
     timestamp: datetime | None = ...
 
 @dataclass(kw_only=True)
+class ListItemsInput(_SerdeShape):
+    """Dataclass for ListItemsInput structure."""
+
+    next_token: str | None = ...
+    page_size: int | None = ...
+
+class ListItemsInputDict(TypedDict, total=False):
+    """Dictionary form of `ListItemsInput`."""
+
+    next_token: str | None
+    page_size: int | None
+
+@dataclass(kw_only=True)
+class ListItemsOutput(_SerdeShape):
+    """Dataclass for ListItemsOutput structure."""
+
+    items: list[str] | None = ...
+    next_token: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
 class LogEvent(_SerdeShape):
     """Dataclass for LogEvent structure."""
 
@@ -290,6 +318,7 @@ class TradeEventStreamOutput(_SerdeShape):
     individually optional.
     """
 
+LIST_ITEMS: APIOperation[ListItemsInput, ListItemsOutput]
 PUBLISH_EVENTS: APIOperation[PublishEventsInput, PublishEventsOutput]
 SUBSCRIBE_TO_EVENTS: APIOperation[SubscribeToEventsInput, SubscribeToEventsOutput]
 TRADE_EVENT_STREAM: APIOperation[TradeEventStreamInput, TradeEventStreamOutput]

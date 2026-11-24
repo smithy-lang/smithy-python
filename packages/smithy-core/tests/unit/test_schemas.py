@@ -383,6 +383,14 @@ def _token_operation(
             "_models__",
             id="models-beside-sibling",
         ),
+        # The paginators' SDK option is reserved on every operation input.
+        pytest.param(
+            ("stopOnSameToken", "stop_on_same_token_"),
+            "stopOnSameToken",
+            True,
+            "stop_on_same_token__",
+            id="sdk-option-beside-sibling",
+        ),
         # The sibling that already has the suffixed name keeps it.
         pytest.param(
             ("plugins", "plugins_"),

@@ -18,6 +18,8 @@ import pytest
 from smithy_cbor import loads
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.exceptions import EndpointResolutionError
+from smithy_core.interceptors import InputContext
+from smithy_core.interceptors import Interceptor as SmithyInterceptor
 from smithy_core.retries import SimpleRetryStrategy
 from smithy_http import HTTPResponse, tuples_to_fields
 from smithy_http.interfaces import HTTPRequest, HTTPRequestConfiguration
@@ -423,6 +425,626 @@ def test_a_service_with_both_protocols_needs_a_protocol_selection() -> None:
     model = load_model({"smithy": "2.0", "shapes": shapes})
     generator = ClientGenerator(ClientPlan.from_model(model, settings))
     generator.generate(generator.context())
+
+
+_JSON_HEADERS = [
+    ("Content-Type", "application/json"),
+    ("smithy-protocol", "rpc-v2-json"),
+]
+
+
+class _PagedTransport(_Transport):
+    """Answers each request with the next response, and fails past the last."""
+
+    def __init__(self, *bodies: bytes) -> None:
+        super().__init__(headers=_JSON_HEADERS)
+        self._bodies = list(bodies)
+
+    def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> HTTPResponse:
+        if not self._bodies:
+            raise AssertionError(f"unexpected request {len(self.requests) + 1}")
+        return self._respond(request, self._bodies.pop(0))
+
+
+def _paginated_shapes() -> dict[str, Any]:
+    shapes = _shapes()
+    service = shapes["example#Greeter"]
+    service["traits"] = {
+        "smithy.protocols#rpcv2Json": {},
+        "smithy.api#paginated": {
+            "inputToken": "nextToken",
+            "outputToken": "nextToken",
+            "pageSize": "maxResults",
+        },
+    }
+    service["operations"].append({"target": "example#ListThings"})
+    shapes["example#ListThings"] = {
+        "type": "operation",
+        "input": {"target": "example#ListThingsInput"},
+        "output": {"target": "example#ListThingsOutput"},
+        "traits": {
+            "smithy.api#readonly": {},
+            "smithy.api#paginated": {"items": "things"},
+        },
+    }
+    shapes["example#ListThingsInput"] = {
+        "type": "structure",
+        "members": {
+            "filter": {"target": "smithy.api#String"},
+            "nextToken": {"target": "smithy.api#String"},
+            "maxResults": {"target": "smithy.api#Integer"},
+        },
+    }
+    shapes["example#ListThingsOutput"] = {
+        "type": "structure",
+        "members": {
+            "nextToken": {"target": "smithy.api#String"},
+            "things": {"target": "example#Things"},
+        },
+    }
+    shapes["example#Things"] = {
+        "type": "list",
+        "member": {"target": "smithy.api#String"},
+    }
+    return shapes
+
+
+def test_paginator_lazily_requests_pages_until_the_output_token_ends(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _generate(tmp_path, "greeter_paginated", _paginated_shapes())
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module("greeter_paginated")
+    transport = _PagedTransport(
+        b'{"things": ["a", "b"], "nextToken": "t1"}',
+        b'{"things": [], "nextToken": "t2"}',
+        b'{"things": ["c"]}',
+    )
+    client = package.Greeter(_config(package, transport, aio=False))
+
+    pages = client.paginate_list_things(filter="f", max_results=2)
+    assert not transport.requests
+    assert iter(pages) is pages
+
+    # An empty page with a token continues. A page without one ends.
+    assert [(type(page).__name__, page.things, page.next_token) for page in pages] == [
+        ("ListThingsOutput", ["a", "b"], "t1"),
+        ("ListThingsOutput", [], "t2"),
+        ("ListThingsOutput", ["c"], None),
+    ]
+    assert [json.loads(_body(request)) for request in transport.requests] == [
+        {"filter": "f", "maxResults": 2},
+        {"filter": "f", "maxResults": 2, "nextToken": "t1"},
+        {"filter": "f", "maxResults": 2, "nextToken": "t2"},
+    ]
+    assert next(pages, None) is None
+    assert len(transport.requests) == 3
+
+
+class _AsyncPagedTransport(_PagedTransport):
+    async def send(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> HTTPResponse:
+        response = super().send(request, request_config=request_config)
+        response.body = AsyncBytesReader(response.body)  # pyright: ignore[reportArgumentType]
+        return response
+
+
+def _scan_shapes() -> dict[str, Any]:
+    """Adds pagination exercising names, nested paths, maps, and unions.
+
+    ``PaginateListThings`` takes the name ``ListThings``'s paginator prefers.
+    ``ScanItems`` overrides the service's tokens with a keyword-named input
+    token and nested map outputs. ``Count`` inherits every setting and has no
+    items.
+    """
+    shapes = _paginated_shapes()
+    operations = shapes["example#Greeter"]["operations"]
+    for name in ("PaginateListThings", "ScanItems", "Count"):
+        operations.append({"target": f"example#{name}"})
+        shapes[f"example#{name}"] = {
+            "type": "operation",
+            "input": {"target": f"example#{name}Input"},
+            "output": {"target": f"example#{name}Output"},
+        }
+        shapes[f"example#{name}Input"] = {"type": "structure", "members": {}}
+        shapes[f"example#{name}Output"] = {"type": "structure", "members": {}}
+    shapes["example#ScanItems"]["traits"] = {
+        "smithy.api#paginated": {
+            "inputToken": "from",
+            "outputToken": "page.lastKey",
+            "pageSize": "limit",
+            "items": "page.entries",
+        }
+    }
+    shapes["example#ScanItemsInput"]["members"] = {
+        "from": {"target": "example#Key"},
+        "limit": {"target": "smithy.api#Integer"},
+    }
+    shapes["example#ScanItemsOutput"]["members"] = {
+        "page": {"target": "example#ScanPage"}
+    }
+    shapes["example#ScanPage"] = {
+        "type": "structure",
+        "members": {
+            "lastKey": {"target": "example#Key"},
+            "entries": {"target": "example#Entries"},
+        },
+    }
+    shapes["example#Key"] = {
+        "type": "map",
+        "key": {"target": "smithy.api#String"},
+        "value": {"target": "example#AttributeValue"},
+    }
+    shapes["example#AttributeValue"] = {
+        "type": "union",
+        "members": {
+            "s": {"target": "smithy.api#String"},
+            "b": {"target": "smithy.api#Blob"},
+        },
+    }
+    shapes["example#Entries"] = {
+        "type": "map",
+        "key": {"target": "smithy.api#String"},
+        "value": {"target": "example#Thing"},
+        "traits": {"smithy.api#sparse": {}},
+    }
+    shapes["example#Thing"] = {
+        "type": "structure",
+        "members": {"name": {"target": "smithy.api#String"}},
+    }
+    shapes["example#Count"]["traits"] = {"smithy.api#paginated": {}}
+    shapes["example#CountInput"]["members"] = {
+        "nextToken": {"target": "smithy.api#String"},
+        "maxResults": {"target": "smithy.api#Integer"},
+    }
+    shapes["example#CountOutput"]["members"] = {
+        "nextToken": {"target": "smithy.api#String"},
+        "total": {"target": "smithy.api#Integer"},
+    }
+    return shapes
+
+
+def test_paginators_type_check_with_their_page_and_item_types(
+    tmp_path: Path,
+) -> None:
+    shapes = _scan_shapes()
+    # An input member named like the SDK option is escaped, so the SDK keyword
+    # and the input's dictionary keys don't overlap.
+    shapes["example#CountInput"]["members"]["stopOnSameToken"] = {
+        "target": "smithy.api#String"
+    }
+    _generate(tmp_path, "greeter_pages_typing", shapes)
+    (tmp_path / "pyrightconfig.json").write_text(
+        json.dumps({"typeCheckingMode": "strict", "enableExperimentalFeatures": True})
+    )
+    (tmp_path / "src" / "consumer.py").write_text(
+        # An ignore comment that hides no error is itself an error.
+        "# pyright: reportUnnecessaryTypeIgnoreComment=true\n"
+        "from typing import assert_type\n\n"
+        "from smithy_core.aio.pagination import AsyncItemPaginator, AsyncPaginator\n"
+        "from smithy_core.pagination import ItemPaginator, Paginator\n\n"
+        "from greeter_pages_typing import AsyncGreeter, Config, Greeter, models\n\n"
+        "type Entry = tuple[str, models.Thing | None]\n"
+        "client = Greeter(Config(endpoint_uri='https://example.com'))\n"
+        "assert_type(client.paginate_list_things(), models.PaginateListThingsOutput)\n"
+        "assert_type(\n"
+        "    client.paginate_list_things_(filter='f', max_results=1),\n"
+        "    ItemPaginator[models.ListThingsOutput, str],\n"
+        ")\n"
+        "scan = client.paginate_scan_items({'from_': {'k': {'s': 'v'}}})\n"
+        "assert_type(scan, ItemPaginator[models.ScanItemsOutput, Entry])\n"
+        "for page in scan:\n"
+        "    assert_type(page, models.ScanItemsOutput)\n"
+        "for entry in client.paginate_scan_items(models.ScanItemsInput()).items():\n"
+        "    assert_type(entry, Entry)\n"
+        "assert_type(client.paginate_count(), Paginator[models.CountOutput])\n"
+        "polled = client.paginate_count(next_token='t', stop_on_same_token=False)\n"
+        "assert_type(polled, Paginator[models.CountOutput])\n"
+        "modeled = client.paginate_count(\n"
+        "    stop_on_same_token_='t', stop_on_same_token=False\n"
+        ")\n"
+        "assert_type(modeled, Paginator[models.CountOutput])\n"
+        "assert_type(client.count({'stop_on_same_token_': 't'}), models.CountOutput)\n"
+        "client.paginate_count(stop_on_same_token='no')  # pyright: ignore\n"
+        "client.paginate_count({}, stop_on_same_token=None)  # pyright: ignore\n"
+        "client.paginate_count({'stop_on_same_token': 't'})  # pyright: ignore\n"
+        "client.count(stop_on_same_token='t')  # pyright: ignore\n\n\n"
+        "async def run(client: AsyncGreeter) -> None:\n"
+        "    count = client.paginate_count(next_token='t')\n"
+        "    assert_type(count, AsyncPaginator[models.CountOutput])\n"
+        "    request = models.ScanItemsInput()\n"
+        "    scan = client.paginate_scan_items(request, stop_on_same_token=False)\n"
+        "    assert_type(scan, AsyncItemPaginator[models.ScanItemsOutput, Entry])\n"
+        "    things = client.paginate_list_things_()\n"
+        "    assert_type(things, AsyncItemPaginator[models.ListThingsOutput, str])\n"
+        "    async for thing in things.items():\n"
+        "        assert_type(thing, str)\n"
+    )
+    checked = subprocess.run(
+        [sys.executable, "-m", "pyright", "src"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert checked.returncode == 0, checked.stdout + checked.stderr
+
+
+class _AddToken:
+    """A per-call plugin whose interceptor changes the request token in place.
+
+    It changes the token's string union values and adds an entry.
+    """
+
+    def __init__(self, models: Any) -> None:
+        self.models = models
+        self.calls = 0
+
+    def __call__(self, config: Any) -> None:
+        self.calls += 1
+        models = self.models
+
+        class Interceptor(SmithyInterceptor[Any, Any, Any, Any]):
+            def modify_before_serialization(self, context: InputContext[Any]) -> Any:
+                token = context.request.from_
+                if token is not None:
+                    for value in token.values():
+                        if isinstance(value, models.AttributeValueS):
+                            value.value = "changed"
+                    token["extra"] = models.AttributeValueS(value="x")
+                return context.request
+
+        config.interceptors.append(Interceptor())
+
+
+@pytest.mark.parametrize("aio", [False, True], ids=["sync", "async"])
+async def test_union_map_tokens_are_isolated_and_compared_by_value(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, aio: bool
+) -> None:
+    name = "greeter_scan_aio" if aio else "greeter_scan"
+    _generate(tmp_path, name, _scan_shapes())
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module(name)
+    models: Any = importlib.import_module(f"{name}.models")
+    key = base64.b64encode(b"\x00k1").decode()
+    bodies = (
+        json.dumps(
+            {
+                "page": {
+                    "lastKey": {"id": {"b": key}},
+                    "entries": {"a": {"name": "x"}, "b": None},
+                }
+            }
+        ).encode(),
+        json.dumps({"page": {"lastKey": {"id": {"b": key}}}}).encode(),
+    )
+    transport = (_AsyncPagedTransport if aio else _PagedTransport)(*bodies)
+    client = (package.AsyncGreeter if aio else package.Greeter)(
+        _config(package, transport, aio=aio)
+    )
+    plugin = _AddToken(models)
+    value = models.AttributeValueS(value="original")
+    initial = {"id": value}
+    request = models.ScanItemsInput(from_=initial, limit=5)
+    pages = client.paginate_scan_items(request, plugins=[plugin])
+    # A change to the caller's token after the paginator is made is not sent.
+    initial["late"] = models.AttributeValueS(value="late")
+
+    async def advance() -> Any:
+        return await anext(pages) if aio else next(pages)
+
+    first = await advance()
+    # The interceptor's changes to the first request reached neither the
+    # caller's map nor its union values.
+    assert initial == {"id": value, "late": models.AttributeValueS(value="late")}
+    assert value == models.AttributeValueS(value="original")
+    assert first.page.last_key == {"id": models.AttributeValueB(value=b"\x00k1")}
+    assert first.page.entries == {"a": models.Thing(name="x"), "b": None}
+    first.page.last_key["id"].value = b"changed by caller"
+    second = await advance()
+    # The second response repeats the token its request sent, so pagination ends
+    # after it. The interceptor's addition to that request changed neither the
+    # stored token nor the comparison.
+    assert second.page.last_key == {"id": models.AttributeValueB(value=b"\x00k1")}
+    if aio:
+        with pytest.raises(StopAsyncIteration):
+            await anext(pages)
+    else:
+        assert next(pages, None) is None
+    assert [json.loads(_body(request)) for request in transport.requests] == [
+        {"limit": 5, "from": {"id": {"s": "changed"}, "extra": {"s": "x"}}},
+        {"limit": 5, "from": {"id": {"b": key}, "extra": {"s": "x"}}},
+    ]
+    assert plugin.calls == 2
+
+
+def test_paginator_input_styles_validate_early_and_copy_the_request(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _generate(tmp_path, "greeter_pages_input", _scan_shapes())
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module("greeter_pages_input")
+    models: Any = importlib.import_module("greeter_pages_input.models")
+    transport = _PagedTransport(*[b'{"total": 1}'] * 3)
+    client = package.Greeter(_config(package, transport, aio=False))
+
+    request = models.CountInput(next_token="start", max_results=3)
+    values = {"next_token": "start", "max_results": 3}
+    for pages in (
+        client.paginate_count(request),
+        client.paginate_count(values),
+        client.paginate_count(**values),
+    ):
+        assert [page.total for page in pages] == [1]
+    assert request == models.CountInput(next_token="start", max_results=3)
+    assert values == {"next_token": "start", "max_results": 3}
+    assert [json.loads(_body(sent)) for sent in transport.requests] == [
+        {"nextToken": "start", "maxResults": 3}
+    ] * 3
+
+    with pytest.raises(TypeError, match="unknown"):
+        client.paginate_count(unknown=1)
+    with pytest.raises(TypeError, match="not both"):
+        client.paginate_count(request, max_results=1)
+    assert len(transport.requests) == 3
+
+
+@pytest.mark.parametrize("aio", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("style", ["keywords", "model", "dict"])
+async def test_paginators_continue_on_repeated_tokens_when_asked(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, aio: bool, style: str
+) -> None:
+    name = f"greeter_pages_poll_{style}" + ("_aio" if aio else "")
+    _generate(tmp_path, name, _paginated_shapes())
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module(name)
+    models: Any = importlib.import_module(f"{name}.models")
+    # The first response repeats the starting token, and the second repeats the
+    # token its request sent.
+    bodies = (b'{"nextToken": "t1"}', b'{"nextToken": "t1"}', b'{"things": ["a"]}')
+    transport = (_AsyncPagedTransport if aio else _PagedTransport)(*bodies)
+    client = (package.AsyncGreeter if aio else package.Greeter)(
+        _config(package, transport, aio=aio)
+    )
+    calls: list[object] = []
+    options: dict[str, Any] = {"plugins": [calls.append], "stop_on_same_token": False}
+    values = {"filter": "f", "next_token": "t1"}
+    if style == "keywords":
+        pages = client.paginate_list_things(**values, **options)
+    elif style == "model":
+        pages = client.paginate_list_things(models.ListThingsInput(**values), **options)
+    else:
+        pages = client.paginate_list_things(values, **options)
+
+    collected = [page async for page in pages] if aio else list(pages)
+    assert [page.next_token for page in collected] == ["t1", "t1", None]
+    # The SDK option is not sent.
+    assert [json.loads(_body(request)) for request in transport.requests] == [
+        {"filter": "f", "nextToken": "t1"}
+    ] * 3
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize("aio", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("style", ["keywords", "model", "dict"])
+async def test_input_members_named_like_the_sdk_option_are_escaped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, aio: bool, style: str
+) -> None:
+    # A modeled stopOnSameToken, also the input token, and a sibling already named
+    # like its escape. Output members keep their names.
+    shapes = _scan_shapes()
+    members = shapes["example#CountInput"]["members"]
+    members["stopOnSameToken"] = {"target": "smithy.api#String"}
+    members["stop_on_same_token_"] = {"target": "smithy.api#String"}
+    shapes["example#Count"]["traits"] = {
+        "smithy.api#paginated": {"inputToken": "stopOnSameToken"}
+    }
+    output = shapes["example#CountOutput"]["members"]
+    output["stopOnSameToken"] = {"target": "smithy.api#String"}
+    name = f"greeter_pages_names_{style}" + ("_aio" if aio else "")
+    _generate(tmp_path, name, shapes)
+    # Neither the generated model nor the ordinary call depends on the paginator's
+    # input style, so the model is checked once and the call once per mode.
+    keywords = style == "keywords"
+    if keywords and not aio:
+        stub = (tmp_path / "src" / name / "models.pyi").read_text()
+        typed_dict = stub.split("class CountInputDict(")[1].split("\nclass ")[0]
+        assert "stop_on_same_token__: str | None" in typed_dict
+        assert "stop_on_same_token_: str | None" in typed_dict
+        assert "stop_on_same_token: " not in typed_dict
+
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module(name)
+    models: Any = importlib.import_module(f"{name}.models")
+    # The first response repeats the starting token, which the SDK option allows.
+    bodies = [
+        b'{"nextToken": "t1", "stopOnSameToken": "out"}',
+        b'{"nextToken": "t2"}',
+        b"{}",
+    ]
+    if keywords:
+        bodies.append(b"{}")
+    transport = (_AsyncPagedTransport if aio else _PagedTransport)(*bodies)
+    client = (package.AsyncGreeter if aio else package.Greeter)(
+        _config(package, transport, aio=aio)
+    )
+    values = {"stop_on_same_token__": "t1", "stop_on_same_token_": "s"}
+    if style == "keywords":
+        pages = client.paginate_count(**values, stop_on_same_token=False)
+    elif style == "model":
+        request = models.CountInput(**values)
+        pages = client.paginate_count(request, stop_on_same_token=False)
+    else:
+        pages = client.paginate_count(values, stop_on_same_token=False)
+
+    collected = [page async for page in pages] if aio else list(pages)
+    assert [page.next_token for page in collected] == ["t1", "t2", None]
+    assert collected[0].stop_on_same_token == "out"
+    expected: list[dict[str, str]] = [
+        {"stopOnSameToken": "t1", "stop_on_same_token_": "s"},
+        {"stopOnSameToken": "t1", "stop_on_same_token_": "s"},
+        {"stopOnSameToken": "t2", "stop_on_same_token_": "s"},
+    ]
+    if keywords:
+        # The ordinary operation method takes the same escaped field.
+        if aio:
+            await client.count(stop_on_same_token__="x")
+        else:
+            client.count(stop_on_same_token__="x")
+        expected.append({"stopOnSameToken": "x"})
+    assert [json.loads(_body(request)) for request in transport.requests] == expected
+
+
+@pytest.mark.parametrize("target", ["Byte", "Short", "Long"])
+def test_page_size_may_target_any_integral_type(target: str) -> None:
+    shapes = _scan_shapes()
+    integral = f"smithy.api#{target}"
+    # Count inherits the service's pageSize, and ScanItems names its own.
+    shapes["example#CountInput"]["members"]["maxResults"]["target"] = integral
+    shapes["example#ScanItemsInput"]["members"]["limit"]["target"] = integral
+    generator = ClientGenerator(_plan(shapes))
+    generator.generate(generator.context())
+
+
+def test_paginated_clients_load_no_models_until_used(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _generate(tmp_path, "greeter_pages_lazy", _scan_shapes())
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    importlib.import_module("greeter_pages_lazy.client")
+    importlib.import_module("greeter_pages_lazy.aio.client")
+    models: Any = sys.modules["greeter_pages_lazy.models"]
+    assert not models._registry._classes  # pyright: ignore[reportPrivateUsage]
+
+
+def _set_scan(**settings: str) -> Callable[[dict[str, Any]], None]:
+    def change(shapes: dict[str, Any]) -> None:
+        shapes["example#ScanItems"]["traits"]["smithy.api#paginated"].update(settings)
+
+    return change
+
+
+def _drop_service_tokens(shapes: dict[str, Any]) -> None:
+    del shapes["example#Greeter"]["traits"]["smithy.api#paginated"]["inputToken"]
+
+
+def _set_service(**settings: str) -> Callable[[dict[str, Any]], None]:
+    def change(shapes: dict[str, Any]) -> None:
+        shapes["example#Greeter"]["traits"]["smithy.api#paginated"].update(settings)
+
+    return change
+
+
+def _string_count_page_size(shapes: dict[str, Any]) -> None:
+    shapes["example#CountInput"]["members"]["maxResults"]["target"] = (
+        "smithy.api#String"
+    )
+
+
+def _string_scan_input_token(shapes: dict[str, Any]) -> None:
+    shapes["example#ScanItemsInput"]["members"]["from"]["target"] = "smithy.api#String"
+
+
+def _map_count_input_token(shapes: dict[str, Any]) -> None:
+    shapes["example#CountInput"]["members"]["nextToken"]["target"] = "example#Key"
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        (_drop_service_tokens, "example#ListThings needs an inputToken"),
+        (_set_scan(inputToken="limitless"), "inputToken 'limitless'"),
+        (
+            _set_scan(inputToken="limit"),
+            "example#ScanItems has inputToken 'limit' targeting a integer",
+        ),
+        (
+            _string_scan_input_token,
+            "example#ScanItems has inputToken 'from' targeting a string, but "
+            "outputToken 'page.lastKey' targets a map",
+        ),
+        (
+            _map_count_input_token,
+            "example#Count has inputToken 'nextToken' targeting a map, but "
+            "outputToken 'nextToken' targets a string",
+        ),
+        (_set_scan(outputToken="page.missing"), "'missing' is not a member"),
+        (_set_scan(outputToken="page.lastKey.id"), "'id' is not a member"),
+        (_set_scan(outputToken="page"), "outputToken 'page' targeting a structure"),
+        (_set_scan(items="page.lastKey.x"), "'x' is not a member"),
+        (_set_scan(items="page"), "items 'page' targeting a structure"),
+        # An inherited pageSize, then an operation's own, that isn't a member.
+        (
+            _set_service(pageSize="pageLimit"),
+            "example#ListThings names pageSize 'pageLimit'",
+        ),
+        (_set_scan(pageSize="size"), "example#ScanItems names pageSize 'size'"),
+        # An inherited pageSize, then an operation's own, that isn't an integer.
+        (
+            _string_count_page_size,
+            "example#Count has pageSize 'maxResults' targeting a string",
+        ),
+        (
+            _set_scan(pageSize="from"),
+            "example#ScanItems has pageSize 'from' targeting a map",
+        ),
+    ],
+)
+def test_unresolvable_pagination_fails_naming_the_operation(
+    change: Callable[[dict[str, Any]], None], message: str
+) -> None:
+    shapes = _scan_shapes()
+    change(shapes)
+    generator = ClientGenerator(_plan(shapes))
+    with pytest.raises(CodegenError, match=message):
+        generator.generate(generator.context())
+
+
+async def test_async_paginator_is_returned_without_awaiting(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _generate(tmp_path, "greeter_pages_aio", _paginated_shapes())
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module("greeter_pages_aio")
+    transport = _AsyncPagedTransport(
+        b'{"things": ["a"], "nextToken": "t1"}',
+        b'{"nextToken": "t2"}',
+        b'{"things": ["b"]}',
+    )
+    client = package.AsyncGreeter(_config(package, transport, aio=True))
+    things = client.paginate_list_things(filter="f")
+    assert not transport.requests
+    assert [thing async for thing in things.items()] == ["a", "b"]
+    assert [
+        json.loads(_body(request)).get("nextToken") for request in transport.requests
+    ] == [
+        None,
+        "t1",
+        "t2",
+    ]
 
 
 def _add_endpoint_rules(shapes: dict[str, Any]) -> None:

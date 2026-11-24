@@ -8,23 +8,42 @@ import static software.amazon.smithy.python.codegen.SymbolProperties.DESERIALIZE
 import static software.amazon.smithy.python.codegen.SymbolProperties.OPERATION_METHOD;
 
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.EventStreamIndex;
 import software.amazon.smithy.model.knowledge.EventStreamInfo;
+import software.amazon.smithy.model.knowledge.PaginatedIndex;
+import software.amazon.smithy.model.knowledge.PaginationInfo;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
+import software.amazon.smithy.model.shapes.ListShape;
+import software.amazon.smithy.model.shapes.MapShape;
+import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.shapes.ShapeType;
+import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
+import software.amazon.smithy.model.traits.PaginatedTrait;
+import software.amazon.smithy.model.traits.SparseTrait;
+import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
@@ -37,6 +56,15 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  */
 @SmithyInternalApi
 final class ClientGenerator implements Runnable {
+
+    // The types a paginated trait's settings may target, as Smithy validates them.
+    private static final Set<ShapeType> TOKEN_TARGETS = EnumSet.of(ShapeType.STRING, ShapeType.MAP);
+    private static final Set<ShapeType> PAGE_SIZE_TARGETS = EnumSet.of(
+            ShapeType.BYTE,
+            ShapeType.SHORT,
+            ShapeType.INTEGER,
+            ShapeType.LONG);
+    private static final Set<ShapeType> ITEMS_TARGETS = EnumSet.of(ShapeType.LIST, ShapeType.MAP);
 
     private final GenerationContext context;
     private final Model model;
@@ -158,7 +186,10 @@ final class ClientGenerator implements Runnable {
 
                     var topDownIndex = TopDownIndex.of(model);
                     var eventStreamIndex = EventStreamIndex.of(model);
-                    for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
+                    var paginatedIndex = PaginatedIndex.of(model);
+                    var operations = topDownIndex.getContainedOperations(service);
+                    var paginatorNames = paginatorNames(operations, eventStreamIndex);
+                    for (OperationShape operation : operations) {
                         if (eventStreamIndex.getInputInfo(operation).isPresent()
                                 || eventStreamIndex.getOutputInfo(operation).isPresent()) {
                             // Sync clients don't support event streams.
@@ -167,6 +198,14 @@ final class ClientGenerator implements Runnable {
                             }
                         } else {
                             generateOperation(writer, operation, sync);
+                            var paginatorName = paginatorNames.get(operation.getId());
+                            if (paginatorName != null) {
+                                generatePaginator(writer,
+                                        operation,
+                                        paginatorName,
+                                        paginationInfo(paginatedIndex, operation),
+                                        sync);
+                            }
                         }
                     }
 
@@ -221,6 +260,8 @@ final class ClientGenerator implements Runnable {
         writeOverloadedOperation(writer,
                 input,
                 sync,
+                true,
+                false,
                 outputSymbol.getName(),
                 w -> writeOperationDocs(w, operation, output),
                 """
@@ -233,6 +274,305 @@ final class ClientGenerator implements Runnable {
                             plugins,
                         )""",
                 writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
+    }
+
+    /**
+     * Names the paginator of each operation that gets one.
+     *
+     * <p>A paginator is named like its operation's method with a {@code paginate_}
+     * prefix. Operation methods keep their names. A paginator whose name is an
+     * operation method's or an inherited client method's gets trailing underscores
+     * until its name is also free of every other paginator's preferred name, so no
+     * name depends on the order of operations. Paginators are named in shape ID order.
+     *
+     * <p>Event stream operations get no paginator, nor do operations with a
+     * streaming input member, since that input can't be sent again for each page.
+     */
+    private Map<ShapeId, String> paginatorNames(
+            Collection<OperationShape> operations,
+            EventStreamIndex eventStreamIndex
+    ) {
+        var methods = new HashSet<>(PythonSymbolProvider.CLIENT_RESERVED_METHOD_NAMES);
+        var preferred = new TreeMap<ShapeId, String>();
+        for (OperationShape operation : operations) {
+            var method = symbolProvider.toSymbol(operation).expectProperty(OPERATION_METHOD).getName();
+            methods.add(method);
+            if (operation.hasTrait(PaginatedTrait.class)
+                    && eventStreamIndex.getInputInfo(operation).isEmpty()
+                    && eventStreamIndex.getOutputInfo(operation).isEmpty()
+                    && !hasStreamingInput(operation)) {
+                preferred.put(operation.getId(), "paginate_" + method);
+            }
+        }
+        var taken = new HashSet<>(methods);
+        taken.addAll(preferred.values());
+        var names = new LinkedHashMap<ShapeId, String>();
+        for (var entry : preferred.entrySet()) {
+            var name = entry.getValue();
+            if (methods.contains(name)) {
+                while (taken.contains(name)) {
+                    name += "_";
+                }
+                taken.add(name);
+            }
+            names.put(entry.getKey(), name);
+        }
+        return names;
+    }
+
+    private boolean hasStreamingInput(OperationShape operation) {
+        return model.expectShape(operation.getInputShape())
+                .members()
+                .stream()
+                .anyMatch(member -> model.expectShape(member.getTarget()).hasTrait(StreamingTrait.class));
+    }
+
+    /**
+     * Resolves the operation's effective pagination settings: its own trait, with
+     * the service's filling each setting it omits.
+     *
+     * <p>Each token must be configured, and each configured setting must resolve to
+     * a member of a supported type, as Smithy's own validation requires: tokens
+     * target a string or map, the page size an integral number, and the items a list
+     * or map. Both tokens must target the same type, since each output token is sent
+     * as the next input token. An omitted page size or items is fine. Generation fails otherwise,
+     * since a model built without validation could make a setting silently vanish.
+     */
+    private PaginationInfo paginationInfo(PaginatedIndex index, OperationShape operation) {
+        var own = operation.expectTrait(PaginatedTrait.class);
+        var trait = service.getTrait(PaginatedTrait.class).map(own::merge).orElse(own);
+        var input = model.expectShape(operation.getInputShape(), StructureShape.class);
+        var output = model.expectShape(operation.getOutputShape(), StructureShape.class);
+        Function<String, List<MemberShape>> inputMember = name -> input.getMember(name)
+                .map(List::of)
+                .orElse(List.of());
+        Function<String, List<MemberShape>> outputPath = path -> PaginatedTrait.resolveFullPath(path, model, output);
+        var inputToken =
+                checkPaginated(operation, "inputToken", trait.getInputToken(), true, inputMember, TOKEN_TARGETS);
+        var outputToken = checkPaginated(operation,
+                "outputToken",
+                trait.getOutputToken(),
+                true,
+                outputPath,
+                TOKEN_TARGETS);
+        // Each output token is sent as the next input token, unconverted.
+        if (inputToken != outputToken) {
+            throw new CodegenException(String.format(
+                    "The paginated inputToken of %s, \"%s\", targets a %s, but its outputToken, \"%s\", targets a %s.",
+                    operation.getId(),
+                    trait.getInputToken().get(),
+                    inputToken,
+                    trait.getOutputToken().get(),
+                    outputToken));
+        }
+        checkPaginated(operation, "pageSize", trait.getPageSize(), false, inputMember, PAGE_SIZE_TARGETS);
+        checkPaginated(operation, "items", trait.getItems(), false, outputPath, ITEMS_TARGETS);
+        return index.getPaginationInfo(service, operation)
+                .orElseThrow(() -> new CodegenException(String.format(
+                        "The paginated trait of %s does not resolve to members of its input and output.",
+                        operation.getId())));
+    }
+
+    // Fails unless a setting is omitted and optional, or resolves to members whose
+    // last targets one of the given types. Returns that type, or null if omitted.
+    private ShapeType checkPaginated(
+            OperationShape operation,
+            String setting,
+            Optional<String> path,
+            boolean required,
+            Function<String, List<MemberShape>> resolve,
+            Set<ShapeType> targets
+    ) {
+        if (path.isEmpty()) {
+            if (required) {
+                throw new CodegenException(String.format(
+                        "The paginated trait of %s configures no %s, on the operation or its service.",
+                        operation.getId(),
+                        setting));
+            }
+            return null;
+        }
+        var members = resolve.apply(path.get());
+        if (members.isEmpty()) {
+            throw new CodegenException(String.format(
+                    "The paginated %s of %s, \"%s\", does not resolve to a member.",
+                    setting,
+                    operation.getId(),
+                    path.get()));
+        }
+        var target = model.expectShape(members.get(members.size() - 1).getTarget());
+        if (!targets.contains(target.getType())) {
+            throw new CodegenException(String.format(
+                    "The paginated %s of %s, \"%s\", targets a %s, but must target one of %s.",
+                    setting,
+                    operation.getId(),
+                    path.get(),
+                    target.getType(),
+                    targets));
+        }
+        return target.getType();
+    }
+
+    /**
+     * Generates the method that iterates a paginated operation's pages.
+     *
+     * <p>It takes the same request as the operation's method, and checks and builds it
+     * at once, but sends nothing: the runtime paginator calls the operation's method
+     * for each page as it is iterated, so each call runs the operation's default
+     * plugins and the caller's. It also takes the keyword-only SDK option
+     * {@code stop_on_same_token}, which it hands to the runtime paginator, never to
+     * the request. The async client's method is not a coroutine, since it returns an
+     * async iterator.
+     */
+    private void generatePaginator(
+            PythonWriter writer,
+            OperationShape operation,
+            String paginatorName,
+            PaginationInfo info,
+            boolean sync
+    ) {
+        var operationSymbol = symbolProvider.toSymbol(operation);
+        var methodName = operationSymbol.expectProperty(OPERATION_METHOD).getName();
+        var input = model.expectShape(operation.getInputShape());
+        var outputName = symbolProvider.toSymbol(info.getOutput()).getName();
+        var page = annotation(writer, symbolProvider.toSymbol(info.getOutput()));
+        var itemsPath = info.getItemsMemberPath();
+
+        // Page and item types are spelled through the models module, so they import
+        // no model, and the runtime type is imported through $T, so a name the
+        // client already uses is aliased.
+        Symbol runtime;
+        String returns;
+        if (itemsPath.isEmpty()) {
+            runtime = RuntimeTypes.ASYNC_PAGINATOR;
+            returns = writer.format("$T[$L]", runtime, page);
+        } else {
+            runtime = RuntimeTypes.ASYNC_ITEM_PAGINATOR;
+            var items = model.expectShape(itemsPath.get(itemsPath.size() - 1).getTarget());
+            returns = writer.format("$T[$L, $L]", runtime, page, itemType(writer, items));
+        }
+
+        writer.putContext("operationName", paginatorName);
+        writer.putContext("operation", "_models." + operationSymbol.getName());
+        writer.putContext("plugin", CodegenUtils.getPluginSymbol(context.settings()));
+        writeOverloadedOperation(writer,
+                input,
+                sync,
+                false,
+                true,
+                returns,
+                w -> writePaginatorDocs(w, operation, methodName, outputName, !itemsPath.isEmpty()),
+                """
+                        return $T(
+                            self._build_input(
+                                self._select_input(${operation:L}, args, kwargs),
+                                ${operation:L},
+                            ),
+                            self.$L,
+                            plugins,
+                            ${C|}
+                        )""",
+                runtime,
+                methodName,
+                writer.consumer(w -> {
+                    w.write("input_token=$L,", quote(symbolProvider.toMemberName(info.getInputTokenMember())));
+                    w.write("output_token=$L,", pythonPath(info.getOutputTokenMemberPath()));
+                    if (!itemsPath.isEmpty()) {
+                        w.write("items=$L,", pythonPath(itemsPath));
+                    }
+                    w.write("stop_on_same_token=stop_on_same_token,");
+                }));
+    }
+
+    // A tuple of the members' Python names.
+    private String pythonPath(List<MemberShape> path) {
+        var names = path.stream()
+                .map(member -> quote(symbolProvider.toMemberName(member)))
+                .collect(Collectors.joining(", "));
+        return path.size() == 1 ? "(" + names + ",)" : "(" + names + ")";
+    }
+
+    private static String quote(String name) {
+        return '"' + name + '"';
+    }
+
+    /**
+     * Spells the type of the items a paginator yields from a page's collection: a
+     * list's element, or a map's key and value as a tuple. A sparse collection's
+     * items may be None.
+     */
+    private String itemType(PythonWriter writer, Shape collection) {
+        if (collection instanceof MapShape map) {
+            return "tuple[str, " + elementType(writer, map.getValue(), map.hasTrait(SparseTrait.class)) + "]";
+        }
+        if (collection instanceof ListShape list) {
+            return elementType(writer, list.getMember(), list.hasTrait(SparseTrait.class));
+        }
+        throw new CodegenException("Paginated items must be a list or a map, but " + collection.getId()
+                + " is a " + collection.getType());
+    }
+
+    private String elementType(PythonWriter writer, MemberShape member, boolean sparse) {
+        var type = valueType(writer, model.expectShape(member.getTarget()));
+        return sparse ? type + " | None" : type;
+    }
+
+    // Spelled as the models spell it, but with nested models qualified through the
+    // models module, which the symbols of collections don't do. Other types, such as
+    // Decimal or Document, are written as symbols so that the writer aliases one
+    // named like the client.
+    private String valueType(PythonWriter writer, Shape shape) {
+        if (shape instanceof MapShape map) {
+            return "dict[str, " + elementType(writer, map.getValue(), map.hasTrait(SparseTrait.class)) + "]";
+        }
+        if (shape instanceof ListShape list) {
+            return "list[" + elementType(writer, list.getMember(), list.hasTrait(SparseTrait.class)) + "]";
+        }
+        var symbol = symbolProvider.toSymbol(shape);
+        if (writer.getSymbolMapper().apply(symbol).getNamespace().equals(modelsNamespace)) {
+            return annotation(writer, symbol);
+        }
+        return writer.format("$T", symbol);
+    }
+
+    private void writePaginatorDocs(
+            PythonWriter writer,
+            OperationShape operation,
+            String methodName,
+            String outputName,
+            boolean hasItems
+    ) {
+        writer.writeMultiLineDocs(() -> {
+            writer.write("""
+                    Iterates the pages of the $L operation.
+
+                    Takes the same request as `$L`, and checks it now, but sends nothing \
+                    until iteration starts. Each page is the output of one call. The \
+                    request's token, if any, starts the first page. Pagination ends at a \
+                    page with no token or an empty one. By default, it also ends, normally, \
+                    at a page whose token equals the one its request sent, including the \
+                    starting token.$L
+                    """,
+                    operation.getId().getName(),
+                    methodName,
+                    hasItems ? " `items()` iterates the items of each page instead." : "");
+            writer.write("Args:");
+            writer.write("""
+                        plugins:
+                            A list of callables that modify the configuration dynamically.
+                            They apply to each call of this iteration only, and will not
+                            affect any other operation invocations.
+                        stop_on_same_token:
+                            Whether to end pagination at a page whose token equals, by
+                            value, the one its request sent. Set to False to keep requesting
+                            pages when tokens repeat, such as when polling for new results.
+                            A page with no token, or an empty one, still ends pagination.
+                            This option is not sent to the service.
+
+                    Returns:
+                        An iterator of `$L` pages.
+                    """, outputName);
+        });
     }
 
     /**
@@ -254,6 +594,11 @@ final class ClientGenerator implements Runnable {
      * @param writer The writer to write the method with.
      * @param input The operation's input shape.
      * @param sync Whether the method is for the sync client.
+     * @param coroutine Whether the async client's method is a coroutine. A sync
+     *     client's method never is.
+     * @param paginator Whether the method is a paginator, which also takes the
+     *     SDK's keyword-only {@code stop_on_same_token} option in every definition.
+     *     The option is not a member of the request, so it is never sent.
      * @param returns The method's return type, as written.
      * @param docs Writes the method's documentation.
      * @param body The async code template of the implementation's body.
@@ -263,22 +608,27 @@ final class ClientGenerator implements Runnable {
             PythonWriter writer,
             Shape input,
             boolean sync,
+            boolean coroutine,
+            boolean paginator,
             String returns,
             Consumer<PythonWriter> docs,
             String body,
             Object... bodyArgs
     ) {
         UnaryOperator<String> code = sync ? SyncVariant::toSyncCode : UnaryOperator.identity();
+        UnaryOperator<String> signature = coroutine ? code : SyncVariant::toSyncCode;
         // Aliased because a method defined in the class body shadows a module name
         // for the rest of the class, and an operation may be named Overload.
         writer.addStdlibImport("typing", "overload", "_overload");
         writer.addStdlibImport("typing", "Unpack", "_Unpack");
+        // Set on every call, since the writer's context outlives this method.
+        writer.putContext("paginator", paginator);
         writer.putContext("returns", returns);
         writer.putContext("request", requestType(writer, input, sync));
         writer.putContext("keywords", keywordsType(writer, input, sync));
         writer.putContext("docs", writer.consumer(docs));
         writer.putContext("body", writer.consumer(w -> w.write(code.apply(body), bodyArgs)));
-        writer.write(code.apply("""
+        writer.write(signature.apply("""
                 @_overload
                 async def ${operationName:L}(
                     self,
@@ -286,6 +636,9 @@ final class ClientGenerator implements Runnable {
                     /,
                     *,
                     plugins: list[${plugin:T}] | None = None,
+                    ${?paginator}
+                    stop_on_same_token: bool = True,
+                    ${/paginator}
                 ) -> ${returns:L}: ...
 
                 @_overload
@@ -294,6 +647,9 @@ final class ClientGenerator implements Runnable {
                     /,
                     *,
                     plugins: list[${plugin:T}] | None = None,
+                    ${?paginator}
+                    stop_on_same_token: bool = True,
+                    ${/paginator}
                     **kwargs: _Unpack[${keywords:L}],
                 ) -> ${returns:L}:
                     ${docs:C|}
@@ -303,6 +659,9 @@ final class ClientGenerator implements Runnable {
                     /,
                     *args: object,
                     plugins: list[${plugin:T}] | None = None,
+                    ${?paginator}
+                    stop_on_same_token: bool = True,
+                    ${/paginator}
                     **kwargs: object,
                 ) -> ${returns:L}:
                     ${body:C|}
@@ -501,6 +860,8 @@ final class ClientGenerator implements Runnable {
         // Sync clients don't support event streams, so this is only ever async.
         writeOverloadedOperation(writer,
                 input,
+                false,
+                true,
                 false,
                 returns,
                 w -> writeOperationDocs(w, operation, output, outputDocs),

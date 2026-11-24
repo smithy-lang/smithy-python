@@ -23,20 +23,27 @@ _sH = "smithy.api#eventHeader"
 _p = "payload"
 _sP = "smithy.api#eventPayload"
 _HE = "HeartbeatEvent"
+_ILt = "ItemList"
+_LII = "ListItemsInput"
+_s = "smithy.api#input"
+_nT = "nextToken"
+_pS = "pageSize"
+_LIO = "ListItemsOutput"
+_sm = "smithy.api#output"
+_it = "items"
+_LI = "ListItems"
 _LE = "LogEvent"
 _l = "level"
 _ME = "MetricEvent"
 _va = "value"
 _PES = "PublishEventStream"
-_s = "smithy.api#streaming"
+_smi = "smithy.api#streaming"
 _lo = "log"
 _met = "metric"
 _PEI = "PublishEventsInput"
-_sm = "smithy.api#input"
 _c = "channel"
 _e = "events"
 _PEO = "PublishEventsOutput"
-_smi = "smithy.api#output"
 _eC = "eventCount"
 _PE = "PublishEvents"
 _STEI = "SubscribeToEventsInput"
@@ -88,6 +95,36 @@ GAMMA: StaticSchema = (
 
 HEARTBEAT_EVENT: StaticSchema = (18, n0, _HE, 0, (_t,), ((4, 0),))
 
+ITEM_LIST: StaticSchema = (16, n0, _ILt, 0, (_m,), ((3, 0),))
+
+LIST_ITEMS_INPUT: StaticSchema = (
+    18,
+    n0,
+    _LII,
+    {_s: None},
+    (_nT, _pS),
+    ((3, 0), (7, 0)),
+)
+
+LIST_ITEMS_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _LIO,
+    {_sm: None},
+    (_it, _nT),
+    ((ITEM_LIST, 0), (3, 0)),
+)
+
+LIST_ITEMS: StaticOperationSchema = (
+    23,
+    n0,
+    _LI,
+    0,
+    LIST_ITEMS_INPUT,
+    LIST_ITEMS_OUTPUT,
+    (),
+)
+
 LOG_EVENT: StaticSchema = (18, n0, _LE, 0, (_l, _me), ((3, 0), (3, 0)))
 
 METRIC_EVENT: StaticSchema = (18, n0, _ME, 0, (_n, _va), ((3, 0), (10, 0)))
@@ -96,7 +133,7 @@ PUBLISH_EVENT_STREAM: StaticSchema = (
     19,
     n0,
     _PES,
-    {_s: None},
+    {_smi: None},
     (_lo, _met),
     ((LOG_EVENT, 0), (METRIC_EVENT, 0)),
 )
@@ -105,7 +142,7 @@ PUBLISH_EVENTS_INPUT: StaticSchema = (
     18,
     n0,
     _PEI,
-    {_sm: None},
+    {_s: None},
     (_c, _e),
     ((3, 0), (PUBLISH_EVENT_STREAM, 0)),
 )
@@ -114,7 +151,7 @@ PUBLISH_EVENTS_OUTPUT: StaticSchema = (
     18,
     n0,
     _PEO,
-    {_smi: None},
+    {_sm: None},
     (_eC, _me),
     ((7, 0), (3, 0)),
 )
@@ -133,7 +170,7 @@ SUBSCRIBE_TO_EVENTS_INPUT: StaticSchema = (
     18,
     n0,
     _STEI,
-    {_sm: None},
+    {_s: None},
     (_c, _mE),
     ((3, 0), (7, 0)),
 )
@@ -144,7 +181,7 @@ SUBSCRIBE_EVENT_STREAM: StaticSchema = (
     19,
     n0,
     _SES,
-    {_s: None},
+    {_smi: None},
     (_no, _h),
     ((NOTIFICATION_EVENT, 0), (HEARTBEAT_EVENT, 0)),
 )
@@ -153,7 +190,7 @@ SUBSCRIBE_TO_EVENTS_OUTPUT: StaticSchema = (
     18,
     n0,
     _STEO,
-    {_smi: None},
+    {_sm: None},
     (_sI, _e),
     ((3, 0), (SUBSCRIBE_EVENT_STREAM, 0)),
 )
@@ -183,7 +220,7 @@ TRADE_EVENTS: StaticSchema = (
     19,
     n0,
     _TEr,
-    {_s: None},
+    {_smi: None},
     (_a, _b, _g, _d, _th),
     ((ALPHA, 0), (-1, 0), (GAMMA, 0), (DIFFERENT_SHAPE_NAME, 0), (THROTTLING_EVENT, 0)),
 )
@@ -192,7 +229,7 @@ TRADE_EVENT_STREAM_INPUT: StaticSchema = (
     18,
     n0,
     _TESI,
-    {_sm: None},
+    {_s: None},
     (_sIe, _e),
     ((3, 0), (TRADE_EVENTS, 0)),
 )
@@ -201,7 +238,7 @@ TRADE_EVENT_STREAM_OUTPUT: StaticSchema = (
     18,
     n0,
     _TESO,
-    {_smi: None},
+    {_sm: None},
     (_gr, _e),
     ((3, 0), (TRADE_EVENTS, 0)),
 )

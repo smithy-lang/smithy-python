@@ -246,12 +246,27 @@ class SymbolProvider:
         container = self._shape(member.container)
         if container.type not in DECLARATION_TYPES or self._model.is_prelude(container):
             raise ModelError(f"No generated member name for {member.id}")
-        return _name(
-            member.name,
-            constant=container.type in _ENUMS,
-            preserve_underscores=True,
-            reserved=self._reserved_member_names.get(container.id, ()),
-        )
+        reserved = self._reserved_member_names.get(container.id, frozenset())
+        if container.type in _ENUMS:
+            return _name(
+                member.name, constant=True, preserve_underscores=True, reserved=reserved
+            )
+        # Escaping for a client method's own parameter skips past the siblings'
+        # names, as smithy_core._model_naming.escape_input_member_names does.
+        # Every other reserved name gets one underscore, and may still collide.
+        parameters = reserved & _OPERATION_PARAMETER_NAMES
+        other = reserved - parameters
+        name = _name(member.name, preserve_underscores=True, reserved=other)
+        if name not in parameters:
+            return name
+        siblings = {
+            _name(sibling.name, preserve_underscores=True, reserved=other)
+            for sibling in container.members.values()
+        }
+        name += "_"
+        while name in siblings:
+            name += "_"
+        return name
 
     @staticmethod
     def _check_collision(
@@ -432,6 +447,17 @@ _KEYWORDS = frozenset(
     "not or pass raise return try while with yield".split()
 )
 _ENUMS = frozenset({ShapeType.ENUM, ShapeType.INT_ENUM})
+# The names generated client methods use besides their input members: the
+# parameters they declare, and the models module alias their bodies reference.
+# ``stop_on_same_token`` is declared only by paginator methods, but is reserved on
+# every operation input so that an input's names don't depend on its pagination.
+# Where a caller reserves one, it is escaped past its siblings, as the runtime
+# escapes it, rather than colliding like other reserved names.
+# CAUTION: mirrors smithy_core._model_naming._RESERVED_INPUT_MEMBERS and
+# PythonSymbolProvider.OPERATION_PARAMETER_NAMES.
+_OPERATION_PARAMETER_NAMES = frozenset(
+    {"self", "plugins", "_models", "stop_on_same_token"}
+)
 _RESERVED_DECLARATIONS = frozenset({"ServiceError"})
 _UNIT = ShapeId("smithy.api", "Unit")
 _DISTRIBUTION_NAME = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?")

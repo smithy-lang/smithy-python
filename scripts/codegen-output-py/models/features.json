@@ -28,6 +28,9 @@
                     "target": "example.features#GetThing"
                 },
                 {
+                    "target": "example.features#ListNotes"
+                },
+                {
                     "target": "example.features#Ping"
                 },
                 {
@@ -730,6 +733,64 @@
             },
             "traits": {
                 "smithy.api#output": {}
+            }
+        },
+        "example.features#ListNotes": {
+            "type": "operation",
+            "input": {
+                "target": "example.features#ListNotesInput"
+            },
+            "output": {
+                "target": "example.features#ListNotesOutput"
+            },
+            "traits": {
+                "smithy.api#auth": [],
+                "smithy.api#documentation": "Lists notes a page at a time. Needs no auth.",
+                "smithy.api#paginated": {
+                    "inputToken": "nextToken",
+                    "outputToken": "nextToken",
+                    "items": "items",
+                    "pageSize": "pageSize"
+                },
+                "smithy.rules#staticContextParams": {
+                    "Kind": {
+                        "value": "list"
+                    }
+                }
+            }
+        },
+        "example.features#ListNotesInput": {
+            "type": "structure",
+            "members": {
+                "nextToken": {
+                    "target": "smithy.api#String"
+                },
+                "pageSize": {
+                    "target": "smithy.api#Integer"
+                }
+            },
+            "traits": {
+                "smithy.api#input": {}
+            }
+        },
+        "example.features#ListNotesOutput": {
+            "type": "structure",
+            "members": {
+                "items": {
+                    "target": "example.features#NoteList"
+                },
+                "nextToken": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#output": {}
+            }
+        },
+        "example.features#NoteList": {
+            "type": "list",
+            "member": {
+                "target": "smithy.api#String"
             }
         },
         "example.features#Ping": {

@@ -9,7 +9,7 @@ from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, replace
 from types import MappingProxyType
 
-from . import _client_emitter
+from . import _client_emitter, _pagination
 from . import dependencies as _dependencies
 from . import files as _files
 from . import generation as _generation
@@ -68,9 +68,12 @@ class ClientGenerator:
         )
         _client_emitter.check_supported(plan, integrations)
         endpoints = _client_emitter.plan_endpoints(plan, integrations)
+        paginators = _pagination.plan_paginators(plan)
         _schemas.SchemaGenerator().generate(context)
         _models.ModelGenerator().generate(context)
-        _client_emitter.write_client(context, plan, protocol, endpoints, integrations)
+        _client_emitter.write_client(
+            context, plan, protocol, endpoints, paginators, integrations
+        )
 
     def context(
         self,

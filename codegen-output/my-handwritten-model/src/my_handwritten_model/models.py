@@ -25,6 +25,8 @@ _registry = ModelRegistry(
         "Gamma": "GAMMA",
         "GammaPayload": "GAMMA_PAYLOAD",
         "HeartbeatEvent": "HEARTBEAT_EVENT",
+        "ListItemsInput": "LIST_ITEMS_INPUT",
+        "ListItemsOutput": "LIST_ITEMS_OUTPUT",
         "LogEvent": "LOG_EVENT",
         "MetricEvent": "METRIC_EVENT",
         "NotificationEvent": "NOTIFICATION_EVENT",
@@ -59,6 +61,8 @@ _registry = ModelRegistry(
             "Gamma",
             "GammaPayload",
             "HeartbeatEvent",
+            "ListItemsInput",
+            "ListItemsOutput",
             "LogEvent",
             "MetricEvent",
             "NotificationEvent",
@@ -79,7 +83,12 @@ _registry = ModelRegistry(
 )
 
 _operation_data = {}
-_operation_names = ("PUBLISH_EVENTS", "SUBSCRIBE_TO_EVENTS", "TRADE_EVENT_STREAM")
+_operation_names = (
+    "LIST_ITEMS",
+    "PUBLISH_EVENTS",
+    "SUBSCRIBE_TO_EVENTS",
+    "TRADE_EVENT_STREAM",
+)
 for _operation_name in _operation_names:
     globals().pop(_operation_name, None)
 
@@ -103,6 +112,8 @@ def __getattr__(name: str):
 def __dir__():
     return sorted({*globals(), *_operation_names})
 
+
+_operation_data["LIST_ITEMS"] = ("LIST_ITEMS", (), ("smithy.api#noAuth",))
 
 _operation_data["PUBLISH_EVENTS"] = ("PUBLISH_EVENTS", (), ("smithy.api#noAuth",))
 

@@ -15,7 +15,25 @@ service MyHandwrittenModel {
         TradeEventStream
         PublishEvents
         SubscribeToEvents
+        ListItems
     ]
+}
+
+/// Lists items a page at a time.
+@paginated(inputToken: "nextToken", outputToken: "nextToken", items: "items", pageSize: "pageSize")
+operation ListItems {
+    input := {
+        nextToken: String
+        pageSize: Integer
+    }
+    output := {
+        items: ItemList
+        nextToken: String
+    }
+}
+
+list ItemList {
+    member: String
 }
 
 /// Bidirectional (duplex) stream. The non-stream members (sessionId, greeting) are

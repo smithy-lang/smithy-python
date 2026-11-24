@@ -813,6 +813,41 @@ def test_reserved_member_names_still_collide() -> None:
     assert "'serialize_'" in str(error.value)
 
 
+def test_reserved_client_parameter_names_skip_past_siblings() -> None:
+    # Unlike other reserved names, a client method's own parameter names are
+    # escaped past their siblings, as the runtime escapes operation inputs.
+    names = (
+        "plugins",
+        "plugins_",
+        "stopOnSameToken",
+        "stop_on_same_token_",
+        "stop_on_same_token__",
+    )
+    model = model_with(
+        {
+            "example#Request": {
+                "type": "structure",
+                "members": {name: {"target": "smithy.api#String"} for name in names},
+            }
+        }
+    )
+    default = SymbolProvider(model, select_shapes(model), package="pkg")
+    symbols = SymbolProvider(
+        model,
+        select_shapes(model),
+        package="pkg",
+        reserved_member_names=lambda _: {"plugins", "stop_on_same_token"},
+    )
+    assert default.member_name("example#Request$plugins") == "plugins"
+    assert [symbols.member_name(f"example#Request${name}") for name in names] == [
+        "plugins__",
+        "plugins_",
+        "stop_on_same_token___",
+        "stop_on_same_token_",
+        "stop_on_same_token__",
+    ]
+
+
 def test_enum_sunder_escaping_still_detects_collisions() -> None:
     from smithy_python.model import ModelError
 

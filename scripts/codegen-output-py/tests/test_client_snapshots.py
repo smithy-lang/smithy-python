@@ -76,16 +76,20 @@ def test_clients_have_a_method_per_operation_like_java() -> None:
 class _Transport:
     TIMEOUT_EXCEPTIONS = ()
 
-    def __init__(self, body: bytes) -> None:
-        self.body = body
+    def __init__(self, *bodies: bytes) -> None:
+        self.bodies = bodies
         self.requests: list[HTTPRequest] = []
 
     def __deepcopy__(self, memo: dict[int, Any]) -> _Transport:
         # Clients copy their config, transport included. Keep one recorder.
         return self
 
-    def _respond(self, request: HTTPRequest, body: Any) -> HTTPResponse:
+    def _record(self, request: HTTPRequest) -> bytes:
+        # Each request gets the next body, and the last body repeats.
         self.requests.append(request)
+        return self.bodies[min(len(self.requests), len(self.bodies)) - 1]
+
+    def _respond(self, body: Any) -> HTTPResponse:
         headers = [
             ("Content-Type", "application/cbor"),
             ("smithy-protocol", "rpc-v2-cbor"),
@@ -98,7 +102,7 @@ class _Transport:
         *,
         request_config: HTTPRequestConfiguration | None = None,
     ) -> HTTPResponse:
-        return self._respond(request, self.body)
+        return self._respond(self._record(request))
 
 
 class _AsyncTransport(_Transport):
@@ -108,7 +112,16 @@ class _AsyncTransport(_Transport):
         *,
         request_config: HTTPRequestConfiguration | None = None,
     ) -> HTTPResponse:
-        return self._respond(request, AsyncBytesReader(self.body))
+        return self._respond(AsyncBytesReader(self._record(request)))
+
+
+def _body(request: HTTPRequest) -> Any:
+    body: Any = request.body
+    if not isinstance(body, bytes):
+        body = body.read()
+        if asyncio.iscoroutine(body):
+            body = asyncio.run(body)
+    return loads(body)
 
 
 @pytest.mark.parametrize("aio", [False, True])
@@ -131,12 +144,7 @@ def test_snapshot_client_round_trips_through_the_runtime(
     assert request.destination.path == (
         "/service/RpcV2Protocol/operation/SimpleScalarProperties"
     )
-    body: Any = request.body
-    if not isinstance(body, bytes):
-        body = body.read()
-        if asyncio.iscoroutine(body):
-            body = asyncio.run(body)
-    assert loads(body) == {"stringValue": "in", "integerValue": 3}
+    assert _body(request) == {"stringValue": "in", "integerValue": 3}
 
 
 @pytest.fixture
@@ -193,9 +201,11 @@ def features() -> Iterator[ModuleType]:
                 del sys.modules[module]
 
 
-def _client(package: ModuleType, aio: bool, **overrides: Any) -> Any:
-    # CBOR {"id": "n1"}.
-    transport = (_AsyncTransport if aio else _Transport)(b"\xa1\x62id\x62n1")
+def _client(package: ModuleType, aio: bool, *bodies: bytes, **overrides: Any) -> Any:
+    # CBOR {"id": "n1"} by default.
+    transport = (_AsyncTransport if aio else _Transport)(
+        *(bodies or (b"\xa1\x62id\x62n1",))
+    )
     config_class = package.AsyncFieldNotesConfig if aio else package.FieldNotesConfig
     config = config_class.resolve(
         transport=transport,
@@ -312,3 +322,82 @@ def test_sigv4_clients_default_to_the_credentials_chain(
     (request,) = transport.requests
     authorization = request.fields["Authorization"].as_string()
     assert "Credential=AKIDFROMENV/" in authorization
+
+
+@pytest.fixture(scope="module")
+def handwritten() -> Iterator[ModuleType]:
+    source = _ROOT / "codegen-output/my-handwritten-model/src"
+    name = "my_handwritten_model"
+
+    def owned(module: str) -> bool:
+        return module == name or module.startswith(name + ".")
+
+    # Another copy may already be imported, such as an installed package.
+    saved = {
+        module: sys.modules.pop(module)
+        for module in tuple(sys.modules)
+        if owned(module)
+    }
+    sys.path.insert(0, str(source))
+    try:
+        yield importlib.import_module(name)
+    finally:
+        sys.path.remove(str(source))
+        for module in tuple(sys.modules):
+            if owned(module):
+                del sys.modules[module]
+        sys.modules.update(saved)
+
+
+# CBOR {"items": ["a", "b"], "nextToken": "t1"}, then {"items": ["c"]}.
+_PAGES = (
+    b"\xa2\x65items\x82\x61a\x61b\x69nextToken\x62t1",
+    b"\xa1\x65items\x81\x61c",
+)
+
+
+@pytest.mark.parametrize("items", [False, True], ids=["pages", "items"])
+@pytest.mark.parametrize("aio", [False, True])
+@pytest.mark.parametrize("generator", ["java", "native"])
+def test_snapshot_paginators_follow_tokens_through_the_runtime(
+    request: pytest.FixtureRequest,
+    generator: str,
+    aio: bool,
+    items: bool,
+    aws_env: pytest.MonkeyPatch,
+) -> None:
+    if generator == "java":
+        package = request.getfixturevalue("handwritten")
+        transport = (_AsyncTransport if aio else _Transport)(*_PAGES)
+        config = (package.AsyncConfig if aio else package.Config)(
+            endpoint_uri=_ENDPOINT,
+            transport=transport,
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+        )
+        client_class = (
+            package.AsyncMyHandwrittenModel if aio else package.MyHandwrittenModel
+        )
+        paginator = client_class(config).paginate_list_items(page_size=2)
+    else:
+        features = request.getfixturevalue("features")
+        client, transport = _client(features, aio, *_PAGES, endpoint_uri=_ENDPOINT)
+        paginator = client.paginate_list_notes(page_size=2)
+    assert not transport.requests
+
+    source = paginator.items() if items else paginator
+
+    async def collect() -> list[Any]:
+        return [value async for value in source]
+
+    values = asyncio.run(collect()) if aio else list(source)
+    if items:
+        assert values == ["a", "b", "c"]
+    else:
+        assert [(page.items, page.next_token) for page in values] == [
+            (["a", "b"], "t1"),
+            (["c"], None),
+        ]
+    assert [_body(sent) for sent in transport.requests] == [
+        {"pageSize": 2},
+        {"pageSize": 2, "nextToken": "t1"},
+    ]
