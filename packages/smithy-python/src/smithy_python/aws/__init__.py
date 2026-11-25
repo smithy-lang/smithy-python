@@ -10,7 +10,7 @@ gets bearer auth and the default AWS token provider chain. AWS services, and
 services whose rules use AWS functions or built-ins, resolve endpoints with the
 AWS rules extension.
 Clients may also use the AWS protocols ``aws.protocols#restJson1``,
-``awsJson1_0``, ``awsJson1_1`` and ``restXml``.
+``awsJson1_0``, ``awsJson1_1``, ``restXml``, ``awsQuery`` and ``ec2Query``.
 """
 
 from __future__ import annotations
@@ -21,13 +21,23 @@ from ._config import AwsConfigIntegration
 from ._dependencies import SMITHY_AWS_CORE
 from ._endpoints import AwsEndpointsIntegration
 from ._identity import AwsIdentityIntegration
-from ._protocols import AWS_JSON_10, AWS_JSON_11, AWS_PROTOCOLS, REST_JSON, REST_XML
+from ._protocols import (
+    AWS_JSON_10,
+    AWS_JSON_11,
+    AWS_PROTOCOLS,
+    AWS_QUERY,
+    EC2_QUERY,
+    REST_JSON,
+    REST_XML,
+)
 
 __all__ = [
     "AWS_INTEGRATIONS",
     "AWS_JSON_10",
     "AWS_JSON_11",
     "AWS_PROTOCOLS",
+    "AWS_QUERY",
+    "EC2_QUERY",
     "REST_JSON",
     "REST_XML",
     "SMITHY_AWS_CORE",

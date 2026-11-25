@@ -173,7 +173,7 @@ A protocol registry maps modeled protocol IDs to protocol contributions. A
 contribution provides sync/async protocol and transport references and their
 dependencies. RPCv2 CBOR and RPCv2 JSON are built in. The CLI uses
 `smithy_python.aws.AWS_PROTOCOLS`, which adds AWS restJson1, awsJson1_0,
-awsJson1_1 and restXml. Tests can inject a
+awsJson1_1, restXml, awsQuery and ec2Query. Tests can inject a
 registry. The plan keeps the registry's protocol traits in the service schema,
 even when the model omits their definitions.
 
@@ -192,12 +192,16 @@ The contributions use these runtime protocols:
 | `aws.protocols#awsJson1_0` | `AwsJson10ClientProtocol` | `AsyncAwsJson10ClientProtocol` | `smithy-aws-core[json]` |
 | `aws.protocols#awsJson1_1` | `AwsJson11ClientProtocol` | `AsyncAwsJson11ClientProtocol` | `smithy-aws-core[json]` |
 | `aws.protocols#restXml` | `RestXmlClientProtocol` | `AsyncRestXmlClientProtocol` | `smithy-aws-core[xml]` |
+| `aws.protocols#awsQuery` | `AwsQueryClientProtocol` | `AwsQueryClientProtocol` | `smithy-aws-core[xml]` |
+| `aws.protocols#ec2Query` | `Ec2QueryClientProtocol` | `Ec2QueryClientProtocol` | `smithy-aws-core[xml]` |
 
 The AWS protocols come from `smithy-aws-core`, as in the Java generator. Schemas
 keep `aws.protocols#awsQueryCompatible` and `awsQueryError`, which the runtime
 reads for query compatibility, and `aws.customizations#s3UnwrappedXmlOutput`,
 which restXml reads. `ProtocolSettings` carries the service's `xmlNamespace`
-URI, which restXml applies to payloads that don't declare their own.
+URI, which restXml applies to payloads that don't declare their own. The query
+protocols have no event streams, so async clients use the sync protocols, and
+they read the service version from `ProtocolSettings`.
 All also use:
 
 * `ProtocolSettings` with the service namespace, target, version, and schema.

@@ -1,0 +1,23 @@
+{
+  "files": {
+    "README.md": "fc70510c0ee77debc118c3148080eb18d8fe4f166f07be9959f6eec6293c9f52",
+    "pyproject.toml": "e6514ec6e62e045cdbc32ecf7fd3706b6c25003b9855e17d6ea11f5d0eec368d",
+    "src/awsquery_client/__init__.py": "7efbfd2c9225bd02b9d33d99b6e044c5031f3168e867ee8bbd625a265b84653d",
+    "src/awsquery_client/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/awsquery_client/_private/endpoints.py": "7d515fe771678e82ddbe07798d6b7e48c25c6c9bec19cec9318deb0bc5064ead",
+    "src/awsquery_client/_private/schemas.py": "d96130a1d54809b1ecefaf15072388d96da93f75a91bcf6169f75771e3f5f7b9",
+    "src/awsquery_client/_private/schemas_0.py": "96539de684f03d833c79986ea8455d88a33452a8939d0c24b2ed04297c7a0ba8",
+    "src/awsquery_client/_private/schemas_1.py": "86827c7b2d76df0d807fef2eaea9a2adff341e1c9654d614660390cb0a74c4a4",
+    "src/awsquery_client/aio/__init__.py": "5e4e7a9c5f95792a358199470b872eba950c87bbb217ef90ef0d989be262c98e",
+    "src/awsquery_client/aio/client.py": "00ab3680a96892f53d7535482b7e433270fa270d67d72a1bc6a2abda151cfecc",
+    "src/awsquery_client/aio/config.py": "3eca00c18f5915d68e074f90664779d65196f398e93c0b702d606f2eb2c88c0c",
+    "src/awsquery_client/aio/user_agent.py": "5a444990482102365629342212190546cd5ad1a570875d1a5302fc1ceafe927c",
+    "src/awsquery_client/client.py": "c25690587eda400bfe60780a0099c7957616e22a7f3a189032de20fb1a317e0d",
+    "src/awsquery_client/config.py": "da41a14dcc2dac063d6f60e522d2434af80d3671149cb6e8108d9ac89d5e1793",
+    "src/awsquery_client/models.py": "ba8d5724acbbfa51527fe38b734a9fe445374669c6e5bc45b68ef42729992e7a",
+    "src/awsquery_client/models.pyi": "8fc34c50f68078076864f73385f35c82e005bd2547c1bae448a4ed618cfa04ec",
+    "src/awsquery_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/awsquery_client/user_agent.py": "519126177f5fcbef76dac9721912639178540ab8c31d2abbd7ec106557ecea2e"
+  },
+  "version": 1
+}

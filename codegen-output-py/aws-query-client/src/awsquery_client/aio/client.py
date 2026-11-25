@@ -1,0 +1,1216 @@
+from __future__ import annotations
+
+from typing import Unpack, cast, overload
+
+from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
+from smithy_aws_core.config.merged_config import MergedConfig
+from smithy_aws_core.config.types import ConfigSource
+from smithy_aws_core.identity.components import AWSCredentialsIdentity
+from smithy_core.aio.client import AsyncClient
+from smithy_http.aio.interfaces import AsyncHTTPClient
+from smithy_http.plugins import user_agent_plugin
+
+from awsquery_client import models
+from awsquery_client.aio.config import AsyncQueryProtocolConfig, Plugin
+from awsquery_client.aio.user_agent import aws_user_agent_plugin
+
+
+class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
+    "A query service that sends query requests and XML responses."
+
+    _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
+
+    @overload
+    async def datetime_offsets(
+        self,
+        request: models.DatetimeOffsetsInput | models.DatetimeOffsetsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.DatetimeOffsetsOutput: ...
+
+    @overload
+    async def datetime_offsets(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.DatetimeOffsetsInputDict],
+    ) -> models.DatetimeOffsetsOutput:
+        """
+        Invokes the DatetimeOffsets operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def datetime_offsets(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.DatetimeOffsetsOutput:
+        return await self._invoke(
+            self._select_input(models.DATETIME_OFFSETS, args, kwargs),
+            models.DATETIME_OFFSETS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def empty_input_and_empty_output(
+        self,
+        request: models.EmptyInputAndEmptyOutputInput
+        | models.EmptyInputAndEmptyOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.EmptyInputAndEmptyOutputOutput: ...
+
+    @overload
+    async def empty_input_and_empty_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.EmptyInputAndEmptyOutputInputDict],
+    ) -> models.EmptyInputAndEmptyOutputOutput:
+        """
+        The example tests how requests and responses are serialized when there's
+        no request or response members.
+
+        While this should be rare, code generators must support this.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def empty_input_and_empty_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.EmptyInputAndEmptyOutputOutput:
+        return await self._invoke(
+            self._select_input(models.EMPTY_INPUT_AND_EMPTY_OUTPUT, args, kwargs),
+            models.EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def endpoint_operation(
+        self,
+        request: models.EndpointOperationInput | models.EndpointOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.EndpointOperationOutput: ...
+
+    @overload
+    async def endpoint_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.EndpointOperationInputDict],
+    ) -> models.EndpointOperationOutput:
+        """
+        Invokes the EndpointOperation operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def endpoint_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.EndpointOperationOutput:
+        return await self._invoke(
+            self._select_input(models.ENDPOINT_OPERATION, args, kwargs),
+            models.ENDPOINT_OPERATION,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def endpoint_with_host_label_operation(
+        self,
+        request: models.EndpointWithHostLabelOperationInput
+        | models.EndpointWithHostLabelOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.EndpointWithHostLabelOperationOutput: ...
+
+    @overload
+    async def endpoint_with_host_label_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.EndpointWithHostLabelOperationInputDict],
+    ) -> models.EndpointWithHostLabelOperationOutput:
+        """
+        Invokes the EndpointWithHostLabelOperation operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def endpoint_with_host_label_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.EndpointWithHostLabelOperationOutput:
+        return await self._invoke(
+            self._select_input(models.ENDPOINT_WITH_HOST_LABEL_OPERATION, args, kwargs),
+            models.ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def flattened_xml_map(
+        self,
+        request: models.FlattenedXmlMapInput | models.FlattenedXmlMapInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.FlattenedXmlMapOutput: ...
+
+    @overload
+    async def flattened_xml_map(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.FlattenedXmlMapInputDict],
+    ) -> models.FlattenedXmlMapOutput:
+        """
+        Flattened maps
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def flattened_xml_map(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.FlattenedXmlMapOutput:
+        return await self._invoke(
+            self._select_input(models.FLATTENED_XML_MAP, args, kwargs),
+            models.FLATTENED_XML_MAP,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def flattened_xml_map_with_xml_name(
+        self,
+        request: models.FlattenedXmlMapWithXmlNameInput
+        | models.FlattenedXmlMapWithXmlNameInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.FlattenedXmlMapWithXmlNameOutput: ...
+
+    @overload
+    async def flattened_xml_map_with_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.FlattenedXmlMapWithXmlNameInputDict],
+    ) -> models.FlattenedXmlMapWithXmlNameOutput:
+        """
+        Flattened maps with @xmlName
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def flattened_xml_map_with_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.FlattenedXmlMapWithXmlNameOutput:
+        return await self._invoke(
+            self._select_input(models.FLATTENED_XML_MAP_WITH_XML_NAME, args, kwargs),
+            models.FLATTENED_XML_MAP_WITH_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def flattened_xml_map_with_xml_namespace(
+        self,
+        request: models.FlattenedXmlMapWithXmlNamespaceInput
+        | models.FlattenedXmlMapWithXmlNamespaceInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.FlattenedXmlMapWithXmlNamespaceOutput: ...
+
+    @overload
+    async def flattened_xml_map_with_xml_namespace(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.FlattenedXmlMapWithXmlNamespaceInputDict],
+    ) -> models.FlattenedXmlMapWithXmlNamespaceOutput:
+        """
+        Flattened maps with @xmlNamespace and @xmlName
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def flattened_xml_map_with_xml_namespace(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.FlattenedXmlMapWithXmlNamespaceOutput:
+        return await self._invoke(
+            self._select_input(
+                models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE, args, kwargs
+            ),
+            models.FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def fractional_seconds(
+        self,
+        request: models.FractionalSecondsInput | models.FractionalSecondsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.FractionalSecondsOutput: ...
+
+    @overload
+    async def fractional_seconds(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.FractionalSecondsInputDict],
+    ) -> models.FractionalSecondsOutput:
+        """
+        Invokes the FractionalSeconds operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def fractional_seconds(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.FractionalSecondsOutput:
+        return await self._invoke(
+            self._select_input(models.FRACTIONAL_SECONDS, args, kwargs),
+            models.FRACTIONAL_SECONDS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def greeting_with_errors(
+        self,
+        request: models.GreetingWithErrorsInput | models.GreetingWithErrorsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.GreetingWithErrorsOutput: ...
+
+    @overload
+    async def greeting_with_errors(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.GreetingWithErrorsInputDict],
+    ) -> models.GreetingWithErrorsOutput:
+        """
+        This operation has three possible return values:
+
+        1. A successful response in the form of GreetingWithErrorsOutput
+        2. An InvalidGreeting error.
+        3. A BadRequest error.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def greeting_with_errors(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.GreetingWithErrorsOutput:
+        return await self._invoke(
+            self._select_input(models.GREETING_WITH_ERRORS, args, kwargs),
+            models.GREETING_WITH_ERRORS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def host_with_path_operation(
+        self,
+        request: models.HostWithPathOperationInput
+        | models.HostWithPathOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.HostWithPathOperationOutput: ...
+
+    @overload
+    async def host_with_path_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.HostWithPathOperationInputDict],
+    ) -> models.HostWithPathOperationOutput:
+        """
+        Invokes the HostWithPathOperation operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def host_with_path_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.HostWithPathOperationOutput:
+        return await self._invoke(
+            self._select_input(models.HOST_WITH_PATH_OPERATION, args, kwargs),
+            models.HOST_WITH_PATH_OPERATION,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def ignores_wrapping_xml_name(
+        self,
+        request: models.IgnoresWrappingXmlNameInput
+        | models.IgnoresWrappingXmlNameInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.IgnoresWrappingXmlNameOutput: ...
+
+    @overload
+    async def ignores_wrapping_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.IgnoresWrappingXmlNameInputDict],
+    ) -> models.IgnoresWrappingXmlNameOutput:
+        """
+        The xmlName trait on the output structure is ignored in AWS Query.
+
+        The wrapping element is always operation name + "Response", and
+        inside of that wrapper is another wrapper named operation name +
+        "Result".
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def ignores_wrapping_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.IgnoresWrappingXmlNameOutput:
+        return await self._invoke(
+            self._select_input(models.IGNORES_WRAPPING_XML_NAME, args, kwargs),
+            models.IGNORES_WRAPPING_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def nested_structures(
+        self,
+        request: models.NestedStructuresInput | models.NestedStructuresInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.NestedStructuresOutput: ...
+
+    @overload
+    async def nested_structures(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.NestedStructuresInputDict],
+    ) -> models.NestedStructuresOutput:
+        """
+        This test serializes nested and recursive structure members.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def nested_structures(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.NestedStructuresOutput:
+        return await self._invoke(
+            self._select_input(models.NESTED_STRUCTURES, args, kwargs),
+            models.NESTED_STRUCTURES,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def no_input_and_no_output(
+        self,
+        request: models.NoInputAndNoOutputInput | models.NoInputAndNoOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.NoInputAndNoOutputOutput: ...
+
+    @overload
+    async def no_input_and_no_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.NoInputAndNoOutputInputDict],
+    ) -> models.NoInputAndNoOutputOutput:
+        """
+        The example tests how requests and responses are serialized when there's
+        no request or response payload because the operation has no input or
+        output.
+
+        While this should be rare, code generators must support this.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def no_input_and_no_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.NoInputAndNoOutputOutput:
+        return await self._invoke(
+            self._select_input(models.NO_INPUT_AND_NO_OUTPUT, args, kwargs),
+            models.NO_INPUT_AND_NO_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def no_input_and_output(
+        self,
+        request: models.NoInputAndOutputInput | models.NoInputAndOutputInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.NoInputAndOutputOutput: ...
+
+    @overload
+    async def no_input_and_output(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.NoInputAndOutputInputDict],
+    ) -> models.NoInputAndOutputOutput:
+        """
+        The example tests how requests and responses are serialized when there's
+        no request payload or response members.
+
+        While this should be rare, code generators must support this.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def no_input_and_output(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.NoInputAndOutputOutput:
+        return await self._invoke(
+            self._select_input(models.NO_INPUT_AND_OUTPUT, args, kwargs),
+            models.NO_INPUT_AND_OUTPUT,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def put_with_content_encoding(
+        self,
+        request: models.PutWithContentEncodingInput
+        | models.PutWithContentEncodingInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.PutWithContentEncodingOutput: ...
+
+    @overload
+    async def put_with_content_encoding(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.PutWithContentEncodingInputDict],
+    ) -> models.PutWithContentEncodingOutput:
+        """
+        Invokes the PutWithContentEncoding operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def put_with_content_encoding(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.PutWithContentEncodingOutput:
+        return await self._invoke(
+            self._select_input(models.PUT_WITH_CONTENT_ENCODING, args, kwargs),
+            models.PUT_WITH_CONTENT_ENCODING,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def query_idempotency_token_auto_fill(
+        self,
+        request: models.QueryIdempotencyTokenAutoFillInput
+        | models.QueryIdempotencyTokenAutoFillInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.QueryIdempotencyTokenAutoFillOutput: ...
+
+    @overload
+    async def query_idempotency_token_auto_fill(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.QueryIdempotencyTokenAutoFillInputDict],
+    ) -> models.QueryIdempotencyTokenAutoFillOutput:
+        """
+        Automatically adds idempotency tokens.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def query_idempotency_token_auto_fill(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.QueryIdempotencyTokenAutoFillOutput:
+        return await self._invoke(
+            self._select_input(models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL, args, kwargs),
+            models.QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def query_lists(
+        self,
+        request: models.QueryListsInput | models.QueryListsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.QueryListsOutput: ...
+
+    @overload
+    async def query_lists(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.QueryListsInputDict],
+    ) -> models.QueryListsOutput:
+        """
+        This test serializes simple and complex lists.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def query_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.QueryListsOutput:
+        return await self._invoke(
+            self._select_input(models.QUERY_LISTS, args, kwargs),
+            models.QUERY_LISTS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def query_maps(
+        self,
+        request: models.QueryMapsInput | models.QueryMapsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.QueryMapsOutput: ...
+
+    @overload
+    async def query_maps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.QueryMapsInputDict],
+    ) -> models.QueryMapsOutput:
+        """
+        This test serializes simple and complex maps.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def query_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.QueryMapsOutput:
+        return await self._invoke(
+            self._select_input(models.QUERY_MAPS, args, kwargs),
+            models.QUERY_MAPS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def query_timestamps(
+        self,
+        request: models.QueryTimestampsInput | models.QueryTimestampsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.QueryTimestampsOutput: ...
+
+    @overload
+    async def query_timestamps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.QueryTimestampsInputDict],
+    ) -> models.QueryTimestampsOutput:
+        """
+        This test serializes timestamps.
+
+        1. Timestamps are serialized as RFC 3339 date-time values by default.
+        2. A timestampFormat trait on a member changes the format.
+        3. A timestampFormat trait on the shape targeted by the member changes
+        the format.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def query_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.QueryTimestampsOutput:
+        return await self._invoke(
+            self._select_input(models.QUERY_TIMESTAMPS, args, kwargs),
+            models.QUERY_TIMESTAMPS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def recursive_xml_shapes(
+        self,
+        request: models.RecursiveXmlShapesInput | models.RecursiveXmlShapesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.RecursiveXmlShapesOutput: ...
+
+    @overload
+    async def recursive_xml_shapes(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.RecursiveXmlShapesInputDict],
+    ) -> models.RecursiveXmlShapesOutput:
+        """
+        Recursive shapes
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def recursive_xml_shapes(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.RecursiveXmlShapesOutput:
+        return await self._invoke(
+            self._select_input(models.RECURSIVE_XML_SHAPES, args, kwargs),
+            models.RECURSIVE_XML_SHAPES,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def simple_input_params(
+        self,
+        request: models.SimpleInputParamsInput | models.SimpleInputParamsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.SimpleInputParamsOutput: ...
+
+    @overload
+    async def simple_input_params(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.SimpleInputParamsInputDict],
+    ) -> models.SimpleInputParamsOutput:
+        """
+        This test serializes strings, numbers, and boolean values.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def simple_input_params(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.SimpleInputParamsOutput:
+        return await self._invoke(
+            self._select_input(models.SIMPLE_INPUT_PARAMS, args, kwargs),
+            models.SIMPLE_INPUT_PARAMS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def simple_scalar_xml_properties(
+        self,
+        request: models.SimpleScalarXmlPropertiesInput
+        | models.SimpleScalarXmlPropertiesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.SimpleScalarXmlPropertiesOutput: ...
+
+    @overload
+    async def simple_scalar_xml_properties(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.SimpleScalarXmlPropertiesInputDict],
+    ) -> models.SimpleScalarXmlPropertiesOutput:
+        """
+        Invokes the SimpleScalarXmlProperties operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def simple_scalar_xml_properties(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.SimpleScalarXmlPropertiesOutput:
+        return await self._invoke(
+            self._select_input(models.SIMPLE_SCALAR_XML_PROPERTIES, args, kwargs),
+            models.SIMPLE_SCALAR_XML_PROPERTIES,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def xml_blobs(
+        self,
+        request: models.XmlBlobsInput | models.XmlBlobsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.XmlBlobsOutput2: ...
+
+    @overload
+    async def xml_blobs(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.XmlBlobsInputDict],
+    ) -> models.XmlBlobsOutput2:
+        """
+        Blobs are base64 encoded
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def xml_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.XmlBlobsOutput2:
+        return await self._invoke(
+            self._select_input(models.XML_BLOBS, args, kwargs),
+            models.XML_BLOBS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def xml_empty_blobs(
+        self,
+        request: models.XmlEmptyBlobsInput | models.XmlEmptyBlobsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.XmlEmptyBlobsOutput: ...
+
+    @overload
+    async def xml_empty_blobs(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.XmlEmptyBlobsInputDict],
+    ) -> models.XmlEmptyBlobsOutput:
+        """
+        Invokes the XmlEmptyBlobs operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def xml_empty_blobs(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.XmlEmptyBlobsOutput:
+        return await self._invoke(
+            self._select_input(models.XML_EMPTY_BLOBS, args, kwargs),
+            models.XML_EMPTY_BLOBS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def xml_empty_lists(
+        self,
+        request: models.XmlEmptyListsInput | models.XmlEmptyListsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.XmlEmptyListsOutput: ...
+
+    @overload
+    async def xml_empty_lists(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.XmlEmptyListsInputDict],
+    ) -> models.XmlEmptyListsOutput:
+        """
+        Invokes the XmlEmptyLists operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def xml_empty_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.XmlEmptyListsOutput:
+        return await self._invoke(
+            self._select_input(models.XML_EMPTY_LISTS, args, kwargs),
+            models.XML_EMPTY_LISTS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def xml_empty_maps(
+        self,
+        request: models.XmlEmptyMapsInput | models.XmlEmptyMapsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.XmlEmptyMapsOutput: ...
+
+    @overload
+    async def xml_empty_maps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.XmlEmptyMapsInputDict],
+    ) -> models.XmlEmptyMapsOutput:
+        """
+        Invokes the XmlEmptyMaps operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def xml_empty_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.XmlEmptyMapsOutput:
+        return await self._invoke(
+            self._select_input(models.XML_EMPTY_MAPS, args, kwargs),
+            models.XML_EMPTY_MAPS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def xml_enums(
+        self,
+        request: models.XmlEnumsInput | models.XmlEnumsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.XmlEnumsOutput: ...
+
+    @overload
+    async def xml_enums(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.XmlEnumsInputDict],
+    ) -> models.XmlEnumsOutput:
+        """
+        This example serializes enums as top level properties, in lists, sets,
+        and maps.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def xml_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.XmlEnumsOutput:
+        return await self._invoke(
+            self._select_input(models.XML_ENUMS, args, kwargs),
+            models.XML_ENUMS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def xml_int_enums(
+        self,
+        request: models.XmlIntEnumsInput | models.XmlIntEnumsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.XmlIntEnumsOutput: ...
+
+    @overload
+    async def xml_int_enums(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.XmlIntEnumsInputDict],
+    ) -> models.XmlIntEnumsOutput:
+        """
+        This example serializes enums as top level properties, in lists, sets,
+        and maps.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def xml_int_enums(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.XmlIntEnumsOutput:
+        return await self._invoke(
+            self._select_input(models.XML_INT_ENUMS, args, kwargs),
+            models.XML_INT_ENUMS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def xml_lists(
+        self,
+        request: models.XmlListsInput | models.XmlListsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.XmlListsOutput2: ...
+
+    @overload
+    async def xml_lists(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.XmlListsInputDict],
+    ) -> models.XmlListsOutput2:
+        """
+        This test case serializes XML lists for the following cases for both
+        input and output:
+
+        1. Normal XML lists.
+        2. Normal XML sets.
+        3. XML lists of lists.
+        4. XML lists with @xmlName on its members
+        5. Flattened XML lists.
+        6. Flattened XML lists with @xmlName.
+        7. Lists of structures.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def xml_lists(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.XmlListsOutput2:
+        return await self._invoke(
+            self._select_input(models.XML_LISTS, args, kwargs),
+            models.XML_LISTS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def xml_maps(
+        self,
+        request: models.XmlMapsInput | models.XmlMapsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.XmlMapsOutput2: ...
+
+    @overload
+    async def xml_maps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.XmlMapsInputDict],
+    ) -> models.XmlMapsOutput2:
+        """
+        The example tests basic map serialization.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def xml_maps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.XmlMapsOutput2:
+        return await self._invoke(
+            self._select_input(models.XML_MAPS, args, kwargs),
+            models.XML_MAPS,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def xml_maps_xml_name(
+        self,
+        request: models.XmlMapsXmlNameInput | models.XmlMapsXmlNameInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.XmlMapsXmlNameOutput: ...
+
+    @overload
+    async def xml_maps_xml_name(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.XmlMapsXmlNameInputDict],
+    ) -> models.XmlMapsXmlNameOutput:
+        """
+        Invokes the XmlMapsXmlName operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def xml_maps_xml_name(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.XmlMapsXmlNameOutput:
+        return await self._invoke(
+            self._select_input(models.XML_MAPS_XML_NAME, args, kwargs),
+            models.XML_MAPS_XML_NAME,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def xml_namespaces(
+        self,
+        request: models.XmlNamespacesInput | models.XmlNamespacesInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.XmlNamespacesOutput: ...
+
+    @overload
+    async def xml_namespaces(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.XmlNamespacesInputDict],
+    ) -> models.XmlNamespacesOutput:
+        """
+        Invokes the XmlNamespaces operation.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def xml_namespaces(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.XmlNamespacesOutput:
+        return await self._invoke(
+            self._select_input(models.XML_NAMESPACES, args, kwargs),
+            models.XML_NAMESPACES,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def xml_timestamps(
+        self,
+        request: models.XmlTimestampsInput | models.XmlTimestampsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.XmlTimestampsOutput: ...
+
+    @overload
+    async def xml_timestamps(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.XmlTimestampsInputDict],
+    ) -> models.XmlTimestampsOutput:
+        """
+        This tests how timestamps are serialized, including using the
+        default format of date-time and various @timestampFormat trait
+        values.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    async def xml_timestamps(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.XmlTimestampsOutput:
+        return await self._invoke(
+            self._select_input(models.XML_TIMESTAMPS, args, kwargs),
+            models.XML_TIMESTAMPS,
+            [],
+            plugins,
+        )
+
+    async def _new_config(self) -> AsyncQueryProtocolConfig:
+        return await AsyncQueryProtocolConfig.resolve()
+
+    async def _post_setup(self, config: AsyncQueryProtocolConfig) -> None:
+        if config.aws_credentials_identity_resolver is None:
+            config_file, profile_name = await self._profile_overrides(config)
+            config.aws_credentials_identity_resolver = await AsyncIdentityChain.create(
+                AWSCredentialsIdentity,
+                config_file=config_file,
+                profile_name=profile_name,
+                region_override=config.region,
+                http_client=cast(AsyncHTTPClient | None, config.transport),
+            )
+
+    async def _profile_overrides(
+        self, config: AsyncQueryProtocolConfig
+    ) -> tuple[MergedConfig | None, str | None]:
+        config_context = config.resolution_context()
+        config_file = None
+        profile_name = None
+        if config_context is not None:
+            config_file = await config_context.parsed_profiles()
+            if config_context.profile_source is ConfigSource.OVERRIDE:
+                profile_name = config_context.profile_name
+        return config_file, profile_name
