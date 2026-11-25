@@ -169,3 +169,24 @@ async def test_other_errors_are_not_retried(
 
     assert isinstance(error, CallError)
     assert transport.attempts == 1
+
+
+@pytest.mark.parametrize(
+    ("responses", "expected"),
+    [
+        ([(400, "InvalidInstanceID.NotFound")], "InvalidInstanceID.NotFound"),
+        ([(503, "RequestLimitExceeded"), (504, None)], None),
+    ],
+    ids=["single-attempt", "retried"],
+)
+async def test_last_attempts_error_code_is_reported(
+    sync: bool,
+    tmp_path: Path,
+    responses: list[tuple[int, str | None]],
+    expected: str | None,
+) -> None:
+    # Copied because the transport pops from it and both runs share it.
+    _, _, error = await _call(sync, tmp_path, list(responses), max_attempts=2)
+
+    assert isinstance(error, CallError)
+    assert error.response_metadata.error_code == expected

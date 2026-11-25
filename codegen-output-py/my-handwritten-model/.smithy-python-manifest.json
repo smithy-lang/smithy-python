@@ -6,7 +6,7 @@
     "src/my_handwritten_model/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/my_handwritten_model/_private/schemas.py": "f146ba11103b98b70213619c2e581755d336f4c8133ee4900830b2fab428ffc5",
     "src/my_handwritten_model/models.py": "269ec10c3bf4da91ac9c4a3f479f40bdad48f0113f9772d9a4c259229abd043c",
-    "src/my_handwritten_model/models.pyi": "7a120fc925e95e974645dc612f4edc4acc5399e0359cd45c188afe394dafe2d9",
+    "src/my_handwritten_model/models.pyi": "eea41779046bf217dab1a4739f27854742b63aacaad48cfebee3c99792459950",
     "src/my_handwritten_model/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

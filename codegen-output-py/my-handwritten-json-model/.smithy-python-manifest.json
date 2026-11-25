@@ -6,7 +6,7 @@
     "src/my_handwritten_json_model/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/my_handwritten_json_model/_private/schemas.py": "d6a88206b0288f028d923a590d97acb21efc6f5d6d29dacc1393068063ab4435",
     "src/my_handwritten_json_model/models.py": "c7d9575479a8a6a3580871da76345de34c6ca18a977f271fcf9bd62801715700",
-    "src/my_handwritten_json_model/models.pyi": "8f59462ef2d242ae24b24bbcdb082aa05576aab445d2fa2bc9ae3a9194399bdb",
+    "src/my_handwritten_json_model/models.pyi": "e37473ba12ab24f0948dd377fa3fe9e82566b2d2ee1d7dfe41aaa4555f42a9dd",
     "src/my_handwritten_json_model/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

@@ -285,7 +285,7 @@ class RestXmlClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol
                 modeled_error.args = (error_info.message,)
             if retry_after is not None:
                 modeled_error.retry_after = retry_after
-            return self._classify_error_for_retry(modeled_error, response, code)
+            return self._finalize_error(modeled_error, response, code)
 
         message = (
             f"Unknown error for operation {operation.schema.id} "
@@ -303,7 +303,7 @@ class RestXmlClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol
             fault="client" if response.status < 500 else "server",
             retry_after=retry_after,
         )
-        return self._classify_error_for_retry(error, response, code)
+        return self._finalize_error(error, response, code)
 
 
 class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
@@ -488,7 +488,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
             modeled_error = error_shape.deserialize(deserializer)
             if retry_after is not None:
                 modeled_error.retry_after = retry_after
-            return self._classify_error_for_retry(modeled_error, response, code)
+            return self._finalize_error(modeled_error, response, code)
 
         message = (
             f"Unknown error for operation {operation.schema.id} "
@@ -504,7 +504,7 @@ class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
         )
 
         error = CallError(message=message, fault=fault, retry_after=retry_after)
-        return self._classify_error_for_retry(error, response, code)
+        return self._finalize_error(error, response, code)
 
     def _matches_content_type(self, response: HTTPResponse) -> bool:
         if "content-type" not in response.fields:
@@ -693,7 +693,7 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, RpcClientProtocol):
             status=response.status,
             retry_after=parse_retry_after(response),
         )
-        return self._classify_error_for_retry(error, response, code)
+        return self._finalize_error(error, response, code)
 
     def _create_serializer(
         self,

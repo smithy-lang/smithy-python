@@ -78,6 +78,7 @@ _SHAPE_SERIALIZER: Final = _core_reference("ShapeSerializer", "serializers")
 _SHAPE_DESERIALIZER: Final = _core_reference("ShapeDeserializer", "deserializers")
 _UNKNOWN_ENUM_MIXIN: Final = _core_reference("UnknownEnumMixin", "types")
 _RESPONSE_METADATA: Final = _core_reference("ResponseMetadata", "response")
+_ERROR_RESPONSE_METADATA: Final = _core_reference("ErrorResponseMetadata", "response")
 _DATACLASS: Final = _symbols.TypeReference("dataclass", "dataclasses")
 _SELF: Final = _symbols.TypeReference("Self", "typing")
 _STR_ENUM: Final = _symbols.TypeReference("StrEnum", "enum")
@@ -126,6 +127,12 @@ _RESPONSE_METADATA_DOC: Final = (
     "Use this to recover the request identifiers a service's support team needs "
     "in order to investigate a call. Members of the metadata are individually "
     "optional."
+)
+_ERROR_RESPONSE_METADATA_DOC: Final = (
+    "Metadata about the response that produced this error.\n\n"
+    "Use this to read the error code or to recover the request identifiers a "
+    "service's support team needs in order to investigate a call. Members of the "
+    "metadata are individually optional."
 )
 _SERVICE_ERROR_DOC: Final = (
     "Base error for all errors in the service.\n\n"
@@ -504,7 +511,10 @@ class _StubEmitter:
                 )
                 if docs := _member_documentation(member, shape.id in self.inputs):
                     _write_docstring(writer, docs)
-            if carries_metadata:
+            if error:
+                writer.line("response_metadata: ", _ERROR_RESPONSE_METADATA, " = ...")
+                _write_docstring(writer, _ERROR_RESPONSE_METADATA_DOC)
+            elif carries_metadata:
                 writer.line("response_metadata: ", _RESPONSE_METADATA, " = ...")
                 _write_docstring(writer, _RESPONSE_METADATA_DOC)
 

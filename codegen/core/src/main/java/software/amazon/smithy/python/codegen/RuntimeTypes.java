@@ -57,6 +57,8 @@ public final class RuntimeTypes {
             createSymbol("response", "ResponseMetadata", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol EMPTY_RESPONSE_METADATA =
             createSymbol("response", "EMPTY_RESPONSE_METADATA", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol ERROR_RESPONSE_METADATA =
+            createSymbol("response", "ErrorResponseMetadata", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.exceptions
     public static final Symbol MODELED_ERROR =

@@ -6,7 +6,7 @@
     "src/ec2query/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/ec2query/_private/schemas.py": "d5aed93dfd4bcd0e2352724f6390abe866531874f9e6b74ca01c71fc06b99ad1",
     "src/ec2query/models.py": "ce705a922131d6b8c1b864d288be281bd7bca1d77a4240d6aee1aa5accbc2267",
-    "src/ec2query/models.pyi": "c4f72b8db1ccb61492be4d8fea8d636cd7e0cfd37d3b39a2bf919107dbae7088",
+    "src/ec2query/models.pyi": "1700e24aeafcd2999ec0d025e9a4a54fdabd050474bf3f62e29061a422bb0a8c",
     "src/ec2query/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

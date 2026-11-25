@@ -317,6 +317,7 @@ def test_model_generator_emits_runtime_and_stub(tmp_path: Path) -> None:
     assert "OK = 200" in stub
     assert "response_metadata_: str | None = ..." in stub
     assert "response_metadata: ResponseMetadata = ..." in stub
+    assert "response_metadata: ErrorResponseMetadata = ..." in stub
     assert SMITHY_CORE in context.dependencies
 
 

@@ -99,8 +99,8 @@ class CallError(SmithyError):
     retry_after: float | None = None
     is_throttling_error: bool = False
     is_timeout_error: bool = False
-    response_metadata: ResponseMetadata = field(
-        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    response_metadata: ErrorResponseMetadata = field(
+        default=EMPTY_ERROR_RESPONSE_METADATA, repr=False, compare=False
     )
 ```
 

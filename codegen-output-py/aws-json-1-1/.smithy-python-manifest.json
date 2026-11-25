@@ -6,7 +6,7 @@
     "src/awsjson11/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/awsjson11/_private/schemas.py": "9e4916f6f66be35ae119fad66e5fdbaa277a2d4f4c6b70b29f2b22065636273d",
     "src/awsjson11/models.py": "c44bb35dc4c85f06d814a3b38f1f802024c3c24d54c1534c06f10a64f95f2c3a",
-    "src/awsjson11/models.pyi": "de83945be2db0a56f63c5e1beaeebb56ea27300ea463288bf7a626a6bc21b4c8",
+    "src/awsjson11/models.pyi": "dca0ae775625d5bfa9d765880547afcd153456adc0d7a91c7bc4e77887d74d7d",
     "src/awsjson11/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

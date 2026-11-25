@@ -36,7 +36,7 @@ from smithy_core.interfaces import (
 from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 from smithy_core.prelude import DOCUMENT, UNIT
 from smithy_core.program import Program
-from smithy_core.response import ResponseMetadata
+from smithy_core.response import ErrorResponseMetadata, ResponseMetadata
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import SerializeableShape, SerializeableStruct
 from smithy_core.shapes import ShapeID, ShapeType
@@ -194,6 +194,13 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
             return document.discriminator
         except DiscriminatorError:
             return None
+
+    def _finalize_error[E: CallError](
+        self, error: E, response: HTTPResponse, code: str | None
+    ) -> E:
+        """Attach the error code to the error and classify it for retries."""
+        error.response_metadata = ErrorResponseMetadata(error_code=code)
+        return self._classify_error_for_retry(error, response, code)
 
     def _classify_error_for_retry[E: CallError](
         self, error: E, response: HTTPResponse, code: str | None
@@ -397,7 +404,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             modeled_error = error_shape.deserialize(deserializer)
             if retry_after is not None:
                 modeled_error.retry_after = retry_after
-            return self._classify_error_for_retry(modeled_error, response, code)
+            return self._finalize_error(modeled_error, response, code)
 
         message = (
             f"Unknown error for operation {operation.schema.id} "
@@ -413,7 +420,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             fault="client" if response.status < 500 else "server",
             retry_after=retry_after,
         )
-        return self._classify_error_for_retry(error, response, code)
+        return self._finalize_error(error, response, code)
 
     def _retry_after(self, response: HTTPResponse) -> float | None:
         """The retry delay in seconds requested by the server, if the response carries one."""
@@ -877,7 +884,7 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
                 )
             deserializer = self._codec.create_deserializer(body or self._empty_document)
             modeled_error = error_shape.deserialize(deserializer)
-            return self._classify_error_for_retry(modeled_error, response, code)
+            return self._finalize_error(modeled_error, response, code)
 
         message = (
             f"Unknown error for operation {operation.schema.id} "
@@ -892,7 +899,7 @@ class _RpcV2ProtocolBase(RpcClientProtocol):
             fault=self._query_error_fault(response)
             or ("client" if response.status < 500 else "server"),
         )
-        return self._classify_error_for_retry(error, response, code)
+        return self._finalize_error(error, response, code)
 
     def _rpc_error_code(self, response: HTTPResponse, raw_type: object) -> str | None:
         """The error code, preferring a query-compatible service's awsQuery code."""

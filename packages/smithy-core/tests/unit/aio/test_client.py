@@ -35,7 +35,11 @@ from smithy_core.interceptors import (
     OutputContext,
     RequestContext,
 )
-from smithy_core.response import EMPTY_RESPONSE_METADATA
+from smithy_core.response import (
+    EMPTY_ERROR_RESPONSE_METADATA,
+    EMPTY_RESPONSE_METADATA,
+    ErrorResponseMetadata,
+)
 from smithy_core.retries import (
     RETRY_STRATEGY,
     AdaptiveRetryStrategy,
@@ -146,6 +150,26 @@ async def test_response_metadata_attached_to_error() -> None:
     assert exc_info.value.response_metadata.http_status_code == 200
 
 
+async def test_error_code_kept_when_response_metadata_is_attached() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+
+    async def raise_coded_error(**kwargs: Any) -> StubOutput:
+        raise CallError(
+            "Rate exceeded",
+            response_metadata=ErrorResponseMetadata(error_code="ThrottlingException"),
+        )
+
+    harness.protocol.deserialize_response = raise_coded_error  # type: ignore[method-assign]
+
+    with pytest.raises(CallError) as exc_info:
+        await harness.pipeline(client_call())
+
+    metadata = exc_info.value.response_metadata
+    assert metadata.error_code == "ThrottlingException"
+    assert metadata.request_id == "stub-request-id"
+    assert metadata.http_status_code == 200
+
+
 async def test_response_metadata_kept_when_retry_times_out_waiting_for_send_token() -> (
     None
 ):
@@ -188,7 +212,7 @@ async def test_response_metadata_empty_when_no_response_received() -> None:
     with pytest.raises(CallError) as exc_info:
         await harness.pipeline(client_call())
 
-    assert exc_info.value.response_metadata is EMPTY_RESPONSE_METADATA
+    assert exc_info.value.response_metadata is EMPTY_ERROR_RESPONSE_METADATA
     assert exc_info.value.response_metadata.http_status_code is None
     assert harness.protocol.extract_response_metadata_calls == 0
 

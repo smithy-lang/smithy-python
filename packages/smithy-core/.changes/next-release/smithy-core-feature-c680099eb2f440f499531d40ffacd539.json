@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `ErrorResponseMetadata`, a `ResponseMetadata` subclass with an `error_code`. `CallError.response_metadata` is now an `ErrorResponseMetadata`."
+}

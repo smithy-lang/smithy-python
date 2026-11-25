@@ -6,7 +6,7 @@ from typing import Self, TypedDict, Union
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
-from smithy_core.response import ResponseMetadata
+from smithy_core.response import ErrorResponseMetadata, ResponseMetadata
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import ShapeSerializer
 
@@ -60,26 +60,26 @@ class GammaPayload(_SerdeShape):
 class StreamServiceError(ServiceError, _SerdeShape):
     """Dataclass for StreamServiceError structure."""
 
-    response_metadata: ResponseMetadata = ...
+    response_metadata: ErrorResponseMetadata = ...
     """
-    Metadata about the response that produced this output.
+    Metadata about the response that produced this error.
 
-    Use this to recover the request identifiers a service's support team
-    needs in order to investigate a call. Members of the metadata are
-    individually optional.
+    Use this to read the error code or to recover the request identifiers a
+    service's support team needs in order to investigate a call. Members of
+    the metadata are individually optional.
     """
 
 @dataclass(kw_only=True)
 class ThrottlingEvent(ServiceError, _SerdeShape):
     """Dataclass for ThrottlingEvent structure."""
 
-    response_metadata: ResponseMetadata = ...
+    response_metadata: ErrorResponseMetadata = ...
     """
-    Metadata about the response that produced this output.
+    Metadata about the response that produced this error.
 
-    Use this to recover the request identifiers a service's support team
-    needs in order to investigate a call. Members of the metadata are
-    individually optional.
+    Use this to read the error code or to recover the request identifiers a
+    service's support team needs in order to investigate a call. Members of
+    the metadata are individually optional.
     """
 
 @dataclass

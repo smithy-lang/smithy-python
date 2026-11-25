@@ -16,7 +16,7 @@
     "src/restxml_client/client.py": "d80278e3c12d1eb193df94c4e8afbc5ec24eb9c9eb41fa2353669861f4c5f05a",
     "src/restxml_client/config.py": "d86882e00443edfa3dbf16bb916de881b372c71332856206e1f8d66de0f70ca8",
     "src/restxml_client/models.py": "7e5c04410551333822485911673cb8dd0fe24aa24a33bbd71b66f5ea5f65e1fb",
-    "src/restxml_client/models.pyi": "4f503cae8ce42fc1675f8fe62e5efda28e4af18396ac78ba64b6dc3c5ae77e58",
+    "src/restxml_client/models.pyi": "212fe61a16371a0e3361d3d6ca79018f52a8754a50985d5cb57892616327bd6b",
     "src/restxml_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/restxml_client/user_agent.py": "ec8e91e968b0514092b9b2c768d92a408f6764da99c44df82c6af0d56fa795a3"
   },
