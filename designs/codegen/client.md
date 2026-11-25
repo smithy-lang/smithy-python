@@ -248,6 +248,11 @@ of the parameter name, and its docstring is the entry's documentation. The BDD
 records the field name as the parameter's config attribute. A field name that
 matches a standard config field or another entry's field fails generation.
 
+When an operation has the `smithy.api#endpoint` trait, the config gets
+`disable_host_prefix_injection: bool | None`, as in the Java generator's
+`HostPrefixIntegration`. The runtime prepends each operation's expanded host
+prefix to its endpoint host unless the field is true.
+
 Schemas retain `smithy.rules#contextParam`, `smithy.rules#staticContextParams`,
 and `smithy.rules#operationContextParams`, which the runtime parameter plan
 reads to bind input members and operation values.

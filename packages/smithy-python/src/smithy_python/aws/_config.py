@@ -11,6 +11,7 @@ from .. import dependencies as _dependencies
 from .. import exceptions as _exceptions
 from .. import model as _model
 from .. import models as _models
+from .._client_emitter import HOST_PREFIX_FIELD
 from ..integrations import ClientIntegration, ClientMode, ClientNames, ConfigPlan
 from ..symbols import TypeReference
 from ._dependencies import SMITHY_AWS_CORE
@@ -239,6 +240,18 @@ def _write_config(writer: PythonWriter, config: ConfigPlan) -> None:
                 ("default=None",),
             )
             for field in endpoints.client_context_fields
+        ),
+        *(
+            (
+                (
+                    HOST_PREFIX_FIELD[0],
+                    ("bool | None",),
+                    HOST_PREFIX_FIELD[1],
+                    ("default=None",),
+                ),
+            )
+            if config.host_prefix
+            else ()
         ),
         *(
             _builtin_field(definition, field)
