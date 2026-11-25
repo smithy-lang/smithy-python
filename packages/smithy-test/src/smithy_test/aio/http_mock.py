@@ -18,8 +18,9 @@ from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.aio.testing import AsyncMockHTTPClient
 from smithy_http.interfaces import HTTPRequest, HTTPRequestConfiguration
 
-from .._private.http_mock import NoResponse, take_over
+from .._private.http_mock import NoResponse, mock_install, take_over
 from ..http_mock import HTTPMockController, HTTPMockError
+from ._tracking import track_operation
 
 __all__ = ["AsyncHTTPMockController", "mock_async"]
 
@@ -37,7 +38,10 @@ async def mock_async[C](client: AsyncClient[C]) -> "AsyncHTTPMockController":
     controller = AsyncHTTPMockController()
     controller._capture = _AsyncMockTransport(controller)
     take_over(
-        client, controller._capture, _none_without_response, AsyncStaticTokenResolver
+        client,
+        controller._capture,
+        _none_without_response,
+        mock_install(AsyncStaticTokenResolver),
     )
     return controller
 
@@ -158,9 +162,11 @@ class _AsyncMockTransport(AsyncMockHTTPClient):
 
 
 def _none_without_response(invoke: Callable[..., Any]) -> Callable[..., Any]:
+    tracked = track_operation(invoke)
+
     async def _invoke(*args: Any, **kwargs: Any) -> Any:
         try:
-            return await invoke(*args, **kwargs)
+            return await tracked(*args, **kwargs)
         except NoResponse:
             return None
 

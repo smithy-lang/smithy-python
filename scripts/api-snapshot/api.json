@@ -958,12 +958,20 @@
     "AsyncHTTPMockController": "class[async]",
     "mock_async": "function[async]"
   },
+  "smithy_test.aio.http_record": {
+    "AsyncHTTPRecorder": "class[async]",
+    "instrument_async": "function[async]"
+  },
   "smithy_test.http_mock": {
     "HTTPMockController": "class",
     "HTTPMockError": "exception",
     "HTTPMockExpectation": "class",
     "HTTPMockMismatchError": "exception",
     "mock": "function"
+  },
+  "smithy_test.http_record": {
+    "HTTPRecorder": "class",
+    "instrument": "function"
   },
   "smithy_xml": {
     "XMLCodec": "class"

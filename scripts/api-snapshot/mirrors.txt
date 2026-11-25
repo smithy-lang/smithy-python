@@ -108,4 +108,7 @@ Dual-mode symbols (async in aio, sync twin outside):
       http_mock.py
         AsyncHTTPMockController  HTTPMockController
         mock_async               mock
-55 dual-mode symbol(s).
+      http_record.py
+        AsyncHTTPRecorder  HTTPRecorder
+        instrument_async   instrument
+57 dual-mode symbol(s).

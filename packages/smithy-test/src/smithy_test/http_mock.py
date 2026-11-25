@@ -15,7 +15,14 @@ from smithy_http.identity.token import StaticTokenResolver
 from smithy_http.interfaces import HTTPClient, HTTPRequest, HTTPRequestConfiguration
 from smithy_http.testing.mockhttp import MockHTTPClient, MockHTTPClientBase
 
-from ._private.http_mock import NoResponse, mismatches, take_over
+from ._private.http_mock import (
+    CURRENT_OPERATION,
+    NoResponse,
+    mismatches,
+    mock_install,
+    take_over,
+    track_operation,
+)
 
 __all__ = [
     "HTTPMockController",
@@ -47,7 +54,12 @@ def mock[C](client: Client[C]) -> "HTTPMockController":
         )
     controller = HTTPMockController()
     controller._capture = _MockTransport(controller)
-    take_over(client, controller._capture, _none_without_response, StaticTokenResolver)
+    take_over(
+        client,
+        controller._capture,
+        _none_without_response,
+        mock_install(StaticTokenResolver),
+    )
     return controller
 
 
@@ -59,6 +71,7 @@ class HTTPMockController:
 
     def __init__(self) -> None:
         self._expectations: list[HTTPMockExpectation] = []
+        self._operations: dict[str, list[HTTPMockExpectation]] = {}
         self._capture: MockHTTPClientBase | None = None
         self._position = 0
         self._pending_bodies: dict[int, tuple[int, Any]] = {}
@@ -116,6 +129,17 @@ class HTTPMockController:
         self._expectations.append(expectation)
         return expectation
 
+    def expect_operation(self, name: str) -> "HTTPMockExpectation":
+        """Expect a call of the named operation, whatever its request looks like.
+
+        Operations are answered from their own queues, so the order in which the
+        client calls different operations doesn't matter. A call beyond the expected
+        ones raises, unlike a request expectation, whose last response repeats.
+        """
+        expectation = HTTPMockExpectation({})
+        self._operations.setdefault(name, []).append(expectation)
+        return expectation
+
     def _exchange(
         self, request: HTTPRequest, body: bytes | None, number: int
     ) -> tuple[int, list[tuple[str, str]], AnyStreamingBlob]:
@@ -127,7 +151,22 @@ class HTTPMockController:
         :raises HTTPMockMismatchError: If the request doesn't match its expectation.
         :raises NoResponse: If the matching expectation has no response.
         """
+        operation = CURRENT_OPERATION.get()
+        if operation is not None and operation in self._operations:
+            queue = self._operations[operation]
+            for expectation in queue:
+                if expectation._used < expectation._times:
+                    return expectation._respond()
+            raise HTTPMockError(
+                f"Request {number} is call {sum(e._times for e in queue) + 1} of "
+                f"{operation}, but only {sum(e._times for e in queue)} were expected."
+            )
         expectations = self._expectations
+        if not expectations and self._operations:
+            raise HTTPMockError(
+                f"Request {number} is a call of {operation}, which has no expectation. "
+                f"Expected operations: {', '.join(sorted(self._operations))}."
+            )
         if not expectations:
             raise HTTPMockError(
                 f"Request {number} was sent, but no requests were expected. Call "
@@ -168,6 +207,12 @@ class HTTPMockController:
             *(
                 f"Expectation {i}: matched {e._used} of {e._times} requests"
                 for i, e in enumerate(self._expectations, start=1)
+                if e._used < e._times
+            ),
+            *(
+                f"{name}: called {e._used} of {e._times} expected times"
+                for name, queue in self._operations.items()
+                for e in queue
                 if e._used < e._times
             ),
         ]
@@ -253,9 +298,11 @@ class _MockTransport(MockHTTPClient):
 
 
 def _none_without_response(invoke: Callable[..., Any]) -> Callable[..., Any]:
+    tracked = track_operation(invoke)
+
     def _invoke(*args: Any, **kwargs: Any) -> Any:
         try:
-            return invoke(*args, **kwargs)
+            return tracked(*args, **kwargs)
         except NoResponse:
             return None
 

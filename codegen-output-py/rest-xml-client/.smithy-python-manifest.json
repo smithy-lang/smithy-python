@@ -1,0 +1,24 @@
+{
+  "files": {
+    "README.md": "1e9cbec40ebffed35c2e9e9d8e92a6cc455f977590e68c4c4b9869876718d14d",
+    "pyproject.toml": "63315ce77d58e2529f720de1525a706b85b40c8e49f0c2b2a5fb12373ad1ad21",
+    "src/restxml_client/__init__.py": "b5a47df1b7e014cde52ee081a4ae42d82033d348b93a1954e1dc30776046207a",
+    "src/restxml_client/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/restxml_client/_private/endpoints.py": "7d515fe771678e82ddbe07798d6b7e48c25c6c9bec19cec9318deb0bc5064ead",
+    "src/restxml_client/_private/schemas.py": "3182b24328495d0db4ce1975dce97d8f4b3cab18e6910641fa27d34df8629086",
+    "src/restxml_client/_private/schemas_0.py": "34f7fe09c98c5b7bf7daffc980f14fbdbb47b608f4b8690034827fd554bcd2c1",
+    "src/restxml_client/_private/schemas_1.py": "32d2cbea4cbf8ee61f1e0dfdab9ebd5a38181b8e3b159d591853686f9090e177",
+    "src/restxml_client/_private/schemas_2.py": "3c8a541a1626dd5ee59b4d6e483b8bf70db4c55f0497a74f67fd0181d226780b",
+    "src/restxml_client/aio/__init__.py": "c9dc5526981cf650810881dabd93561025805073a167c6b02a160a939d02cd9b",
+    "src/restxml_client/aio/client.py": "eeae950da94889c0d51fc0321173e9d10f39c3a3e16a57dcb1bfa554a3a80d30",
+    "src/restxml_client/aio/config.py": "b28594a413fac3f79ebe6c73d46a386f6f7fb1d11ef4740a6319e3b7d708114f",
+    "src/restxml_client/aio/user_agent.py": "6d7319cf63fc3dcc98c7e75b615741296d55768da04013f6943b32b2d0a751f6",
+    "src/restxml_client/client.py": "26e4bb7f122c25a26a2c444f058032e152097350aa4d56da7f3b9d6731dda403",
+    "src/restxml_client/config.py": "d86882e00443edfa3dbf16bb916de881b372c71332856206e1f8d66de0f70ca8",
+    "src/restxml_client/models.py": "7e5c04410551333822485911673cb8dd0fe24aa24a33bbd71b66f5ea5f65e1fb",
+    "src/restxml_client/models.pyi": "4f503cae8ce42fc1675f8fe62e5efda28e4af18396ac78ba64b6dc3c5ae77e58",
+    "src/restxml_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/restxml_client/user_agent.py": "ec8e91e968b0514092b9b2c768d92a408f6764da99c44df82c6af0d56fa795a3"
+  },
+  "version": 1
+}

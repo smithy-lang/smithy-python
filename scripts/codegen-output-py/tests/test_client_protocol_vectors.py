@@ -45,7 +45,7 @@ from smithy_python.clients import ClientPlan
 from smithy_python.generation import ClientSettings
 from smithy_python.integrations import ClientNames
 from smithy_python.model import load_model
-from smithy_test import deep_equal
+from smithy_test import deep_equal, xml_equal
 
 _ROOT = Path(__file__).resolve().parents[3]
 _INPUTS = _ROOT / "scripts/codegen-output-py"
@@ -74,6 +74,8 @@ _EXPECTED_FAILURES = frozenset(
         "RestJsonHttpChecksumRequired",
         "SDKAppliedContentEncoding_restJson1",
         "SDKAppendedGzipAfterProvidedEncoding_restJson1",
+        "SDKAppliedContentEncoding_restXml",
+        "SDKAppendedGzipAfterProvidedEncoding_restXml",
         "RpcV2CborClientPopulatesDefaultValuesInInput",
         "RpcV2CborClientSkipsTopLevelDefaultValuesInInput",
         "RpcV2CborClientUsesExplicitlyProvidedMemberValuesOverDefaults",
@@ -86,11 +88,14 @@ _EXPECTED_FAILURES = frozenset(
 )
 
 # Response vectors that share a case ID with a passing request vector. The client
-# reads an empty blob payload as b"", not as unset.
-_EXPECTED_RESPONSE_FAILURES = frozenset({"RestJsonHttpPayloadTraitsWithNoBlobBody"})
+# reads an empty blob payload as b"", not as unset. The Java tests expect b"".
+_EXPECTED_RESPONSE_FAILURES = frozenset(
+    {"RestJsonHttpPayloadTraitsWithNoBlobBody", "HttpPayloadTraitsWithNoBlobBody"}
+)
 
 # How request bodies of each media type are decoded for comparison. Other bodies
-# compare as bytes. JSON numbers are read as Decimal, so big numbers compare exactly.
+# compare as bytes, except XML, which is compared parsed. JSON numbers are read as
+# Decimal, so big numbers compare exactly.
 _BODY_DECODERS: dict[str, Any] = {
     "application/cbor": cbor_loads,
     "application/json": lambda body: json.loads(body, parse_float=Decimal),
@@ -503,7 +508,9 @@ def _check_request(
     if "body" in case:
         media_type = case.get("bodyMediaType")
         actual_body, expected_body = _body(actual), _vector_body(case)
-        if media_type in _BODY_DECODERS:
+        if media_type == "application/xml":
+            assert xml_equal(actual_body, expected_body)
+        elif media_type in _BODY_DECODERS:
             assert deep_equal(
                 _decoded(media_type, actual_body), _decoded(media_type, expected_body)
             )
@@ -572,5 +579,6 @@ def test_every_client_vector_is_collected() -> None:
     # The Java clients run the same vectors: rpcv2Cbor has 29 request and 43
     # response vectors, and rpcv2Json has 34 and 39. restJson1 has 244, less the 8
     # of the streaming operations the client omits. awsJson1_0 has 67, awsJson1_1
-    # has 118, and the query-compatible awsJson1_0 service has 3.
-    assert len(list(_vectors())) == 72 + 73 + 236 + 67 + 118 + 3
+    # has 118, and the query-compatible awsJson1_0 service has 3. restXml has
+    # 178, and the restXml service with a namespace has 2.
+    assert len(list(_vectors())) == 72 + 73 + 236 + 67 + 118 + 3 + 178 + 2

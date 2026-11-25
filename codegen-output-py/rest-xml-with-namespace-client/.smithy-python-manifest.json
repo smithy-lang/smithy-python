@@ -1,0 +1,21 @@
+{
+  "files": {
+    "README.md": "261f9c2a74b59aba880bd74d63a8b331eedff80a723a84da366a6ff51180c54a",
+    "pyproject.toml": "a4af94e6a5e9f199238f0b377414299921c5f6cb731b2801d5e78e9173b77804",
+    "src/restxml_xmlns_client/__init__.py": "2a449371cb24f0b87b6b2049f24c81bb756383dc483fc1525079d943e278cb65",
+    "src/restxml_xmlns_client/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/restxml_xmlns_client/_private/endpoints.py": "7d515fe771678e82ddbe07798d6b7e48c25c6c9bec19cec9318deb0bc5064ead",
+    "src/restxml_xmlns_client/_private/schemas.py": "446191e2ecccc07216170998f042d1eb4862949525613bcd60c1a26e65d05843",
+    "src/restxml_xmlns_client/aio/__init__.py": "e866ad70cd2dadc81c1f536d3542c3bfac9e44710ab7274a9189966a023de368",
+    "src/restxml_xmlns_client/aio/client.py": "04e1a6e37c21217a8cc89754909c42072c4bb901345293dfe14bde4173318b26",
+    "src/restxml_xmlns_client/aio/config.py": "dfdb14cab0ec633c99892914b68bb1bc129df64da4457a1770c8463d7520ced2",
+    "src/restxml_xmlns_client/aio/user_agent.py": "47a42572832cc5061a683f16eb4f2843752bb3c9d93d9ae4264fdf34aee09022",
+    "src/restxml_xmlns_client/client.py": "386bb4cde848f75e3be20e1d6c2b95e64b73224cc21009b017275d9a91580a5c",
+    "src/restxml_xmlns_client/config.py": "d0ebf114ecdad097cda37a31f682dda4d1f3225517fc03e16a71369d5dfbcbbf",
+    "src/restxml_xmlns_client/models.py": "fc8a774d66ce039c53574b682af086821f35e5b81af98d7643aa6527963d38a0",
+    "src/restxml_xmlns_client/models.pyi": "1ab7b67478c0b4d2183c811a2b6dd19ce57bd6852a664539a394a50c3706dbb8",
+    "src/restxml_xmlns_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/restxml_xmlns_client/user_agent.py": "cefef0e24ca0bb7708710501e04a5c87b5807d9a8a8be4fe9d020a383e4a99c8"
+  },
+  "version": 1
+}

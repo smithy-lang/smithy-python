@@ -4,6 +4,7 @@
 import inspect
 import re
 from collections.abc import Callable, Iterable, Iterator, Mapping
+from contextvars import ContextVar
 from copy import deepcopy
 from typing import Any, Protocol, cast
 from urllib.parse import parse_qsl
@@ -14,6 +15,23 @@ from smithy_http.identity import TokenIdentity
 from smithy_http.interfaces import HTTPRequest
 
 MOCK_CREDENTIAL = "HTTP_MOCK"
+
+CURRENT_OPERATION: ContextVar[str | None] = ContextVar(
+    "smithy_test_current_operation", default=None
+)
+"""The operation whose call is in flight, set by the invoke wrapper of a mocked or
+recording client so that transports can tell operations apart."""
+
+
+_MISSING = object()
+
+_CLIENT_ATTRIBUTES = ("_setup_done", "_config", "_transport")
+_CLIENT_HOOKS = {
+    "_post_setup": ("config",),
+    "_build_call": ("input", "operation", "config", "retry_strategy"),
+    "_invoke": ("input", "operation", "default_plugins", "plugins"),
+}
+_CREDENTIAL_FIELDS = ("aws_access_key_id", "aws_secret_access_key", "aws_session_token")
 
 
 class MockTransport(Protocol):
@@ -28,39 +46,40 @@ class NoResponse(SmithyError):
 
 def take_over(
     client: ClientBase[Any],
-    transport: MockTransport,
+    transport: Any,
     wrap_invoke: Callable[[Callable[..., Any]], Callable[..., Any]],
-    static_token_resolver: Callable[..., Any],
+    install: Callable[[Any, Any], None],
 ) -> None:
-    """Route the client's calls to the transport and replace its credentials.
+    """Route the client's calls to the transport.
 
-    :param static_token_resolver: Builds the sync or async static token resolver
-        that replaces an AWS bearer client's, from its ``identity`` keyword.
+    :param install: Puts the transport into a config. A mock passes
+        :py:func:`mock_install`, which also replaces the config's credentials and
+        bearer token; a recorder keeps them.
     :raises TypeError: If the client's internals aren't the ones this relies on.
     """
     _check_client(client)
     # Typed as Any so instance attributes can shadow the client's methods.
     target: Any = client
     if target._setup_done:
-        _scrub(target._config, transport, static_token_resolver)
+        install(target._config, transport)
         target._transport = transport
     elif target._config is not None:
         # Copied so the caller's config, possibly shared, keeps its own values.
         target._config = deepcopy(target._config)
-        _scrub(target._config, transport, static_token_resolver)
+        install(target._config, transport)
 
     post_setup = target._post_setup
     build_call = target._build_call
 
     # Client and operation plugins may set credentials or a transport after this.
     def _post_setup(config: Any) -> Any:
-        _scrub(config, transport, static_token_resolver)
+        install(config, transport)
         return post_setup(config)
 
     def _build_call(
         input: Any, operation: Any, *, config: Any, retry_strategy: Any
     ) -> Any:
-        _scrub(config, transport, static_token_resolver)
+        install(config, transport)
         return build_call(
             input, operation, config=config, retry_strategy=retry_strategy
         )
@@ -90,15 +109,38 @@ def mismatches(
     return failures, cause
 
 
-_MISSING = object()
+def track_operation(invoke: Callable[..., Any]) -> Callable[..., Any]:
+    """Wrap ``_invoke`` so transports can tell which operation is being called."""
 
-_CLIENT_ATTRIBUTES = ("_setup_done", "_config", "_transport")
-_CLIENT_HOOKS = {
-    "_post_setup": ("config",),
-    "_build_call": ("input", "operation", "config", "retry_strategy"),
-    "_invoke": ("input", "operation", "default_plugins", "plugins"),
-}
-_CREDENTIAL_FIELDS = ("aws_access_key_id", "aws_secret_access_key", "aws_session_token")
+    def _invoke(*args: Any, **kwargs: Any) -> Any:
+        token = CURRENT_OPERATION.set(operation_name(invoke, args, kwargs))
+        try:
+            return invoke(*args, **kwargs)
+        finally:
+            CURRENT_OPERATION.reset(token)
+
+    return _invoke
+
+
+def operation_name(invoke: Callable[..., Any], args: Any, kwargs: Any) -> str:
+    """Find the name of the operation among the arguments of an ``_invoke`` call."""
+    operation = inspect.signature(invoke).bind(*args, **kwargs).arguments["operation"]
+    return operation.schema.id.name
+
+
+def mock_install(
+    static_token_resolver: Callable[..., Any],
+) -> Callable[[Any, Any], None]:
+    """Build the ``install`` of a mock: it replaces a config's transport and secrets.
+
+    :param static_token_resolver: Builds the sync or async static token resolver
+        that replaces an AWS bearer client's, from its ``identity`` keyword.
+    """
+
+    def install(config: Any, transport: MockTransport) -> None:
+        _scrub_config(config, transport, static_token_resolver)
+
+    return install
 
 
 def _check_client(client: ClientBase[Any]) -> None:
@@ -136,7 +178,7 @@ def _check_config(config: Any) -> None:
         )
 
 
-def _scrub(
+def _scrub_config(
     config: Any, transport: MockTransport, static_token_resolver: Callable[..., Any]
 ) -> None:
     _check_config(config)
