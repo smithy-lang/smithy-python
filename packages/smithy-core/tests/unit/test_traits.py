@@ -20,6 +20,7 @@ from smithy_core.traits import (
     StaticContextParamsTrait,
     Trait,
     UnitTypeTrait,
+    WaitableTrait,
 )
 
 
@@ -106,6 +107,13 @@ def test_trait_factory_constructs_operation_context_params_trait():
     )
     assert isinstance(trait, OperationContextParamsTrait)
     assert trait.paths == {"DeleteObjectKeys": "Delete.Objects[*].Key"}
+
+
+def test_trait_factory_constructs_waitable_trait():
+    waiters: DocumentValue = {"ThingExists": {"acceptors": []}}
+    trait = Trait.new(WaitableTrait.id, waiters)
+    assert isinstance(trait, WaitableTrait)
+    assert trait.waiters == waiters
 
 
 @pytest.mark.parametrize("trait_cls", [RpcV2CborTrait, RpcV2JsonTrait])

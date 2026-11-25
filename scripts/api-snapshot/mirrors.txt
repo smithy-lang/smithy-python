@@ -79,6 +79,8 @@ Dual-mode symbols (async in aio, sync twin outside):
         AsyncSeekableBytesReader  SeekableBytesReader  (smithy_core.interfaces)
       utils.py
         read_streaming_blob_async  read_streaming_blob
+      waiters.py
+        wait_async  wait
   smithy_http/
     aio/
       auth/
@@ -111,4 +113,4 @@ Dual-mode symbols (async in aio, sync twin outside):
       http_record.py
         AsyncHTTPRecorder  HTTPRecorder
         instrument_async   instrument
-57 dual-mode symbol(s).
+58 dual-mode symbol(s).

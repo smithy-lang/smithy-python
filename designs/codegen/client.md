@@ -507,6 +507,7 @@ model assembled by Smithy with its ruleset compiled by `CompileBdd`:
 | API key auth | Operations with `@auth([httpApiKeyAuth])`, one also `@optionalAuth` |
 | No auth | Operations with `@auth([])` |
 | AWS config | `aws.api#service`, with the SDK ID `Field Notes` |
+| Waiters | `DescribeNote` with `@waitable` acceptors on an output path and a modeled error, one with a failure message |
 
 Its tests check which requests carry the API key and that a missing key fails
 the call. They resolve the endpoint from `AWS_ENDPOINT_URL_<SDK_ID>` and from a

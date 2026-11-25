@@ -27,12 +27,12 @@ service IDs, and package versions from
 | `rpcv2-json` | `rpcv2json` | 57 |
 | `query-compatible-rpcv2-cbor` | `querycompatiblerpcv2cbor` | 2 |
 | `non-query-compatible-rpcv2-cbor` | `nonquerycompatiblerpcv2cbor` | 0 |
-| `my-handwritten-model` | `my_handwritten_model` | 23 |
+| `my-handwritten-model` | `my_handwritten_model` | 27 |
 | `my-handwritten-json-model` | `my_handwritten_json_model` | 10 |
 | `types` | `example_types` | 10 |
 | `partitioned-types` | `partitioned_types` | 270 |
 
-The fourteen reference projections contribute 728 data schemas. The original
+The fourteen reference projections contribute 732 data schemas. The original
 example adds service renames, string and integer enums, unknown enum and union
 values, a Unit union member, collections, a modeled error, and streaming
 members. The Python partition stress fixture extends that example with 260

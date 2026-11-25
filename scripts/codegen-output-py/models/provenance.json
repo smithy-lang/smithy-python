@@ -24,8 +24,8 @@
     "fixture_sha256": "f0bc79bc2916afface193a50b5f61f6083ab204c62f02b90e0161681e711a7c5"
   },
   "my-handwritten-model": {
-    "assembled_sha256": "1780f788d2609192f0171e7bba32406ecd92cd2439ee44262e14d691a2bdf30c",
-    "fixture_sha256": "68bb54508ec3d6357bb9397598c3d46bf1d7393337cdbc9cbdb8612195733bb7"
+    "assembled_sha256": "29b0b9d49f96fd438bd596bd3920e4753498bbbdae98d15af9a259680e109080",
+    "fixture_sha256": "5c8b803fd4bfa93d4562ea087b690ecba933febba715d7d2915c225d029e0c6b"
   },
   "non-query-compatible-rpcv2-cbor": {
     "assembled_sha256": "e1b1ad2207f4fb8349d5396a0b99b96df828bd836b864d238a23ba4f0113ace8",

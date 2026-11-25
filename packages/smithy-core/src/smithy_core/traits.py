@@ -63,6 +63,7 @@ __all__ = [
     "TimestampFormatTrait",
     "Trait",
     "UnitTypeTrait",
+    "WaitableTrait",
     "XMLAttributeTrait",
     "XMLFlattenedTrait",
     "XMLNameTrait",
@@ -670,6 +671,20 @@ class OperationContextParamsTrait(
             assert isinstance(path, str)
             paths[name] = path
         object.__setattr__(self, "paths", paths)
+
+
+@dataclass(init=False, frozen=True)
+class WaitableTrait(Trait, id=ShapeID("smithy.waiters#waitable")):
+    """Defines an operation's waiters, keyed by waiter name."""
+
+    waiters: Mapping[str, "DocumentValue"] = field(
+        repr=False, hash=False, compare=False
+    )
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        assert isinstance(self.document_value, Mapping)
+        object.__setattr__(self, "waiters", self.document_value)
 
 
 def _parse_http_protocol_values(

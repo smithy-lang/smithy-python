@@ -354,6 +354,8 @@ _INCLUDED_TRAITS: Final = frozenset(
             "aws.protocols#awsQueryError",
             # restXml reads this to take an output from its root element's text.
             "aws.customizations#s3UnwrappedXmlOutput",
+            # The waiter runtime reads an operation's waiters from its schema.
+            "smithy.waiters#waitable",
         ),
     )
 )

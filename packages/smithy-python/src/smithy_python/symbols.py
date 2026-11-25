@@ -449,14 +449,22 @@ _KEYWORDS = frozenset(
 _ENUMS = frozenset({ShapeType.ENUM, ShapeType.INT_ENUM})
 # The names generated client methods use besides their input members: the
 # parameters they declare, and the models module alias their bodies reference.
-# ``stop_on_same_token`` is declared only by paginator methods, but is reserved on
-# every operation input so that an input's names don't depend on its pagination.
+# Paginator and waiter options are reserved on every operation input, so an
+# input's names don't depend on its pagination or waiters.
 # Where a caller reserves one, it is escaped past its siblings, as the runtime
 # escapes it, rather than colliding like other reserved names.
 # CAUTION: mirrors smithy_core._model_naming._RESERVED_INPUT_MEMBERS and
 # PythonSymbolProvider.OPERATION_PARAMETER_NAMES.
 _OPERATION_PARAMETER_NAMES = frozenset(
-    {"self", "plugins", "_models", "stop_on_same_token"}
+    {
+        "self",
+        "plugins",
+        "_models",
+        "stop_on_same_token",
+        "max_wait_time",
+        "min_delay",
+        "max_delay",
+    }
 )
 _RESERVED_DECLARATIONS = frozenset({"ServiceError"})
 _UNIT = ShapeId("smithy.api", "Unit")

@@ -12,6 +12,7 @@ from smithy_core.aio.eventstream import (
     AsyncOutputEventStream,
 )
 from smithy_core.aio.pagination import AsyncItemPaginator
+from smithy_core.aio.waiters import wait_async
 from smithy_http.plugins import user_agent_plugin
 
 from .. import models as _models
@@ -31,7 +32,7 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..models import ListItemsOutput
+    from ..models import GetItemOutput, ListItemsOutput
 
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,187 @@ class AsyncMyHandwrittenModel(AsyncClient[AsyncConfig]):
     """Client for MyHandwrittenModel"""
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
+
+    @_overload
+    async def get_item(
+        self,
+        request: _models.GetItemInput | _models.GetItemInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GetItemOutput: ...
+
+    @_overload
+    async def get_item(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GetItemInputDict],
+    ) -> GetItemOutput:
+        """
+        Gets an item and its status.
+
+        Args:
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `GetItemOutput`.
+        """
+
+    async def get_item(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GetItemOutput:
+        return await self._invoke(
+            self._select_input(_models.GET_ITEM, args, kwargs),
+            _models.GET_ITEM,
+            [],
+            plugins,
+        )
+
+    @_overload
+    async def wait_until_item_deleted(
+        self,
+        request: _models.GetItemInput | _models.GetItemInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+    ) -> _models.GetItemOutput | None: ...
+
+    @_overload
+    async def wait_until_item_deleted(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: _Unpack[_models.GetItemInputDict],
+    ) -> _models.GetItemOutput | None:
+        """
+        Polls `get_item` until the ItemDeleted waiter succeeds or fails.
+
+        Args:
+            plugins:
+                A list of callables that modify the configuration for each
+                attempt.
+            max_wait_time:
+                Maximum seconds to wait, including requests.
+            min_delay:
+                Minimum seconds between attempts. Defaults to 2.
+            max_delay:
+                Maximum seconds between attempts. Defaults to 120.
+
+        Returns:
+            The matching `GetItemOutput`, or None if the waiter succeeded on an error.
+
+        Raises:
+            ValueError: If a time is invalid.
+            WaiterFailureError: If the waiter reached its failure state.
+            WaiterTimeoutError: If `max_wait_time` passed first.
+        """
+
+    async def wait_until_item_deleted(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: object,
+    ) -> _models.GetItemOutput | None:
+        return await wait_async(
+            self._build_input(
+                self._select_input(_models.GET_ITEM, args, kwargs), _models.GET_ITEM
+            ),
+            _models.GET_ITEM,
+            self.get_item,
+            "ItemDeleted",
+            plugins,
+            max_wait_time=max_wait_time,
+            min_delay=min_delay,
+            max_delay=max_delay,
+        )
+
+    @_overload
+    async def wait_until_item_ready(
+        self,
+        request: _models.GetItemInput | _models.GetItemInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+    ) -> _models.GetItemOutput | None: ...
+
+    @_overload
+    async def wait_until_item_ready(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: _Unpack[_models.GetItemInputDict],
+    ) -> _models.GetItemOutput | None:
+        """
+        Waits until the item is ready.
+
+        Polls `get_item` until the ItemReady waiter succeeds or fails.
+
+        Args:
+            plugins:
+                A list of callables that modify the configuration for each
+                attempt.
+            max_wait_time:
+                Maximum seconds to wait, including requests.
+            min_delay:
+                Minimum seconds between attempts. Defaults to 1.
+            max_delay:
+                Maximum seconds between attempts. Defaults to 5.
+
+        Returns:
+            The matching `GetItemOutput`, or None if the waiter succeeded on an error.
+
+        Raises:
+            ValueError: If a time is invalid.
+            WaiterFailureError: If the waiter reached its failure state.
+            WaiterTimeoutError: If `max_wait_time` passed first.
+        """
+
+    async def wait_until_item_ready(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: object,
+    ) -> _models.GetItemOutput | None:
+        return await wait_async(
+            self._build_input(
+                self._select_input(_models.GET_ITEM, args, kwargs), _models.GET_ITEM
+            ),
+            _models.GET_ITEM,
+            self.get_item,
+            "ItemReady",
+            plugins,
+            max_wait_time=max_wait_time,
+            min_delay=min_delay,
+            max_delay=max_delay,
+        )
 
     @_overload
     async def list_items(

@@ -113,3 +113,105 @@ def test_paths_over_dynamic_models() -> None:
     )
     assert compile("TransactItems[*].Get.TableName")(value) == ["a"]
     assert compile("keys(RequestItems)")(value) == ["x"]
+
+
+WAITER_OUTPUT: dict[str, Any] = {
+    "Status": "ACTIVE",
+    "Count": 2,
+    "Zero": 0,
+    "Flag": False,
+    "Empty": [],
+    "Groups": [
+        {"Min": 2, "Instances": [{"State": "InService"}, {"State": "InService"}]},
+        {"Min": 2, "Instances": [{"State": "InService"}, {"State": "Pending"}]},
+    ],
+    "Destinations": [
+        {"Status": "DISABLED"},
+        {"Status": "ENABLE_FAILED"},
+    ],
+    "Services": [
+        {"Deployments": [1], "Running": 3, "Desired": 3},
+        {"Deployments": [1, 2], "Running": 3, "Desired": 3},
+    ],
+}
+
+
+@pytest.mark.parametrize(
+    "expression, expected",
+    [
+        ("Status == 'ACTIVE'", True),
+        ("Status != 'ACTIVE'", False),
+        ('Status == `"ACTIVE"`', True),
+        ("Count > `1`", True),
+        ("Count >= `3`", False),
+        ("Count < `3` && Count <= `2`", True),
+        ("Status > `1`", None),
+        ("Flag == `0`", False),
+        ("Zero == `false`", False),
+        ("length(Groups) == `2`", True),
+        ("length(Status)", 6),
+        ("length(Missing)", None),
+        ("length(Empty) == `0`", True),
+        ("Groups[0].Min", 2),
+        ("Groups[-1].Instances[1].State", "Pending"),
+        ("Groups[5]", None),
+        ("Groups[].Instances[?State == 'Pending'][].State", ["Pending"]),
+        (
+            "contains(Groups[].[length(Instances[?State=='InService']) >= Min][], "
+            "`false`)",
+            True,
+        ),
+        (
+            "length(Destinations) > `0` && length(Destinations[?Status == "
+            "'DISABLED' || Status == 'ENABLE_FAILED']) == length(Destinations)",
+            True,
+        ),
+        (
+            "length(Services[?!(length(Deployments) == `1` && Running == Desired)])"
+            " == `0`",
+            False,
+        ),
+        ("contains(Status, 'TIV')", True),
+        ("contains(Count, 'x')", None),
+        ("Zero || 'other'", 0),
+        ("Empty || Flag || 'last'", "last"),
+        ("Empty && 'never'", []),
+        ("!Empty", True),
+        ("Groups[*].Min | [0]", 2),
+        ("Groups[?@.Min == `2`] | length(@)", 2),
+    ],
+)
+def test_waiter_paths(expression: str, expected: Any) -> None:
+    assert compile(expression)(WAITER_OUTPUT) == expected
+
+
+def test_raw_strings_unescape_quotes() -> None:
+    assert compile("'it\\'s'")({}) == "it's"
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        "length(a, b)",
+        "contains(a)",
+        "sort_by(a, &b)",
+        "a[?b",
+        "a[1:2]",
+        "{a: b}",
+        "`not json`",
+        "a ==",
+        "a[*]b",
+        "'a''b'",
+    ],
+)
+def test_unsupported_waiter_paths(expression: str) -> None:
+    with pytest.raises(ValueError, match="Unsupported JMESPath expression"):
+        compile(expression)
+
+
+def test_waiter_paths_over_shapes() -> None:
+    value = _Input(
+        transact_items=[_TransactItem(get=_Get(table_name="g1")), _TransactItem()],
+    )
+    assert compile("length(TransactItems[?Get.TableName == 'g1'])")(value) == 1
+    assert compile("TransactItems[0].Get.TableName.upper")(value) is None

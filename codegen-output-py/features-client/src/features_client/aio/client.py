@@ -8,6 +8,7 @@ from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.components import AWSCredentialsIdentity
 from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.pagination import AsyncItemPaginator
+from smithy_core.aio.waiters import wait_async
 from smithy_http.aio.identity.token import AsyncStaticTokenResolver
 from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.identity import TokenIdentity
@@ -28,6 +29,170 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
     """
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
+
+    @overload
+    async def describe_note(
+        self,
+        request: models.DescribeNoteInput | models.DescribeNoteInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.DescribeNoteOutput: ...
+
+    @overload
+    async def describe_note(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.DescribeNoteInputDict],
+    ) -> models.DescribeNoteOutput:
+        """
+        Describes a note and its state. Needs no auth.
+
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DescribeNoteOutput`.
+        """
+
+    async def describe_note(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.DescribeNoteOutput:
+        return await self._invoke(
+            self._select_input(models.DESCRIBE_NOTE, args, kwargs),
+            models.DESCRIBE_NOTE,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def wait_until_note_deleted(
+        self,
+        request: models.DescribeNoteInput | models.DescribeNoteInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+    ) -> models.DescribeNoteOutput | None: ...
+
+    @overload
+    async def wait_until_note_deleted(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: Unpack[models.DescribeNoteInputDict],
+    ) -> models.DescribeNoteOutput | None:
+        """
+        Polls ``describe_note`` until the NoteDeleted waiter succeeds or fails.
+
+        :param plugins: Callables that change the configuration for each
+        attempt.
+        :param max_wait_time: Maximum seconds to wait, including requests.
+        :param min_delay: Minimum seconds between attempts. Defaults to 2.
+        :param max_delay: Maximum seconds between attempts. Defaults to 120.
+        :returns: The matching output, or None if the waiter succeeded on an
+        error.
+        :raises ValueError: If a time is invalid.
+        :raises WaiterFailureError: If the waiter reached its failure state.
+        :raises WaiterTimeoutError: If ``max_wait_time`` passed first.
+        """
+
+    async def wait_until_note_deleted(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: object,
+    ) -> models.DescribeNoteOutput | None:
+        return await wait_async(
+            self._build_input(
+                self._select_input(models.DESCRIBE_NOTE, args, kwargs),
+                models.DESCRIBE_NOTE,
+            ),
+            models.DESCRIBE_NOTE,
+            self.describe_note,
+            "NoteDeleted",
+            plugins,
+            max_wait_time=max_wait_time,
+            min_delay=min_delay,
+            max_delay=max_delay,
+        )
+
+    @overload
+    async def wait_until_note_saved(
+        self,
+        request: models.DescribeNoteInput | models.DescribeNoteInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+    ) -> models.DescribeNoteOutput | None: ...
+
+    @overload
+    async def wait_until_note_saved(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: Unpack[models.DescribeNoteInputDict],
+    ) -> models.DescribeNoteOutput | None:
+        """
+        Waits until the note is saved.
+
+        Polls ``describe_note`` until the NoteSaved waiter succeeds or fails.
+
+        :param plugins: Callables that change the configuration for each
+        attempt.
+        :param max_wait_time: Maximum seconds to wait, including requests.
+        :param min_delay: Minimum seconds between attempts. Defaults to 1.
+        :param max_delay: Maximum seconds between attempts. Defaults to 4.
+        :returns: The matching output, or None if the waiter succeeded on an
+        error.
+        :raises ValueError: If a time is invalid.
+        :raises WaiterFailureError: If the waiter reached its failure state.
+        :raises WaiterTimeoutError: If ``max_wait_time`` passed first.
+        """
+
+    async def wait_until_note_saved(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: object,
+    ) -> models.DescribeNoteOutput | None:
+        return await wait_async(
+            self._build_input(
+                self._select_input(models.DESCRIBE_NOTE, args, kwargs),
+                models.DESCRIBE_NOTE,
+            ),
+            models.DESCRIBE_NOTE,
+            self.describe_note,
+            "NoteSaved",
+            plugins,
+            max_wait_time=max_wait_time,
+            min_delay=min_delay,
+            max_delay=max_delay,
+        )
 
     @overload
     async def echo(

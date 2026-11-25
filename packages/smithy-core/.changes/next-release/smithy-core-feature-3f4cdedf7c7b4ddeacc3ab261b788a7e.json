@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `wait` in `smithy_core.waiters` and `wait_async` in `smithy_core.aio.waiters`, which poll an operation until its modeled waiter succeeds. Waits that fail raise `WaiterFailureError`. Waits that time out raise `WaiterTimeoutError`. Also added `WaitableTrait` to `smithy_core.traits`."
+}

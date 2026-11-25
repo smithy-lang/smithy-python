@@ -134,7 +134,8 @@ specification schedules the last attempt at that moment. Async callers that need
 a hard limit can wrap the call in `asyncio.timeout()`.
 
 `max_wait_time`, `min_delay`, and `max_delay` are reserved input member names on
-waitable operations, in the same way as `plugins`. No AWS input uses them today.
+every operation, in the same way as `plugins` and `stop_on_same_token`. Adding a
+waiter to a model doesn't rename its input members. No AWS input uses them today.
 
 The specification bounds waits by time and doesn't define attempt limits. This
 proposal doesn't add one, because with jittered backoff an attempt count doesn't
@@ -205,7 +206,7 @@ These can be exposed in the future if needed for user-defined waiters.
 | `output` | The path, run against the output, satisfies the comparator. |
 | `inputOutput` | The path, run against `{"input": request, "output": output}`, satisfies the comparator. |
 | `success` | `true` matches an output. `false` matches an error. |
-| `errorType` | The error's shape name or `response_metadata.error_code` equals the name. |
+| `errorType` | The error's shape name or `response_metadata.error_code` equals the name. An absolute shape ID matches only the modeled error with that ID. |
 
 Paths read the model objects directly, using the model's member names such as
 `Table.TableStatus`. `smithy_core._jmespath` compiles each path once, when the
