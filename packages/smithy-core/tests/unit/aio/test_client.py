@@ -37,6 +37,7 @@ from smithy_core.interceptors import (
 )
 from smithy_core.response import EMPTY_RESPONSE_METADATA
 from smithy_core.retries import (
+    RETRY_ATTEMPT,
     RETRY_STRATEGY,
     AdaptiveRetryStrategy,
     ExponentialRetryBackoffStrategy,
@@ -444,6 +445,69 @@ async def test_identity_resolves_before_the_endpoint_and_signing_after_hooks() -
         "read_after_signing",
     ]
     assert call.context[RESOLVED_IDENTITY] is identity
+
+
+async def test_prepare_attempt_request_runs_after_the_endpoint_and_before_signing_hooks() -> (
+    None
+):
+    events: list[str] = []
+    harness = pipeline_harness(NonDuplexTransport())
+    protocol = harness.protocol
+
+    def set_service_endpoint(*, request: Any, endpoint: Any) -> Any:
+        events.append("set_service_endpoint")
+        return request
+
+    def prepare_attempt_request(*, request: Any, context: Any) -> Any:
+        events.append(f"prepare_attempt_request {context[RETRY_ATTEMPT]}")
+        return request
+
+    call = replace(
+        retryable_client_call(), interceptor=InterceptorChain([_RecordHooks(events)])
+    )
+
+    with (
+        patch.object(protocol, "set_service_endpoint", set_service_endpoint),
+        patch.object(protocol, "prepare_attempt_request", prepare_attempt_request),
+    ):
+        await harness.pipeline(call)
+
+    assert events == [
+        "read_before_attempt",
+        "set_service_endpoint",
+        "prepare_attempt_request 1",
+        "modify_before_signing",
+        "read_before_signing",
+        "read_after_signing",
+    ]
+
+
+async def test_each_attempt_sees_its_attempt_number() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+
+    async def raise_retryable_error(**kwargs: Any) -> StubOutput:
+        raise CallError("Rate exceeded", is_retry_safe=True)
+
+    strategy = SimpleRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=0),
+        max_attempts=3,
+    )
+
+    with (
+        patch.object(harness.protocol, "deserialize_response", raise_retryable_error),
+        pytest.raises(CallError),
+    ):
+        await harness.pipeline(retryable_client_call(strategy))
+
+    assert harness.protocol.prepared_attempts == [1, 2, 3]
+
+
+async def test_a_call_that_is_not_retried_is_attempt_1() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+
+    await harness.pipeline(client_call())
+
+    assert harness.protocol.prepared_attempts == [1]
 
 
 async def test_modified_input_reaches_completion_when_serialization_fails() -> None:

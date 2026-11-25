@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Added `prepare_attempt_request()` to the `ClientProtocol`. Implementations that extend `HttpClientProtocol` inherit one and need no change. Protocols that implement `ClientProtocol` directly must add it."
+}

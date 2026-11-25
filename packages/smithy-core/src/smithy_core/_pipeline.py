@@ -45,7 +45,7 @@ from .interceptors import (
 from .interfaces import Endpoint, TypedProperties
 from .interfaces.auth import AuthOption, AuthSchemeResolver
 from .program import Program
-from .retries import AdaptiveRetryStrategy
+from .retries import RETRY_ATTEMPT, AdaptiveRetryStrategy
 from .schemas import APIOperation
 from .serializers import SerializeableShape
 from .shapes import ShapeID, ShapeType
@@ -264,6 +264,7 @@ class RequestPipelineBase[TRequest, TResponse]:
             not call.retryable()
             or (start := (yield from _rewind_position(body))) is None
         ):
+            request_context.properties[RETRY_ATTEMPT] = 1
             return (
                 yield from self._send_with_rate_limiting(
                     call, request_context, request_future
@@ -282,6 +283,7 @@ class RequestPipelineBase[TRequest, TResponse]:
             if retry_token.retry_delay:
                 yield partial(self._sleep, retry_token.retry_delay)
 
+            request_context.properties[RETRY_ATTEMPT] = retry_token.retry_count + 1
             try:
                 output_context = yield from self._send_with_rate_limiting(
                     call,
@@ -441,6 +443,13 @@ class RequestPipelineBase[TRequest, TResponse]:
                 request_context,
                 transport_request=self.protocol.set_service_endpoint(
                     request=request_context.transport_request, endpoint=service_endpoint
+                ),
+            )
+            request_context = replace(
+                request_context,
+                transport_request=self.protocol.prepare_attempt_request(
+                    request=request_context.transport_request,
+                    context=request_context.properties,
                 ),
             )
 

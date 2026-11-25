@@ -56,6 +56,9 @@ public class AwsCodegenTest {
         assertTrue(config.contains("self.auth_schemes = auth_schemes"));
         assertTrue(config.contains("default_factory=lambda: AIOHTTPClient()"));
         assertFalse(config.contains("from smithy_http.aio.crt import AWSCRTHTTPClient"));
+        // The AWS configs turn on the retry headers that the HTTP protocols send.
+        assertTrue(config.contains("(AsyncAwsConfig):"));
+        assertTrue(Files.readString(tempDir.resolve("src/restjson/config.py")).contains("(AwsConfig):"));
 
         var client = Files.readString(tempDir.resolve("src/restjson/aio/client.py"));
         assertInOrder(

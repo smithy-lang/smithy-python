@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Added the `amz-sdk-request` header, with the attempt number and the maximum attempts, to requests of generated AWS clients."
+}

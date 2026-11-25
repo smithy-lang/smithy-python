@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added the `amz-sdk-invocation-id` header to requests of generated AWS clients."
+}

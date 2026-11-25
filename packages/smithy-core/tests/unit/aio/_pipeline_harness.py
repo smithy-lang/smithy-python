@@ -14,7 +14,7 @@ from smithy_core.interfaces.retries import RetryStrategy
 from smithy_core.prelude import BLOB
 from smithy_core.program import Program
 from smithy_core.response import EMPTY_RESPONSE_METADATA, ResponseMetadata
-from smithy_core.retries import SimpleRetryStrategy
+from smithy_core.retries import RETRY_ATTEMPT, SimpleRetryStrategy
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
@@ -183,6 +183,8 @@ class StubProtocol:
         self.serialized_inputs: list[Any] = []
         self.set_service_endpoint_calls = 0
         self.service_endpoints: list[Any] = []
+        # The attempt number that each call of prepare_attempt_request saw.
+        self.prepared_attempts: list[int | None] = []
         self.deserialize_response_calls = 0
         self.create_event_publisher_calls = 0
         self.create_event_receiver_calls = 0
@@ -207,6 +209,10 @@ class StubProtocol:
     def set_service_endpoint(self, *, request: Any, endpoint: Any) -> Any:
         self.set_service_endpoint_calls += 1
         self.service_endpoints.append(endpoint)
+        return request
+
+    def prepare_attempt_request(self, *, request: Any, context: Any) -> Any:
+        self.prepared_attempts.append(context.get(RETRY_ATTEMPT))
         return request
 
     def deserialize_response_program(self, **kwargs: Any) -> Program[StubOutput]:
