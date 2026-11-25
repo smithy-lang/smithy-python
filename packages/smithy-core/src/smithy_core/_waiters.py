@@ -228,7 +228,7 @@ class _SuccessMatcher:
 
 @dataclass(frozen=True, slots=True)
 class _ErrorTypeMatcher:
-    """Matches an absolute shape ID exactly, otherwise a shape name or error code."""
+    """Matches a shape name or error code."""
 
     name: str
 
@@ -241,12 +241,6 @@ class _ErrorTypeMatcher:
     ) -> bool:
         if error is None:
             return False
-        if "#" in self.name:
-            return any(
-                str(error_id) == self.name
-                and isinstance(error, operation.error_registry.get(error_id))
-                for error_id in operation.error_ids
-            )
         if (
             isinstance(error, CallError)
             and error.response_metadata.error_code == self.name
@@ -310,7 +304,8 @@ def _matcher(label: str, kind: str, value: Any) -> _Matcher:
         case "success":
             return _SuccessMatcher(value)
         case "errorType":
-            return _ErrorTypeMatcher(value)
+            # An absolute shape ID matches on its name alone.
+            return _ErrorTypeMatcher(value.rpartition("#")[2])
         case _:
             raise ValueError(f"{label} has an unsupported {kind!r} matcher")
 

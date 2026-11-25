@@ -206,7 +206,7 @@ These can be exposed in the future if needed for user-defined waiters.
 | `output` | The path, run against the output, satisfies the comparator. |
 | `inputOutput` | The path, run against `{"input": request, "output": output}`, satisfies the comparator. |
 | `success` | `true` matches an output. `false` matches an error. |
-| `errorType` | The error's shape name or `response_metadata.error_code` equals the name. An absolute shape ID matches only the modeled error with that ID. |
+| `errorType` | The error's shape name or `response_metadata.error_code` equals the name. An absolute shape ID matches on its name alone. |
 
 Paths read the model objects directly, using the model's member names such as
 `Table.TableStatus`. `smithy_core._jmespath` compiles each path once, when the

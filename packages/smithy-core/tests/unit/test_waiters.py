@@ -76,12 +76,7 @@ _WAITERS: dict[str, Any] = {
             {"state": "success", "matcher": {"errorType": "NotFound"}},
         ],
     },
-    "ExactlyGone": {
-        "acceptors": [
-            {"state": "success", "matcher": {"errorType": "com.example#NotFound"}},
-        ],
-    },
-    "OtherGone": {
+    "GoneByShapeId": {
         "acceptors": [
             {"state": "success", "matcher": {"errorType": "com.other#NotFound"}},
         ],
@@ -388,15 +383,10 @@ def test_success_on_an_error_returns_none(
 
 
 @_AIO
-def test_an_absolute_shape_id_matches_only_that_modeled_error(
-    aio: bool, clock: _Clock
-) -> None:
-    assert _wait(aio, _Service(clock, _NotFound("gone")), "ExactlyGone") is None
-
+def test_an_absolute_shape_id_matches_on_its_name(aio: bool, clock: _Clock) -> None:
     code = CallError(response_metadata=ErrorResponseMetadata(error_code="NotFound"))
-    for waiter, error in (("ExactlyGone", code), ("OtherGone", _NotFound("gone"))):
-        with pytest.raises(WaiterFailureError):
-            _wait(aio, _Service(clock, error), waiter)
+    for error in (_NotFound("gone"), code):
+        assert _wait(aio, _Service(clock, error), "GoneByShapeId") is None
 
 
 def test_error_type_doesnt_match_other_errors(clock: _Clock) -> None:
