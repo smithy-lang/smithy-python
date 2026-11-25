@@ -14,8 +14,22 @@ from rpcv2json.models import (
     ClientOptionalDefaults,
     ClientOptionalDefaultsDict,
     ComplexNestedErrorData,
+    DefaultDiscriminatedShapeDict,
     Defaults,
     DefaultsDict,
+    DiscriminatedCircle,
+    DiscriminatedCircleDict,
+    DiscriminatedFrame,
+    DiscriminatedFrameDict,
+    DiscriminatedLabelDict,
+    DiscriminatedLabeled,
+    DiscriminatedLabeledDict,
+    DiscriminatedRectangle,
+    DiscriminatedRectangleDict,
+    DiscriminatedShapeDict,
+    DiscriminatedUnionOperationInput,
+    DiscriminatedUnionOperationInputDict,
+    DiscriminatedUnionOperationOutput,
     EmptyInputOutputInput,
     EmptyInputOutputInputDict,
     EmptyInputOutputOutput,
@@ -81,6 +95,12 @@ BigIntegerOperationOutput()
 ClientOptionalDefaults()
 ComplexNestedErrorData()
 Defaults()
+DiscriminatedCircle()
+DiscriminatedFrame()
+DiscriminatedLabeled()
+DiscriminatedRectangle()
+DiscriminatedUnionOperationInput()
+DiscriminatedUnionOperationOutput()
 EmptyInputOutputInput()
 EmptyInputOutputOutput()
 FractionalSecondsInput()
@@ -114,24 +134,32 @@ GreetingStruct()
 _params_0: BigDecimalOperationInputDict = {}
 _params_1: BigIntegerOperationInputDict = {}
 _params_2: ClientOptionalDefaultsDict = {}
-_params_3: DefaultsDict = {}
-_params_4: EmptyInputOutputInputDict = {}
-_params_5: FractionalSecondsInputDict = {}
-_params_6: GreetingWithErrorsInputDict = {}
-_params_7: NoInputOutputInputDict = {}
-_params_8: OperationWithDefaultsInputDict = {}
-_params_9: OptionalInputOutputInputDict = {}
-_params_10: RecursiveShapesInputDict = {}
-_params_11: RecursiveShapesInputOutputNested1Dict = {}
-_params_12: RecursiveShapesInputOutputNested2Dict = {}
-_params_13: RpcV2JsonDenseMapsInputDict = {}
-_params_14: RpcV2JsonListsInputDict = {}
-_params_15: RpcV2JsonSparseMapsInputDict = {}
-_params_16: SimpleScalarPropertiesInputDict = {}
-_params_17: SparseNullsOperationInputDict = {}
-_params_18: StructureListMemberDict = {}
-_params_19: TimestampFormatIgnoredInputDict = {}
-_params_20: GreetingStructDict = {}
+_params_3: DefaultDiscriminatedShapeDict = {"circle": _}
+_params_4: DefaultsDict = {}
+_params_5: DiscriminatedCircleDict = {}
+_params_6: DiscriminatedFrameDict = {}
+_params_7: DiscriminatedLabelDict = {"text": _}
+_params_8: DiscriminatedLabeledDict = {}
+_params_9: DiscriminatedRectangleDict = {}
+_params_10: DiscriminatedShapeDict = {"circle": _}
+_params_11: DiscriminatedUnionOperationInputDict = {}
+_params_12: EmptyInputOutputInputDict = {}
+_params_13: FractionalSecondsInputDict = {}
+_params_14: GreetingWithErrorsInputDict = {}
+_params_15: NoInputOutputInputDict = {}
+_params_16: OperationWithDefaultsInputDict = {}
+_params_17: OptionalInputOutputInputDict = {}
+_params_18: RecursiveShapesInputDict = {}
+_params_19: RecursiveShapesInputOutputNested1Dict = {}
+_params_20: RecursiveShapesInputOutputNested2Dict = {}
+_params_21: RpcV2JsonDenseMapsInputDict = {}
+_params_22: RpcV2JsonListsInputDict = {}
+_params_23: RpcV2JsonSparseMapsInputDict = {}
+_params_24: SimpleScalarPropertiesInputDict = {}
+_params_25: SparseNullsOperationInputDict = {}
+_params_26: StructureListMemberDict = {}
+_params_27: TimestampFormatIgnoredInputDict = {}
+_params_28: GreetingStructDict = {}
 
 
 def _request[T](form: type[T]) -> T:
@@ -148,6 +176,16 @@ async def check_async_calls(client: AsyncRpcV2JsonProtocol) -> None:
     await client.big_integer_operation(**_request(BigIntegerOperationInputDict))
     await client.big_integer_operation(_request(BigIntegerOperationInput))
     await client.big_integer_operation(_request(BigIntegerOperationInputDict))
+    await client.discriminated_union_operation()
+    await client.discriminated_union_operation(
+        **_request(DiscriminatedUnionOperationInputDict)
+    )
+    await client.discriminated_union_operation(
+        _request(DiscriminatedUnionOperationInput)
+    )
+    await client.discriminated_union_operation(
+        _request(DiscriminatedUnionOperationInputDict)
+    )
     await client.empty_input_output()
     await client.empty_input_output(**_request(EmptyInputOutputInputDict))
     await client.empty_input_output(_request(EmptyInputOutputInput))
@@ -212,6 +250,12 @@ def check_sync_calls(client: RpcV2JsonProtocol) -> None:
     client.big_integer_operation(**_request(BigIntegerOperationInputDict))
     client.big_integer_operation(_request(BigIntegerOperationInput))
     client.big_integer_operation(_request(BigIntegerOperationInputDict))
+    client.discriminated_union_operation()
+    client.discriminated_union_operation(
+        **_request(DiscriminatedUnionOperationInputDict)
+    )
+    client.discriminated_union_operation(_request(DiscriminatedUnionOperationInput))
+    client.discriminated_union_operation(_request(DiscriminatedUnionOperationInputDict))
     client.empty_input_output()
     client.empty_input_output(**_request(EmptyInputOutputInputDict))
     client.empty_input_output(_request(EmptyInputOutputInput))

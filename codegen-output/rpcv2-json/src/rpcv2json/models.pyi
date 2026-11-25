@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from enum import IntEnum, StrEnum
-from typing import Self, TypedDict
+from typing import Self, TypedDict, Union
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
@@ -145,6 +145,41 @@ class ComplexNestedErrorData(_SerdeShape):
 
     foo: str | None = ...
 
+@dataclass
+class DefaultDiscriminatedShapeCircle(_SerdeShape):
+    value: DiscriminatedCircle
+
+@dataclass
+class DefaultDiscriminatedShapeUnknown(_SerdeShape):
+    """
+    Represents an unknown variant.
+
+    If you receive this value, you will need to update your library to
+    receive the parsed value.
+
+    This value may not be deliberately sent.
+    """
+
+    tag: str
+
+DefaultDiscriminatedShape = Union[
+    DefaultDiscriminatedShapeCircle | DefaultDiscriminatedShapeUnknown
+]
+
+class _DefaultDiscriminatedShapeDeserializer:
+    def deserialize(
+        self, deserializer: ShapeDeserializer
+    ) -> DefaultDiscriminatedShape: ...
+
+class DefaultDiscriminatedShapeCircleDict(TypedDict):
+    circle: DiscriminatedCircle | DiscriminatedCircleDict
+
+DefaultDiscriminatedShapeDict = Union[DefaultDiscriminatedShapeCircleDict]
+"""
+Dictionary form of `DefaultDiscriminatedShape`, setting exactly one
+variant.
+"""
+
 @dataclass(kw_only=True)
 class Defaults(_SerdeShape):
     """Dataclass for Defaults structure."""
@@ -199,6 +234,180 @@ class DefaultsDict(TypedDict, total=False):
     zero_long: int | None
     zero_float: float | None
     zero_double: float | None
+
+@dataclass(kw_only=True)
+class DiscriminatedCircle(_SerdeShape):
+    """Dataclass for DiscriminatedCircle structure."""
+
+    radius: int | None = ...
+
+class DiscriminatedCircleDict(TypedDict, total=False):
+    """Dictionary form of `DiscriminatedCircle`."""
+
+    radius: int | None
+
+@dataclass(kw_only=True)
+class DiscriminatedFrame(_SerdeShape):
+    """Dataclass for DiscriminatedFrame structure."""
+
+    content: DiscriminatedShape | None = ...
+
+class DiscriminatedFrameDict(TypedDict, total=False):
+    """Dictionary form of `DiscriminatedFrame`."""
+
+    content: DiscriminatedShape | DiscriminatedShapeDict | None
+
+@dataclass
+class DiscriminatedLabelText(_SerdeShape):
+    value: str
+
+@dataclass
+class DiscriminatedLabelCode(_SerdeShape):
+    value: int
+
+@dataclass
+class DiscriminatedLabelUnknown(_SerdeShape):
+    """
+    Represents an unknown variant.
+
+    If you receive this value, you will need to update your library to
+    receive the parsed value.
+
+    This value may not be deliberately sent.
+    """
+
+    tag: str
+
+DiscriminatedLabel = Union[
+    DiscriminatedLabelText | DiscriminatedLabelCode | DiscriminatedLabelUnknown
+]
+
+class _DiscriminatedLabelDeserializer:
+    def deserialize(self, deserializer: ShapeDeserializer) -> DiscriminatedLabel: ...
+
+class DiscriminatedLabelTextDict(TypedDict):
+    text: str
+
+class DiscriminatedLabelCodeDict(TypedDict):
+    code: int
+
+DiscriminatedLabelDict = Union[DiscriminatedLabelTextDict | DiscriminatedLabelCodeDict]
+"""Dictionary form of `DiscriminatedLabel`, setting exactly one variant."""
+
+@dataclass(kw_only=True)
+class DiscriminatedLabeled(_SerdeShape):
+    """Dataclass for DiscriminatedLabeled structure."""
+
+    label: DiscriminatedLabel | None = ...
+
+class DiscriminatedLabeledDict(TypedDict, total=False):
+    """Dictionary form of `DiscriminatedLabeled`."""
+
+    label: DiscriminatedLabel | DiscriminatedLabelDict | None
+
+@dataclass(kw_only=True)
+class DiscriminatedRectangle(_SerdeShape):
+    """Dataclass for DiscriminatedRectangle structure."""
+
+    width: int | None = ...
+    height: int | None = ...
+
+class DiscriminatedRectangleDict(TypedDict, total=False):
+    """Dictionary form of `DiscriminatedRectangle`."""
+
+    width: int | None
+    height: int | None
+
+@dataclass
+class DiscriminatedShapeCircle(_SerdeShape):
+    value: DiscriminatedCircle
+
+@dataclass
+class DiscriminatedShapeRectangle(_SerdeShape):
+    value: DiscriminatedRectangle
+
+@dataclass
+class DiscriminatedShapeFrame(_SerdeShape):
+    value: DiscriminatedFrame
+
+@dataclass
+class DiscriminatedShapeLabeled(_SerdeShape):
+    value: DiscriminatedLabeled
+
+@dataclass
+class DiscriminatedShapeUnknown(_SerdeShape):
+    """
+    Represents an unknown variant.
+
+    If you receive this value, you will need to update your library to
+    receive the parsed value.
+
+    This value may not be deliberately sent.
+    """
+
+    tag: str
+
+DiscriminatedShape = Union[
+    DiscriminatedShapeCircle
+    | DiscriminatedShapeRectangle
+    | DiscriminatedShapeFrame
+    | DiscriminatedShapeLabeled
+    | DiscriminatedShapeUnknown
+]
+
+class _DiscriminatedShapeDeserializer:
+    def deserialize(self, deserializer: ShapeDeserializer) -> DiscriminatedShape: ...
+
+class DiscriminatedShapeCircleDict(TypedDict):
+    circle: DiscriminatedCircle | DiscriminatedCircleDict
+
+class DiscriminatedShapeRectangleDict(TypedDict):
+    rectangle: DiscriminatedRectangle | DiscriminatedRectangleDict
+
+class DiscriminatedShapeFrameDict(TypedDict):
+    frame: DiscriminatedFrame | DiscriminatedFrameDict
+
+class DiscriminatedShapeLabeledDict(TypedDict):
+    labeled: DiscriminatedLabeled | DiscriminatedLabeledDict
+
+DiscriminatedShapeDict = Union[
+    DiscriminatedShapeCircleDict
+    | DiscriminatedShapeRectangleDict
+    | DiscriminatedShapeFrameDict
+    | DiscriminatedShapeLabeledDict
+]
+"""Dictionary form of `DiscriminatedShape`, setting exactly one variant."""
+
+@dataclass(kw_only=True)
+class DiscriminatedUnionOperationInput(_SerdeShape):
+    """Dataclass for DiscriminatedUnionOperationInput structure."""
+
+    shape: DiscriminatedShape | None = ...
+    default_shape: DefaultDiscriminatedShape | None = ...
+    shapes: list[DiscriminatedShape] | None = ...
+
+class DiscriminatedUnionOperationInputDict(TypedDict, total=False):
+    """Dictionary form of `DiscriminatedUnionOperationInput`."""
+
+    shape: DiscriminatedShape | DiscriminatedShapeDict | None
+    default_shape: DefaultDiscriminatedShape | DefaultDiscriminatedShapeDict | None
+    shapes: Sequence[DiscriminatedShape | DiscriminatedShapeDict] | None
+
+@dataclass(kw_only=True)
+class DiscriminatedUnionOperationOutput(_SerdeShape):
+    """Dataclass for DiscriminatedUnionOperationOutput structure."""
+
+    shape: DiscriminatedShape | None = ...
+    default_shape: DefaultDiscriminatedShape | None = ...
+    shapes: list[DiscriminatedShape] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
 
 @dataclass(kw_only=True)
 class EmptyInputOutputInput(_SerdeShape):
@@ -720,6 +929,9 @@ class IntegerEnum(UnknownEnumMixin, IntEnum):
 
 BIG_DECIMAL_OPERATION: APIOperation[BigDecimalOperationInput, BigDecimalOperationOutput]
 BIG_INTEGER_OPERATION: APIOperation[BigIntegerOperationInput, BigIntegerOperationOutput]
+DISCRIMINATED_UNION_OPERATION: APIOperation[
+    DiscriminatedUnionOperationInput, DiscriminatedUnionOperationOutput
+]
 EMPTY_INPUT_OUTPUT: APIOperation[EmptyInputOutputInput, EmptyInputOutputOutput]
 FRACTIONAL_SECONDS: APIOperation[FractionalSecondsInput, FractionalSecondsOutput]
 GREETING_WITH_ERRORS: APIOperation[GreetingWithErrorsInput, GreetingWithErrorsOutput]

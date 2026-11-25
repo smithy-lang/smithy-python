@@ -23,7 +23,18 @@ from rpcv2json.models import (
     BigDecimalOperationOutput,
     BigIntegerOperationOutput,
     ClientOptionalDefaults,
+    DefaultDiscriminatedShapeCircle,
     Defaults,
+    DiscriminatedCircle,
+    DiscriminatedFrame,
+    DiscriminatedLabelText,
+    DiscriminatedLabeled,
+    DiscriminatedRectangle,
+    DiscriminatedShapeCircle,
+    DiscriminatedShapeFrame,
+    DiscriminatedShapeLabeled,
+    DiscriminatedShapeRectangle,
+    DiscriminatedUnionOperationOutput,
     EmptyInputOutputOutput,
     FractionalSecondsOutput,
     GreetingStruct,
@@ -815,6 +826,804 @@ async def test_rpc_v2_json_response_big_integer_negative_large_value_response_bi
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
         expected = BigIntegerOperationOutput(value=-9223372036854775809)
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+async def test_rpc_v2_json_request_discriminated_union_request_discriminated_union_operation() -> (
+    None
+):
+    """
+    Serializes a discriminated union as a flat object, with the
+    discriminator field naming the member that is set.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+        )
+    )
+
+    try:
+        await client.discriminated_union_operation(
+            shape=DiscriminatedShapeCircle(value=DiscriminatedCircle(radius=5))
+        )
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert (
+            actual.destination.path
+            == "/service/RpcV2JsonProtocol/operation/DiscriminatedUnionOperation"
+        )
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("accept", "application/json"),
+            ("content-type", "application/json"),
+            ("smithy-protocol", "rpc-v2-json"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = await AsyncBytesReader(actual.body or b"").read()
+        expected_body_content = b'{\n    "shape": {\n        "type": "circle",\n        "radius": 5\n    }\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+async def test_rpc_v2_json_request_discriminated_union_multiple_members_request_discriminated_union_operation() -> (
+    None
+):
+    """
+    Serializes a discriminated union whose set member targets a structure
+    with several members, all serialized alongside the discriminator field.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+        )
+    )
+
+    try:
+        await client.discriminated_union_operation(
+            shape=DiscriminatedShapeRectangle(
+                value=DiscriminatedRectangle(width=3, height=4)
+            )
+        )
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert (
+            actual.destination.path
+            == "/service/RpcV2JsonProtocol/operation/DiscriminatedUnionOperation"
+        )
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("accept", "application/json"),
+            ("content-type", "application/json"),
+            ("smithy-protocol", "rpc-v2-json"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = await AsyncBytesReader(actual.body or b"").read()
+        expected_body_content = b'{\n    "shape": {\n        "type": "rectangle",\n        "width": 3,\n        "height": 4\n    }\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+async def test_rpc_v2_json_request_discriminated_union_default_discriminator_request_discriminated_union_operation() -> (
+    None
+):
+    """
+    Serializes a discriminated union whose trait has no value, which uses
+    the default discriminator field name, __type.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+        )
+    )
+
+    try:
+        await client.discriminated_union_operation(
+            default_shape=DefaultDiscriminatedShapeCircle(
+                value=DiscriminatedCircle(radius=5)
+            )
+        )
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert (
+            actual.destination.path
+            == "/service/RpcV2JsonProtocol/operation/DiscriminatedUnionOperation"
+        )
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("accept", "application/json"),
+            ("content-type", "application/json"),
+            ("smithy-protocol", "rpc-v2-json"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = await AsyncBytesReader(actual.body or b"").read()
+        expected_body_content = b'{\n    "defaultShape": {\n        "__type": "circle",\n        "radius": 5\n    }\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+async def test_rpc_v2_json_request_nested_discriminated_union_request_discriminated_union_operation() -> (
+    None
+):
+    """
+    Serializes a discriminated union whose set member targets a structure
+    that contains another discriminated union, which is serialized as a
+    nested object with its own discriminator field.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+        )
+    )
+
+    try:
+        await client.discriminated_union_operation(
+            shape=DiscriminatedShapeFrame(
+                value=DiscriminatedFrame(
+                    content=DiscriminatedShapeCircle(
+                        value=DiscriminatedCircle(radius=5)
+                    )
+                )
+            )
+        )
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert (
+            actual.destination.path
+            == "/service/RpcV2JsonProtocol/operation/DiscriminatedUnionOperation"
+        )
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("accept", "application/json"),
+            ("content-type", "application/json"),
+            ("smithy-protocol", "rpc-v2-json"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = await AsyncBytesReader(actual.body or b"").read()
+        expected_body_content = b'{\n    "shape": {\n        "type": "frame",\n        "content": {\n            "type": "circle",\n            "radius": 5\n        }\n    }\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+async def test_rpc_v2_json_request_discriminated_union_list_request_discriminated_union_operation() -> (
+    None
+):
+    """
+    Serializes a list of discriminated unions, where each element is a flat
+    object with its own discriminator field.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+        )
+    )
+
+    try:
+        await client.discriminated_union_operation(
+            shapes=[
+                DiscriminatedShapeCircle(value=DiscriminatedCircle(radius=5)),
+                DiscriminatedShapeRectangle(
+                    value=DiscriminatedRectangle(width=3, height=4)
+                ),
+            ]
+        )
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert (
+            actual.destination.path
+            == "/service/RpcV2JsonProtocol/operation/DiscriminatedUnionOperation"
+        )
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("accept", "application/json"),
+            ("content-type", "application/json"),
+            ("smithy-protocol", "rpc-v2-json"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = await AsyncBytesReader(actual.body or b"").read()
+        expected_body_content = b'{\n    "shapes": [\n        {\n            "type": "circle",\n            "radius": 5\n        },\n        {\n            "type": "rectangle",\n            "width": 3,\n            "height": 4\n        }\n    ]\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+async def test_rpc_v2_json_request_standard_union_in_discriminated_union_request_discriminated_union_operation() -> (
+    None
+):
+    """
+    Serializes a discriminated union whose set member targets a structure
+    that contains a standard union, which uses the standard union encoding.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+        )
+    )
+
+    try:
+        await client.discriminated_union_operation(
+            shape=DiscriminatedShapeLabeled(
+                value=DiscriminatedLabeled(label=DiscriminatedLabelText(value="hello"))
+            )
+        )
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert (
+            actual.destination.path
+            == "/service/RpcV2JsonProtocol/operation/DiscriminatedUnionOperation"
+        )
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("accept", "application/json"),
+            ("content-type", "application/json"),
+            ("smithy-protocol", "rpc-v2-json"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = await AsyncBytesReader(actual.body or b"").read()
+        expected_body_content = b'{\n    "shape": {\n        "type": "labeled",\n        "label": {\n            "text": "hello"\n        }\n    }\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+async def test_rpc_v2_json_response_discriminated_union_response_discriminated_union_operation() -> (
+    None
+):
+    """
+    Deserializes a discriminated union from a flat object whose first field
+    is the discriminator.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("Content-Type", "application/json"),
+                    ("smithy-protocol", "rpc-v2-json"),
+                ],
+                body=b'{\n    "shape": {\n        "type": "rectangle",\n        "width": 3,\n        "height": 4\n    }\n}',
+            ),
+        )
+    )
+
+    try:
+        actual = await client.discriminated_union_operation()
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DiscriminatedUnionOperationOutput(
+            shape=DiscriminatedShapeRectangle(
+                value=DiscriminatedRectangle(width=3, height=4)
+            )
+        )
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+async def test_rpc_v2_json_response_discriminated_union_discriminator_last_response_discriminated_union_operation() -> (
+    None
+):
+    """
+    Deserializes a discriminated union whose discriminator field is the last
+    field of the object.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("Content-Type", "application/json"),
+                    ("smithy-protocol", "rpc-v2-json"),
+                ],
+                body=b'{\n    "shape": {\n        "width": 3,\n        "height": 4,\n        "type": "rectangle"\n    }\n}',
+            ),
+        )
+    )
+
+    try:
+        actual = await client.discriminated_union_operation()
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DiscriminatedUnionOperationOutput(
+            shape=DiscriminatedShapeRectangle(
+                value=DiscriminatedRectangle(width=3, height=4)
+            )
+        )
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+async def test_rpc_v2_json_response_discriminated_union_discriminator_in_middle_response_discriminated_union_operation() -> (
+    None
+):
+    """
+    Deserializes a discriminated union whose discriminator field is between
+    other fields of the object.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("Content-Type", "application/json"),
+                    ("smithy-protocol", "rpc-v2-json"),
+                ],
+                body=b'{\n    "shape": {\n        "width": 3,\n        "type": "rectangle",\n        "height": 4\n    }\n}',
+            ),
+        )
+    )
+
+    try:
+        actual = await client.discriminated_union_operation()
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DiscriminatedUnionOperationOutput(
+            shape=DiscriminatedShapeRectangle(
+                value=DiscriminatedRectangle(width=3, height=4)
+            )
+        )
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+async def test_rpc_v2_json_response_discriminated_union_default_discriminator_response_discriminated_union_operation() -> (
+    None
+):
+    """
+    Deserializes a discriminated union whose trait has no value, which uses
+    the default discriminator field name, __type.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("Content-Type", "application/json"),
+                    ("smithy-protocol", "rpc-v2-json"),
+                ],
+                body=b'{\n    "defaultShape": {\n        "__type": "circle",\n        "radius": 5\n    }\n}',
+            ),
+        )
+    )
+
+    try:
+        actual = await client.discriminated_union_operation()
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DiscriminatedUnionOperationOutput(
+            default_shape=DefaultDiscriminatedShapeCircle(
+                value=DiscriminatedCircle(radius=5)
+            )
+        )
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+async def test_rpc_v2_json_response_nested_discriminated_union_discriminators_last_response_discriminated_union_operation() -> (
+    None
+):
+    """
+    Deserializes a discriminated union that contains another discriminated
+    union, where the discriminator field of each object is its last field.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("Content-Type", "application/json"),
+                    ("smithy-protocol", "rpc-v2-json"),
+                ],
+                body=b'{\n    "shape": {\n        "content": {\n            "radius": 5,\n            "type": "circle"\n        },\n        "type": "frame"\n    }\n}',
+            ),
+        )
+    )
+
+    try:
+        actual = await client.discriminated_union_operation()
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DiscriminatedUnionOperationOutput(
+            shape=DiscriminatedShapeFrame(
+                value=DiscriminatedFrame(
+                    content=DiscriminatedShapeCircle(
+                        value=DiscriminatedCircle(radius=5)
+                    )
+                )
+            )
+        )
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+async def test_rpc_v2_json_response_discriminated_union_ignores_unknown_fields_response_discriminated_union_operation() -> (
+    None
+):
+    """
+    Deserializes a discriminated union while ignoring fields that are not
+    members of the set member's target structure, including a __type
+    field when the discriminator field has a different name.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("Content-Type", "application/json"),
+                    ("smithy-protocol", "rpc-v2-json"),
+                ],
+                body=b'{\n    "shape": {\n        "type": "circle",\n        "__type": "rectangle",\n        "radius": 5,\n        "unknown": "ignored"\n    }\n}',
+            ),
+        )
+    )
+
+    try:
+        actual = await client.discriminated_union_operation()
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DiscriminatedUnionOperationOutput(
+            shape=DiscriminatedShapeCircle(value=DiscriminatedCircle(radius=5))
+        )
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+async def test_rpc_v2_json_response_discriminated_union_list_response_discriminated_union_operation() -> (
+    None
+):
+    """
+    Deserializes a list of discriminated unions, including elements whose
+    discriminator field is not the first field.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("Content-Type", "application/json"),
+                    ("smithy-protocol", "rpc-v2-json"),
+                ],
+                body=b'{\n    "shapes": [\n        {\n            "type": "circle",\n            "radius": 5\n        },\n        {\n            "width": 3,\n            "height": 4,\n            "type": "rectangle"\n        }\n    ]\n}',
+            ),
+        )
+    )
+
+    try:
+        actual = await client.discriminated_union_operation()
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DiscriminatedUnionOperationOutput(
+            shapes=[
+                DiscriminatedShapeCircle(value=DiscriminatedCircle(radius=5)),
+                DiscriminatedShapeRectangle(
+                    value=DiscriminatedRectangle(width=3, height=4)
+                ),
+            ]
+        )
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+async def test_rpc_v2_json_response_standard_union_in_discriminated_union_response_discriminated_union_operation() -> (
+    None
+):
+    """
+    Deserializes a discriminated union whose set member targets a structure
+    that contains a standard union, which uses the standard union encoding.
+    """
+    client = AsyncRpcV2JsonProtocol(
+        config=AsyncConfig(
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("Content-Type", "application/json"),
+                    ("smithy-protocol", "rpc-v2-json"),
+                ],
+                body=b'{\n    "shape": {\n        "type": "labeled",\n        "label": {\n            "text": "hello"\n        }\n    }\n}',
+            ),
+        )
+    )
+
+    try:
+        actual = await client.discriminated_union_operation()
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DiscriminatedUnionOperationOutput(
+            shape=DiscriminatedShapeLabeled(
+                value=DiscriminatedLabeled(label=DiscriminatedLabelText(value="hello"))
+            )
+        )
 
         assert deep_equal(actual, expected)
 

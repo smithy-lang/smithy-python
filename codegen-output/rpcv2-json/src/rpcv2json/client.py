@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from .models import (
         BigDecimalOperationOutput,
         BigIntegerOperationOutput,
+        DiscriminatedUnionOperationOutput,
         EmptyInputOutputOutput,
         FractionalSecondsOutput,
         GreetingWithErrorsOutput,
@@ -122,6 +123,48 @@ class RpcV2JsonProtocol(Client[Config]):
         return self._invoke(
             self._select_input(_models.BIG_INTEGER_OPERATION, args, kwargs),
             _models.BIG_INTEGER_OPERATION,
+            [],
+            plugins,
+        )
+
+    @_overload
+    def discriminated_union_operation(
+        self,
+        request: _models.DiscriminatedUnionOperationInput
+        | _models.DiscriminatedUnionOperationInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> DiscriminatedUnionOperationOutput: ...
+
+    @_overload
+    def discriminated_union_operation(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.DiscriminatedUnionOperationInputDict],
+    ) -> DiscriminatedUnionOperationOutput:
+        """
+        Invokes the DiscriminatedUnionOperation operation.
+
+        Args:
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `DiscriminatedUnionOperationOutput`.
+        """
+
+    def discriminated_union_operation(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> DiscriminatedUnionOperationOutput:
+        return self._invoke(
+            self._select_input(_models.DISCRIMINATED_UNION_OPERATION, args, kwargs),
+            _models.DISCRIMINATED_UNION_OPERATION,
             [],
             plugins,
         )
