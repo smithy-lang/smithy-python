@@ -40,8 +40,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         This example uses all query string types.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `AllQueryStringTypesOutput`.
         """
 
     def all_query_string_types(
@@ -78,8 +82,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         The fixed query string parameters and variable parameters must both be
         serialized (implementations may need to merge them together).
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ConstantAndVariableQueryStringOutput`.
         """
 
     def constant_and_variable_query_string(
@@ -115,8 +123,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         compatible. The fixed query string parameter named "hello" should
         in no way conflict with the label, `{hello}`.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ConstantQueryStringOutput`.
         """
 
     def constant_query_string(
@@ -151,8 +163,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         The example tests how servers must support requests
         containing a `Content-Type` header with parameters.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ContentTypeParametersOutput`.
         """
 
     def content_type_parameters(
@@ -185,8 +201,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the DatetimeOffsets operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
         """
 
     def datetime_offsets(
@@ -219,8 +239,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         This example serializes a document as part of the payload.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DocumentTypeOutput`.
         """
 
     def document_type(
@@ -254,8 +278,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         This example serializes documents as the value of maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DocumentTypeAsMapValueOutput`.
         """
 
     def document_type_as_map_value(
@@ -289,8 +317,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         This example serializes a document as the entire HTTP payload.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DocumentTypeAsPayloadOutput`.
         """
 
     def document_type_as_payload(
@@ -327,8 +359,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         and empty output structure that reuses the same shape. While this should
         be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EmptyInputAndEmptyOutputOutput`.
         """
 
     def empty_input_and_empty_output(
@@ -361,8 +397,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the EndpointOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
         """
 
     def endpoint_operation(
@@ -396,8 +436,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
         """
 
     def endpoint_with_host_label_operation(
@@ -430,8 +474,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the FractionalSeconds operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
         """
 
     def fractional_seconds(
@@ -473,8 +521,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         properly (de)serialize successful and error responses based on the
         the presence of the
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
         """
 
     def greeting_with_errors(
@@ -508,8 +560,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the HostWithPathOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
         """
 
     def host_with_path_operation(
@@ -543,8 +599,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         This example tests httpChecksumRequired trait
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpChecksumRequiredOutput`.
         """
 
     def http_checksum_required(
@@ -578,8 +638,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Clients that perform this test extract all headers from the response.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpEmptyPrefixHeadersOutput`.
         """
 
     def http_empty_prefix_headers(
@@ -612,8 +676,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the HttpEnumPayload operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpEnumPayloadOutput`.
         """
 
     def http_enum_payload(
@@ -649,8 +717,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         In this example, no JSON document is synthesized because the payload is
         not a structure or a union type.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadTraitsOutput`.
         """
 
     def http_payload_traits(
@@ -685,8 +757,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         This example uses a `@mediaType` trait on the payload to force a custom
         content-type to be serialized.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
 
     def http_payload_traits_with_media_type(
@@ -725,8 +801,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         Note that serializing a structure changes the wrapper element name
         to match the targeted structure.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithStructureOutput`.
         """
 
     def http_payload_with_structure(
@@ -760,8 +840,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         This example serializes a union in the payload.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithUnionOutput`.
         """
 
     def http_payload_with_union(
@@ -795,8 +879,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         This examples adds headers to the input of a request and response by
         prefix.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPrefixHeadersOutput`.
         """
 
     def http_prefix_headers(
@@ -830,8 +918,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Clients that perform this test extract all headers from the response.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPrefixHeadersInResponseOutput`.
         """
 
     def http_prefix_headers_in_response(
@@ -865,8 +957,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         This example tests httpQueryParams when no other query parameters exist.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpQueryParamsOnlyOperationOutput`.
         """
 
     def http_query_params_only_operation(
@@ -900,8 +996,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the HttpRequestWithFloatLabels operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithFloatLabelsOutput`.
         """
 
     def http_request_with_float_labels(
@@ -935,8 +1035,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
 
     def http_request_with_greedy_label_in_path(
@@ -973,8 +1077,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         The example tests how requests are serialized when there's no input
         payload but there are HTTP labels.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithLabelsOutput`.
         """
 
     def http_request_with_labels(
@@ -1010,8 +1118,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         the
         URI path.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
 
     def http_request_with_labels_and_timestamp_format(
@@ -1047,8 +1159,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the HttpRequestWithRegexLiteral operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithRegexLiteralOutput`.
         """
 
     def http_request_with_regex_literal(
@@ -1081,8 +1197,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the HttpResponseCode operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpResponseCodeOutput`.
         """
 
     def http_response_code(
@@ -1115,8 +1235,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the HttpStringPayload operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpStringPayloadOutput`.
         """
 
     def http_string_payload(
@@ -1152,8 +1276,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         serialized in the body of responses if the structure is used in both
         the request and response.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `IgnoreQueryParamsInResponseOutput`.
         """
 
     def ignore_query_params_in_response(
@@ -1189,8 +1317,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         is
         no input or output payload but there are HTTP header bindings.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `InputAndOutputWithHeadersOutput`.
         """
 
     def input_and_output_with_headers(
@@ -1223,8 +1355,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Blobs are base64 encoded
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonBlobsOutput`.
         """
 
     def json_blobs(
@@ -1258,8 +1394,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonEnumsOutput`.
         """
 
     def json_enums(
@@ -1293,8 +1433,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         This example serializes intEnums as top level properties, in lists,
         sets, and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonIntEnumsOutput`.
         """
 
     def json_int_enums(
@@ -1333,8 +1477,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         3. JSON lists of lists.
         4. Lists of structures.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonListsOutput`.
         """
 
     def json_lists(
@@ -1367,8 +1515,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         The example tests basic map serialization.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonMapsOutput`.
         """
 
     def json_maps(
@@ -1403,8 +1555,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         default format of date-time and various @timestampFormat trait
         values.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonTimestampsOutput`.
         """
 
     def json_timestamps(
@@ -1437,8 +1593,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         This operation uses unions for inputs and outputs.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonUnionsOutput`.
         """
 
     def json_unions(
@@ -1472,8 +1632,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedAcceptWithBody operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedAcceptWithBodyOutput`.
         """
 
     def malformed_accept_with_body(
@@ -1507,8 +1671,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedAcceptWithGenericString operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedAcceptWithGenericStringOutput`.
         """
 
     def malformed_accept_with_generic_string(
@@ -1544,8 +1712,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedAcceptWithPayload operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedAcceptWithPayloadOutput`.
         """
 
     def malformed_accept_with_payload(
@@ -1578,8 +1750,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedBlob operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedBlobOutput`.
         """
 
     def malformed_blob(
@@ -1612,8 +1788,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedBoolean operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedBooleanOutput`.
         """
 
     def malformed_boolean(
@@ -1646,8 +1826,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedByte operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedByteOutput`.
         """
 
     def malformed_byte(
@@ -1681,8 +1865,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedContentTypeWithBody operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedContentTypeWithBodyOutput`.
         """
 
     def malformed_content_type_with_body(
@@ -1716,8 +1904,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedContentTypeWithGenericString operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedContentTypeWithGenericStringOutput`.
         """
 
     def malformed_content_type_with_generic_string(
@@ -1753,8 +1945,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedContentTypeWithPayload operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedContentTypeWithPayloadOutput`.
         """
 
     def malformed_content_type_with_payload(
@@ -1790,8 +1986,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedContentTypeWithoutBody operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedContentTypeWithoutBodyOutput`.
         """
 
     def malformed_content_type_without_body(
@@ -1827,8 +2027,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedContentTypeWithoutBodyEmptyInput operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedContentTypeWithoutBodyEmptyInputOutput`.
         """
 
     def malformed_content_type_without_body_empty_input(
@@ -1863,8 +2067,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedDouble operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedDoubleOutput`.
         """
 
     def malformed_double(
@@ -1897,8 +2105,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedFloat operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedFloatOutput`.
         """
 
     def malformed_float(
@@ -1931,8 +2143,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedInteger operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedIntegerOutput`.
         """
 
     def malformed_integer(
@@ -1965,8 +2181,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedList operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedListOutput`.
         """
 
     def malformed_list(
@@ -1999,8 +2219,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedLong operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedLongOutput`.
         """
 
     def malformed_long(
@@ -2033,8 +2257,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedMap operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedMapOutput`.
         """
 
     def malformed_map(
@@ -2068,8 +2296,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedRequestBody operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedRequestBodyOutput`.
         """
 
     def malformed_request_body(
@@ -2102,8 +2334,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedShort operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedShortOutput`.
         """
 
     def malformed_short(
@@ -2136,8 +2372,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedString operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedStringOutput`.
         """
 
     def malformed_string(
@@ -2171,8 +2411,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampBodyDateTime operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampBodyDateTimeOutput`.
         """
 
     def malformed_timestamp_body_date_time(
@@ -2206,8 +2450,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampBodyDefault operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampBodyDefaultOutput`.
         """
 
     def malformed_timestamp_body_default(
@@ -2241,8 +2489,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampBodyHttpDate operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampBodyHttpDateOutput`.
         """
 
     def malformed_timestamp_body_http_date(
@@ -2276,8 +2528,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampHeaderDateTime operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampHeaderDateTimeOutput`.
         """
 
     def malformed_timestamp_header_date_time(
@@ -2313,8 +2569,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampHeaderDefault operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampHeaderDefaultOutput`.
         """
 
     def malformed_timestamp_header_default(
@@ -2348,8 +2608,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampHeaderEpoch operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampHeaderEpochOutput`.
         """
 
     def malformed_timestamp_header_epoch(
@@ -2383,8 +2647,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampPathDefault operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampPathDefaultOutput`.
         """
 
     def malformed_timestamp_path_default(
@@ -2418,8 +2686,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampPathEpoch operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampPathEpochOutput`.
         """
 
     def malformed_timestamp_path_epoch(
@@ -2453,8 +2725,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampPathHttpDate operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampPathHttpDateOutput`.
         """
 
     def malformed_timestamp_path_http_date(
@@ -2488,8 +2764,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampQueryDefault operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampQueryDefaultOutput`.
         """
 
     def malformed_timestamp_query_default(
@@ -2523,8 +2803,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampQueryEpoch operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampQueryEpochOutput`.
         """
 
     def malformed_timestamp_query_epoch(
@@ -2558,8 +2842,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedTimestampQueryHttpDate operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedTimestampQueryHttpDateOutput`.
         """
 
     def malformed_timestamp_query_http_date(
@@ -2594,8 +2882,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the MalformedUnion operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MalformedUnionOutput`.
         """
 
     def malformed_union(
@@ -2629,8 +2921,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         This example ensures that mediaType strings are base64 encoded in
         headers.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `MediaTypeHeaderOutput`.
         """
 
     def media_type_header(
@@ -2666,8 +2962,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         output.
         While this should be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndNoOutputOutput`.
         """
 
     def no_input_and_no_output(
@@ -2704,8 +3004,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         output is empty. While this should be rare, code generators must support
         this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndOutputOutput`.
         """
 
     def no_input_and_output(
@@ -2740,8 +3044,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         Null headers are not sent over the wire, empty headers are serialized to
         ""
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NullAndEmptyHeadersClientOutput`.
         """
 
     def null_and_empty_headers_client(
@@ -2776,8 +3084,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         Null headers are not sent over the wire, empty headers are serialized to
         ""
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NullAndEmptyHeadersServerOutput`.
         """
 
     def null_and_empty_headers_server(
@@ -2811,8 +3123,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Omits null, but serializes empty string value.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
 
     def omits_null_serializes_empty_string(
@@ -2848,8 +3164,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         `Foo=`, empty lists cannot also be serialized as `Foo=` and instead
         must be omitted.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OmitsSerializingEmptyListsOutput`.
         """
 
     def omits_serializing_empty_lists(
@@ -2883,8 +3203,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the OperationWithDefaults operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OperationWithDefaultsOutput`.
         """
 
     def operation_with_defaults(
@@ -2918,8 +3242,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the OperationWithNestedStructure operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OperationWithNestedStructureOutput`.
         """
 
     def operation_with_nested_structure(
@@ -2952,8 +3280,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         This operation defines a union with a Unit member.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PostPlayerActionOutput`.
         """
 
     def post_player_action(
@@ -2987,8 +3319,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         This operation defines a union that uses jsonName on some members.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PostUnionWithJsonNameOutput`.
         """
 
     def post_union_with_json_name(
@@ -3022,8 +3358,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
         """
 
     def put_with_content_encoding(
@@ -3057,8 +3397,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Automatically adds idempotency tokens.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
 
     def query_idempotency_token_auto_fill(
@@ -3092,8 +3436,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the QueryParamsAsStringListMap operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryParamsAsStringListMapOutput`.
         """
 
     def query_params_as_string_list_map(
@@ -3126,8 +3474,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the QueryPrecedence operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryPrecedenceOutput`.
         """
 
     def query_precedence(
@@ -3160,8 +3512,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Recursive shapes
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RecursiveShapesOutput`.
         """
 
     def recursive_shapes(
@@ -3195,8 +3551,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the ResponseCodeHttpFallback operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ResponseCodeHttpFallbackOutput`.
         """
 
     def response_code_http_fallback(
@@ -3230,8 +3590,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the ResponseCodeRequired operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ResponseCodeRequiredOutput`.
         """
 
     def response_code_required(
@@ -3265,8 +3629,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the SimpleScalarProperties operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
         """
 
     def simple_scalar_properties(
@@ -3299,8 +3667,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         Invokes the SparseJsonLists operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SparseJsonListsOutput`.
         """
 
     def sparse_json_lists(
@@ -3333,8 +3705,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         This example tests sparse map serialization.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SparseJsonMapsOutput`.
         """
 
     def sparse_json_maps(
@@ -3372,8 +3748,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         an empty JSON document ({}).
 
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `TestBodyStructureOutput`.
         """
 
     def test_body_structure(
@@ -3413,8 +3793,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         cannot produce an HTTP body.
 
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `TestGetNoInputNoPayloadOutput`.
         """
 
     def test_get_no_input_no_payload(
@@ -3453,8 +3837,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         cannot produce an HTTP body.
 
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `TestGetNoPayloadOutput`.
         """
 
     def test_get_no_payload(
@@ -3494,8 +3882,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         empty JSON document.
 
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `TestPayloadBlobOutput`.
         """
 
     def test_payload_blob(
@@ -3533,8 +3925,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         but with the body specified by the @httpPayload trait.
 
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `TestPayloadStructureOutput`.
         """
 
     def test_payload_structure(
@@ -3573,8 +3969,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         (Content-Type) to a POST operation with no modeled input.
 
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `TestPostNoInputNoPayloadOutput`.
         """
 
     def test_post_no_input_no_payload(
@@ -3612,8 +4012,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         (Content-Type) to a POST operation with no modeled payload.
 
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `TestPostNoPayloadOutput`.
         """
 
     def test_post_no_payload(
@@ -3648,8 +4052,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         This example tests how timestamp request and response headers are
         serialized.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `TimestampFormatHeadersOutput`.
         """
 
     def timestamp_format_headers(
@@ -3683,8 +4091,12 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         This test is similar to NoInputAndNoOutput, but uses explicit Unit
         types.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `UnitInputAndOutputOutput`.
         """
 
     def unit_input_and_output(

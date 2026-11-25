@@ -34,8 +34,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         Invokes the BigDecimalOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `BigDecimalOperationOutput`.
         """
 
     async def big_decimal_operation(
@@ -68,8 +72,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         Invokes the BigIntegerOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `BigIntegerOperationOutput`.
         """
 
     async def big_integer_operation(
@@ -102,8 +110,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         Invokes the EmptyInputOutput operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EmptyInputOutputOutput`.
         """
 
     async def empty_input_output(
@@ -136,8 +148,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         Invokes the FractionalSeconds operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
         """
 
     async def fractional_seconds(
@@ -177,8 +193,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Implementations must be able to successfully take a response and
         properly deserialize successful and error responses.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
         """
 
     async def greeting_with_errors(
@@ -211,8 +231,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         Invokes the NoInputOutput operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputOutputOutput`.
         """
 
     async def no_input_output(
@@ -246,8 +270,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         Invokes the OperationWithDefaults operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OperationWithDefaultsOutput`.
         """
 
     async def operation_with_defaults(
@@ -280,8 +308,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         Invokes the OptionalInputOutput operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OptionalInputOutputOutput`.
         """
 
     async def optional_input_output(
@@ -314,8 +346,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         Invokes the RecursiveShapes operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RecursiveShapesOutput`.
         """
 
     async def recursive_shapes(
@@ -348,8 +384,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         The example tests basic map serialization.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RpcV2JsonDenseMapsOutput`.
         """
 
     async def rpc_v2_json_dense_maps(
@@ -388,8 +428,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         3. Lists of lists.
         4. Lists of structures.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RpcV2JsonListsOutput`.
         """
 
     async def rpc_v2_json_lists(
@@ -422,8 +466,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         Invokes the RpcV2JsonSparseMaps operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RpcV2JsonSparseMapsOutput`.
         """
 
     async def rpc_v2_json_sparse_maps(
@@ -457,8 +505,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         Invokes the SimpleScalarProperties operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
         """
 
     async def simple_scalar_properties(
@@ -492,8 +544,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         """
         Invokes the SparseNullsOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SparseNullsOperationOutput`.
         """
 
     async def sparse_nulls_operation(
@@ -531,8 +587,12 @@ class AsyncRpcV2JsonProtocol(AsyncClient[AsyncConfig]):
         Members targeting `DateTime` (date-time), `HttpDate` (http-date), and
         `EpochSeconds` (epoch-seconds) must all serialize as JSON numbers.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `TimestampFormatIgnoredOutput`.
         """
 
     async def timestamp_format_ignored(

@@ -40,8 +40,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the DatetimeOffsets operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
         """
 
     def datetime_offsets(
@@ -78,8 +82,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
 
         While this should be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EmptyInputAndEmptyOutputOutput`.
         """
 
     def empty_input_and_empty_output(
@@ -112,8 +120,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the EndpointOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
         """
 
     def endpoint_operation(
@@ -147,8 +159,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
         """
 
     def endpoint_with_host_label_operation(
@@ -181,8 +197,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Flattened maps
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FlattenedXmlMapOutput`.
         """
 
     def flattened_xml_map(
@@ -216,8 +236,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Flattened maps with @xmlName
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
 
     def flattened_xml_map_with_xml_name(
@@ -251,8 +275,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Flattened maps with @xmlNamespace and @xmlName
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
 
     def flattened_xml_map_with_xml_namespace(
@@ -287,8 +315,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the FractionalSeconds operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
         """
 
     def fractional_seconds(
@@ -325,8 +357,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         2. An InvalidGreeting error.
         3. A BadRequest error.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
         """
 
     def greeting_with_errors(
@@ -360,8 +396,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the HostWithPathOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
         """
 
     def host_with_path_operation(
@@ -399,8 +439,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         inside of that wrapper is another wrapper named operation name +
         "Result".
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `IgnoresWrappingXmlNameOutput`.
         """
 
     def ignores_wrapping_xml_name(
@@ -433,8 +477,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         This test serializes nested and recursive structure members.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NestedStructuresOutput`.
         """
 
     def nested_structures(
@@ -471,8 +519,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
 
         While this should be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndNoOutputOutput`.
         """
 
     def no_input_and_no_output(
@@ -508,8 +560,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
 
         While this should be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndOutputOutput`.
         """
 
     def no_input_and_output(
@@ -543,8 +599,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
         """
 
     def put_with_content_encoding(
@@ -578,8 +638,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Automatically adds idempotency tokens.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
 
     def query_idempotency_token_auto_fill(
@@ -612,8 +676,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         This test serializes simple and complex lists.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryListsOutput`.
         """
 
     def query_lists(
@@ -646,8 +714,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         This test serializes simple and complex maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryMapsOutput`.
         """
 
     def query_maps(
@@ -685,8 +757,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         3. A timestampFormat trait on the shape targeted by the member changes
         the format.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryTimestampsOutput`.
         """
 
     def query_timestamps(
@@ -719,8 +795,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Recursive shapes
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RecursiveXmlShapesOutput`.
         """
 
     def recursive_xml_shapes(
@@ -753,8 +833,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         This test serializes strings, numbers, and boolean values.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleInputParamsOutput`.
         """
 
     def simple_input_params(
@@ -788,8 +872,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the SimpleScalarXmlProperties operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleScalarXmlPropertiesOutput`.
         """
 
     def simple_scalar_xml_properties(
@@ -822,8 +910,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Blobs are base64 encoded
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlBlobsOutput2`.
         """
 
     def xml_blobs(
@@ -856,8 +948,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the XmlEmptyBlobs operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyBlobsOutput`.
         """
 
     def xml_empty_blobs(
@@ -890,8 +986,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the XmlEmptyLists operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyListsOutput`.
         """
 
     def xml_empty_lists(
@@ -924,8 +1024,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the XmlEmptyMaps operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyMapsOutput`.
         """
 
     def xml_empty_maps(
@@ -959,8 +1063,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEnumsOutput`.
         """
 
     def xml_enums(
@@ -994,8 +1102,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlIntEnumsOutput`.
         """
 
     def xml_int_enums(
@@ -1037,8 +1149,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         6. Flattened XML lists with @xmlName.
         7. Lists of structures.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlListsOutput2`.
         """
 
     def xml_lists(
@@ -1071,8 +1187,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         The example tests basic map serialization.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlMapsOutput2`.
         """
 
     def xml_maps(
@@ -1105,8 +1225,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the XmlMapsXmlName operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlMapsXmlNameOutput`.
         """
 
     def xml_maps_xml_name(
@@ -1139,8 +1263,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         """
         Invokes the XmlNamespaces operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlNamespacesOutput`.
         """
 
     def xml_namespaces(
@@ -1175,8 +1303,12 @@ class QueryProtocolClient(Client[QueryProtocolConfig]):
         default format of date-time and various @timestampFormat trait
         values.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlTimestampsOutput`.
         """
 
     def xml_timestamps(

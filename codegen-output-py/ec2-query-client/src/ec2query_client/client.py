@@ -40,8 +40,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the DatetimeOffsets operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
         """
 
     def datetime_offsets(
@@ -78,8 +82,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
 
         While this should be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EmptyInputAndEmptyOutputOutput`.
         """
 
     def empty_input_and_empty_output(
@@ -112,8 +120,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the EndpointOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
         """
 
     def endpoint_operation(
@@ -147,8 +159,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
         """
 
     def endpoint_with_host_label_operation(
@@ -181,8 +197,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the FractionalSeconds operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
         """
 
     def fractional_seconds(
@@ -219,8 +239,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         2. An InvalidGreeting error.
         3. A BadRequest error.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
         """
 
     def greeting_with_errors(
@@ -254,8 +278,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the HostWithPathOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
         """
 
     def host_with_path_operation(
@@ -291,8 +319,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
 
         The wrapping element is always operation name + "Response".
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `IgnoresWrappingXmlNameOutput`.
         """
 
     def ignores_wrapping_xml_name(
@@ -325,8 +357,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         This test serializes nested and recursive structure members.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NestedStructuresOutput`.
         """
 
     def nested_structures(
@@ -362,8 +398,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
 
         While this should be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndOutputOutput`.
         """
 
     def no_input_and_output(
@@ -397,8 +437,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
         """
 
     def put_with_content_encoding(
@@ -432,8 +476,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Automatically adds idempotency tokens.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
 
     def query_idempotency_token_auto_fill(
@@ -466,8 +514,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         This test serializes simple and complex lists.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryListsOutput`.
         """
 
     def query_lists(
@@ -505,8 +557,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         3. A timestampFormat trait on the shape targeted by the member changes
         the format.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryTimestampsOutput`.
         """
 
     def query_timestamps(
@@ -539,8 +595,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Recursive shapes
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RecursiveXmlShapesOutput`.
         """
 
     def recursive_xml_shapes(
@@ -573,8 +633,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         This test serializes strings, numbers, and boolean values.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleInputParamsOutput`.
         """
 
     def simple_input_params(
@@ -608,8 +672,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the SimpleScalarXmlProperties operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleScalarXmlPropertiesOutput`.
         """
 
     def simple_scalar_xml_properties(
@@ -642,8 +710,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Blobs are base64 encoded
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlBlobsOutput2`.
         """
 
     def xml_blobs(
@@ -676,8 +748,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the XmlEmptyBlobs operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyBlobsOutput`.
         """
 
     def xml_empty_blobs(
@@ -710,8 +786,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the XmlEmptyLists operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyListsOutput`.
         """
 
     def xml_empty_lists(
@@ -745,8 +825,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEnumsOutput`.
         """
 
     def xml_enums(
@@ -780,8 +864,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         This example serializes intEnums as top level properties, in lists,
         sets, and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlIntEnumsOutput`.
         """
 
     def xml_int_enums(
@@ -824,8 +912,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         7. Flattened XML lists with @xmlNamespace.
         8. Lists of structures.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlListsOutput2`.
         """
 
     def xml_lists(
@@ -858,8 +950,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         """
         Invokes the XmlNamespaces operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlNamespacesOutput`.
         """
 
     def xml_namespaces(
@@ -894,8 +990,12 @@ class EC2ProtocolClient(Client[EC2ProtocolConfig]):
         default format of date-time and various @timestampFormat trait
         values.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlTimestampsOutput`.
         """
 
     def xml_timestamps(

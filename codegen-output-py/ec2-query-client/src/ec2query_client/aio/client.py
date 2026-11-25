@@ -40,8 +40,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Invokes the DatetimeOffsets operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
         """
 
     async def datetime_offsets(
@@ -78,8 +82,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
         While this should be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EmptyInputAndEmptyOutputOutput`.
         """
 
     async def empty_input_and_empty_output(
@@ -112,8 +120,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Invokes the EndpointOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
         """
 
     async def endpoint_operation(
@@ -147,8 +159,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
         """
 
     async def endpoint_with_host_label_operation(
@@ -181,8 +197,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Invokes the FractionalSeconds operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
         """
 
     async def fractional_seconds(
@@ -219,8 +239,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         2. An InvalidGreeting error.
         3. A BadRequest error.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
         """
 
     async def greeting_with_errors(
@@ -254,8 +278,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Invokes the HostWithPathOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
         """
 
     async def host_with_path_operation(
@@ -291,8 +319,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
         The wrapping element is always operation name + "Response".
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `IgnoresWrappingXmlNameOutput`.
         """
 
     async def ignores_wrapping_xml_name(
@@ -325,8 +357,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         This test serializes nested and recursive structure members.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NestedStructuresOutput`.
         """
 
     async def nested_structures(
@@ -362,8 +398,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
 
         While this should be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndOutputOutput`.
         """
 
     async def no_input_and_output(
@@ -397,8 +437,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
         """
 
     async def put_with_content_encoding(
@@ -432,8 +476,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Automatically adds idempotency tokens.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
 
     async def query_idempotency_token_auto_fill(
@@ -466,8 +514,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         This test serializes simple and complex lists.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryListsOutput`.
         """
 
     async def query_lists(
@@ -505,8 +557,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         3. A timestampFormat trait on the shape targeted by the member changes
         the format.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryTimestampsOutput`.
         """
 
     async def query_timestamps(
@@ -539,8 +595,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Recursive shapes
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RecursiveXmlShapesOutput`.
         """
 
     async def recursive_xml_shapes(
@@ -573,8 +633,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         This test serializes strings, numbers, and boolean values.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleInputParamsOutput`.
         """
 
     async def simple_input_params(
@@ -608,8 +672,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Invokes the SimpleScalarXmlProperties operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleScalarXmlPropertiesOutput`.
         """
 
     async def simple_scalar_xml_properties(
@@ -642,8 +710,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Blobs are base64 encoded
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlBlobsOutput2`.
         """
 
     async def xml_blobs(
@@ -676,8 +748,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Invokes the XmlEmptyBlobs operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyBlobsOutput`.
         """
 
     async def xml_empty_blobs(
@@ -710,8 +786,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Invokes the XmlEmptyLists operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyListsOutput`.
         """
 
     async def xml_empty_lists(
@@ -745,8 +825,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEnumsOutput`.
         """
 
     async def xml_enums(
@@ -780,8 +864,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         This example serializes intEnums as top level properties, in lists,
         sets, and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlIntEnumsOutput`.
         """
 
     async def xml_int_enums(
@@ -824,8 +912,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         7. Flattened XML lists with @xmlNamespace.
         8. Lists of structures.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlListsOutput2`.
         """
 
     async def xml_lists(
@@ -858,8 +950,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         """
         Invokes the XmlNamespaces operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlNamespacesOutput`.
         """
 
     async def xml_namespaces(
@@ -894,8 +990,12 @@ class AsyncEC2ProtocolClient(AsyncClient[AsyncEC2ProtocolConfig]):
         default format of date-time and various @timestampFormat trait
         values.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlTimestampsOutput`.
         """
 
     async def xml_timestamps(

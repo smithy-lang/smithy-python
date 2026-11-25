@@ -49,8 +49,12 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         """
         Uses API key auth, but sends no key when it has none.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EchoOutput`.
         """
 
     async def echo(
@@ -83,8 +87,12 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         """
         Reads a note, with a bearer token.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GetNoteOutput`.
         """
 
     async def get_note(
@@ -117,8 +125,12 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         """
         Uses API key auth.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GetThingOutput`.
         """
 
     async def get_thing(
@@ -151,8 +163,12 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         """
         Lists notes a page at a time. Needs no auth.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ListNotesOutput`.
         """
 
     async def list_notes(
@@ -243,8 +259,12 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         """
         Needs no auth.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PingOutput`.
         """
 
     async def ping(
@@ -277,8 +297,12 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         """
         Saves a note, signed with SigV4.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutNoteOutput`.
         """
 
     async def put_note(
@@ -311,8 +335,12 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         """
         Needs no auth.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutThingOutput`.
         """
 
     async def put_thing(

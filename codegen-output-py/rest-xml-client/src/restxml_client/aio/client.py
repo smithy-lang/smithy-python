@@ -40,8 +40,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         This example uses all query string types.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `AllQueryStringTypesOutput`.
         """
 
     async def all_query_string_types(
@@ -75,8 +79,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         The following example serializes a body that uses an XML name,
         changing the wrapper name.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `BodyWithXmlNameOutput`.
         """
 
     async def body_with_xml_name(
@@ -113,8 +121,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         The fixed query string parameters and variable parameters must both be
         serialized (implementations may need to merge them together).
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ConstantAndVariableQueryStringOutput`.
         """
 
     async def constant_and_variable_query_string(
@@ -150,8 +162,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         compatible. The fixed query string parameter named "hello" should
         in no way conflict with the label, `{hello}`.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ConstantQueryStringOutput`.
         """
 
     async def constant_query_string(
@@ -186,8 +202,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         The example tests how servers must support requests
         containing a `Content-Type` header with parameters.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ContentTypeParametersOutput`.
         """
 
     async def content_type_parameters(
@@ -220,8 +240,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the DatetimeOffsets operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
         """
 
     async def datetime_offsets(
@@ -258,8 +282,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         and empty output structure that reuses the same shape. While this should
         be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EmptyInputAndEmptyOutputOutput`.
         """
 
     async def empty_input_and_empty_output(
@@ -292,8 +320,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the EndpointOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
         """
 
     async def endpoint_operation(
@@ -327,8 +359,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelHeaderOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointWithHostLabelHeaderOperationOutput`.
         """
 
     async def endpoint_with_host_label_header_operation(
@@ -364,8 +400,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
         """
 
     async def endpoint_with_host_label_operation(
@@ -398,8 +438,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Flattened maps
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FlattenedXmlMapOutput`.
         """
 
     async def flattened_xml_map(
@@ -433,8 +477,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Flattened maps with @xmlName
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
 
     async def flattened_xml_map_with_xml_name(
@@ -468,8 +516,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Flattened maps with @xmlNamespace and @xmlName
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
 
     async def flattened_xml_map_with_xml_namespace(
@@ -504,8 +556,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the FractionalSeconds operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
         """
 
     async def fractional_seconds(
@@ -546,8 +602,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         properly (de)serialize successful and error responses based on the
         the presence of the
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
         """
 
     async def greeting_with_errors(
@@ -581,8 +641,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Clients that perform this test extract all headers from the response.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpEmptyPrefixHeadersOutput`.
         """
 
     async def http_empty_prefix_headers(
@@ -615,8 +679,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the HttpEnumPayload operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpEnumPayloadOutput`.
         """
 
     async def http_enum_payload(
@@ -652,8 +720,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         In this example, no XML document is synthesized because the payload is
         not a structure or a union type.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadTraitsOutput`.
         """
 
     async def http_payload_traits(
@@ -688,8 +760,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         This example uses a `@mediaType` trait on the payload to force a custom
         content-type to be serialized.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
 
     async def http_payload_traits_with_media_type(
@@ -726,8 +802,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         The following example serializes a payload that uses an XML name
         on the member, changing the wrapper name.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithMemberXmlNameOutput`.
         """
 
     async def http_payload_with_member_xml_name(
@@ -764,8 +844,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Note that serializing a structure changes the wrapper element name
         to match the targeted structure.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithStructureOutput`.
         """
 
     async def http_payload_with_structure(
@@ -799,8 +883,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         This example serializes a union in the payload.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithUnionOutput`.
         """
 
     async def http_payload_with_union(
@@ -835,8 +923,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         The following example serializes a payload that uses an XML name,
         changing the wrapper name.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithXmlNameOutput`.
         """
 
     async def http_payload_with_xml_name(
@@ -870,8 +962,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         The following example serializes a payload that uses an XML namespace.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithXmlNamespaceOutput`.
         """
 
     async def http_payload_with_xml_namespace(
@@ -905,8 +1001,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         The following example serializes a payload that uses an XML namespace.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithXmlNamespaceAndPrefixOutput`.
         """
 
     async def http_payload_with_xml_namespace_and_prefix(
@@ -942,8 +1042,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         This examples adds headers to the input of a request and response by
         prefix.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPrefixHeadersOutput`.
         """
 
     async def http_prefix_headers(
@@ -977,8 +1081,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the HttpRequestWithFloatLabels operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithFloatLabelsOutput`.
         """
 
     async def http_request_with_float_labels(
@@ -1012,8 +1120,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
 
     async def http_request_with_greedy_label_in_path(
@@ -1050,8 +1162,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         The example tests how requests are serialized when there's no input
         payload but there are HTTP labels.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithLabelsOutput`.
         """
 
     async def http_request_with_labels(
@@ -1087,8 +1203,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         the
         URI path.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
 
     async def http_request_with_labels_and_timestamp_format(
@@ -1123,8 +1243,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the HttpResponseCode operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpResponseCodeOutput`.
         """
 
     async def http_response_code(
@@ -1157,8 +1281,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the HttpStringPayload operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpStringPayloadOutput`.
         """
 
     async def http_string_payload(
@@ -1194,8 +1322,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         serialized in the body of responses if the structure is used in both
         the request and response.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `IgnoreQueryParamsInResponseOutput`.
         """
 
     async def ignore_query_params_in_response(
@@ -1231,8 +1363,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         is
         no input or output payload but there are HTTP header bindings.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `InputAndOutputWithHeadersOutput`.
         """
 
     async def input_and_output_with_headers(
@@ -1266,8 +1402,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Nested Xml Maps with key/values with @xmlName
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NestedXmlMapWithXmlNameOutput`.
         """
 
     async def nested_xml_map_with_xml_name(
@@ -1300,8 +1440,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the NestedXmlMaps operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NestedXmlMapsOutput`.
         """
 
     async def nested_xml_maps(
@@ -1337,8 +1481,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         output.
         While this should be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndNoOutputOutput`.
         """
 
     async def no_input_and_no_output(
@@ -1375,8 +1523,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         output is empty. While this should be rare, code generators must support
         this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndOutputOutput`.
         """
 
     async def no_input_and_output(
@@ -1411,8 +1563,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Null headers are not sent over the wire, empty headers are serialized to
         ""
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NullAndEmptyHeadersClientOutput`.
         """
 
     async def null_and_empty_headers_client(
@@ -1447,8 +1603,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         Null headers are not sent over the wire, empty headers are serialized to
         ""
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NullAndEmptyHeadersServerOutput`.
         """
 
     async def null_and_empty_headers_server(
@@ -1482,8 +1642,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Omits null, but serializes empty string value.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
 
     async def omits_null_serializes_empty_string(
@@ -1517,8 +1681,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
         """
 
     async def put_with_content_encoding(
@@ -1552,8 +1720,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Automatically adds idempotency tokens.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
 
     async def query_idempotency_token_auto_fill(
@@ -1587,8 +1759,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the QueryParamsAsStringListMap operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryParamsAsStringListMapOutput`.
         """
 
     async def query_params_as_string_list_map(
@@ -1621,8 +1797,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the QueryPrecedence operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryPrecedenceOutput`.
         """
 
     async def query_precedence(
@@ -1655,8 +1835,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Recursive shapes
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RecursiveShapesOutput`.
         """
 
     async def recursive_shapes(
@@ -1690,8 +1874,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the SimpleScalarProperties operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
         """
 
     async def simple_scalar_properties(
@@ -1726,8 +1914,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         The example tests how timestamp request and response headers are
         serialized.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `TimestampFormatHeadersOutput`.
         """
 
     async def timestamp_format_headers(
@@ -1760,8 +1952,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         This example serializes an XML attributes on synthesized document.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlAttributesOutput`.
         """
 
     async def xml_attributes(
@@ -1800,8 +1996,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         which is critical for languages like C# where attribute writing must
         happen before child elements.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlAttributesInMiddleOutput`.
         """
 
     async def xml_attributes_in_middle(
@@ -1836,8 +2036,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         This example serializes an XML attributes on a document targeted by
         httpPayload.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlAttributesOnPayloadOutput`.
         """
 
     async def xml_attributes_on_payload(
@@ -1870,8 +2074,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Blobs are base64 encoded
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlBlobsOutput`.
         """
 
     async def xml_blobs(
@@ -1904,8 +2112,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Blobs are base64 encoded
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyBlobsOutput`.
         """
 
     async def xml_empty_blobs(
@@ -1938,8 +2150,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the XmlEmptyLists operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyListsOutput`.
         """
 
     async def xml_empty_lists(
@@ -1972,8 +2188,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the XmlEmptyMaps operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyMapsOutput`.
         """
 
     async def xml_empty_maps(
@@ -2006,8 +2226,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the XmlEmptyStrings operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyStringsOutput`.
         """
 
     async def xml_empty_strings(
@@ -2041,8 +2265,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEnumsOutput`.
         """
 
     async def xml_enums(
@@ -2076,8 +2304,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlIntEnumsOutput`.
         """
 
     async def xml_int_enums(
@@ -2121,8 +2353,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         8. Lists of structures.
         9. Flattened XML list of structures
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlListsOutput`.
         """
 
     async def xml_lists(
@@ -2156,8 +2392,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Maps with @xmlNamespace and @xmlName
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlMapWithXmlNamespaceOutput`.
         """
 
     async def xml_map_with_xml_namespace(
@@ -2190,8 +2430,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         The example tests basic map serialization.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlMapsOutput`.
         """
 
     async def xml_maps(
@@ -2224,8 +2468,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the XmlMapsXmlName operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlMapsXmlNameOutput`.
         """
 
     async def xml_maps_xml_name(
@@ -2258,8 +2506,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the XmlNamespaces operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlNamespacesOutput`.
         """
 
     async def xml_namespaces(
@@ -2294,8 +2546,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         default format of date-time and various @timestampFormat trait
         values.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlTimestampsOutput`.
         """
 
     async def xml_timestamps(
@@ -2328,8 +2584,12 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         Invokes the XmlUnions operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlUnionsOutput`.
         """
 
     async def xml_unions(
