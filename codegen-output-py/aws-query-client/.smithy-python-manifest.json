@@ -15,7 +15,7 @@
     "src/awsquery_client/client.py": "863af7ca0d9d23acf801674eff74c3d79a6c7ddd733a3981913063f1b2366177",
     "src/awsquery_client/config.py": "eeaeb33b4efc999d912a1bf4ecc856d9f1acf38fc43098e6e3eae4c2c93f2345",
     "src/awsquery_client/models.py": "ba8d5724acbbfa51527fe38b734a9fe445374669c6e5bc45b68ef42729992e7a",
-    "src/awsquery_client/models.pyi": "8fc34c50f68078076864f73385f35c82e005bd2547c1bae448a4ed618cfa04ec",
+    "src/awsquery_client/models.pyi": "dc568df2126d1559b22c15ba6da65cfc3ddfdff8e708f61d5a8f47c138862b4f",
     "src/awsquery_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/awsquery_client/user_agent.py": "519126177f5fcbef76dac9721912639178540ab8c31d2abbd7ec106557ecea2e"
   },

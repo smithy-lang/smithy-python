@@ -452,3 +452,11 @@ def test_http_binding_modeled_error_retry_safety(
 
     assert isinstance(error, error_shape)
     assert error.is_retry_safe is expected
+
+
+def test_http_binding_error_reports_its_code() -> None:
+    error = _deserialize_error(
+        _ModeledErrorProtocol(), 400, TypeRegistry({_MODELED_ERROR_ID: _ModeledError})
+    )
+
+    assert error.response_metadata.error_code == "ModeledError"

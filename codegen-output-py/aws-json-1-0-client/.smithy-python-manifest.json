@@ -13,7 +13,7 @@
     "src/awsjson10_client/client.py": "11a93375acec68f90242a5230c4f0b41bd38fe99a3e58e8ff116c56c7aa613b3",
     "src/awsjson10_client/config.py": "61faff2b618079bb89719d418f14bac84981983d65fbc9fa587cb61a4779ff41",
     "src/awsjson10_client/models.py": "d184b6f8288bd787f23c6f119a0a1259e1a468fb487c3d9c2c710825d390636a",
-    "src/awsjson10_client/models.pyi": "fc5bc36883b8b0851132826edfa5b51dbf7a2023e94b357dccac383878ff9d02",
+    "src/awsjson10_client/models.pyi": "d816fc9ed3932d6420c929a5baf3c1a5bb406aa66cb001f24c7089d36eaef7e0",
     "src/awsjson10_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/awsjson10_client/user_agent.py": "9cc5406633815f0a196c979e9e362e335772e47f6f56071770c8b59e83f6e199"
   },

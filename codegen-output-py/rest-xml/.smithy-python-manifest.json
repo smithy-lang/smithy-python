@@ -8,7 +8,7 @@
     "src/restxml/_private/schemas_0.py": "8113488e5ddb8d910f87f86aa7ae27bdc47157fe74e5ee27279c43b42e8be012",
     "src/restxml/_private/schemas_1.py": "a1f209de9d32b23dd7ee6b661adf54de62003e260e0f86ee5c83d57ec48e5a6c",
     "src/restxml/models.py": "e30e11c2ca184011e834949184a08275a8567136dc2d421cf53f81ea3145e2c3",
-    "src/restxml/models.pyi": "d6c5d7b7326fa1d342e0a805675528fd9ecb6c08e25b64221a0a2a44d32656b6",
+    "src/restxml/models.pyi": "1e159535c6b5ceb63f9149b19bdccface662259159d162b99238e2d1cd3cf011",
     "src/restxml/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

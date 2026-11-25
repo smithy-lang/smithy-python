@@ -11,7 +11,7 @@ import logging
 import uuid
 from collections.abc import Mapping, Sequence
 from copy import copy
-from dataclasses import replace
+from dataclasses import fields, replace
 from functools import partial
 from typing import Any, ClassVar, Protocol
 
@@ -45,6 +45,7 @@ from .interceptors import (
 from .interfaces import Endpoint, TypedProperties
 from .interfaces.auth import AuthOption, AuthSchemeResolver
 from .program import Program
+from .response import ResponseMetadata
 from .retries import AdaptiveRetryStrategy
 from .schemas import APIOperation
 from .serializers import SerializeableShape
@@ -154,9 +155,10 @@ class RequestPipelineBase[TRequest, TResponse]:
         """Attach metadata about the transport response to the result or error.
 
         This runs for successes and failures alike, so that request identifiers
-        stay available to callers for debugging. Results that do not carry the
-        attribute are left untouched, as are cases where no response was received
-        at all.
+        stay available to callers for debugging. The extracted values are merged
+        into the result's existing metadata, which keeps the code a protocol set on
+        an error. Results that do not carry the attribute are left untouched, as
+        are cases where no response was received at all.
         """
         result = output_context.response
         transport_response = output_context.transport_response
@@ -171,16 +173,21 @@ class RequestPipelineBase[TRequest, TResponse]:
             return
 
         try:
-            metadata = self.protocol.extract_response_metadata(
+            extracted = self.protocol.extract_response_metadata(
                 response=transport_response,
                 context=output_context.properties,
             )
             target: Any = result
-            target.response_metadata = metadata
+            target.response_metadata = replace(
+                target.response_metadata,
+                **{
+                    f.name: getattr(extracted, f.name) for f in fields(ResponseMetadata)
+                },
+            )
         except Exception as e:
-            # Metadata is diagnostic and must never fail a call. Both statements
-            # above can raise: a broken protocol, or the assignment itself if the
-            # output shape is frozen.
+            # Metadata is diagnostic and must never fail a call. The statements
+            # above can raise: a broken protocol, an existing value that isn't a
+            # dataclass, or the assignment itself if the output shape is frozen.
             self._logger.debug("Unable to attach response metadata: %s", e)
 
     def _handle_execution[I: SerializeableShape, O: DeserializeableShape](

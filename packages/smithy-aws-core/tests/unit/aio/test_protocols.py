@@ -728,7 +728,7 @@ async def test_aws_query_reports_request_id_from_the_response_body() -> None:
             b"<RequestId>body-request-id</RequestId></ErrorResponse>"
         ),
     )
-    with pytest.raises(_ModeledQueryError):
+    with pytest.raises(_ModeledQueryError) as exc_info:
         await _deserialize_response(
             protocol,
             operation=_mock_operation(
@@ -746,6 +746,7 @@ async def test_aws_query_reports_request_id_from_the_response_body() -> None:
     metadata = protocol.extract_response_metadata(response=response, context=context)
     assert metadata.request_id == "body-request-id"
     assert metadata.http_status_code == 400
+    assert exc_info.value.response_metadata.error_code == "InvalidAction"
 
 
 async def test_aws_query_prefers_a_request_id_header_when_one_is_sent() -> None:

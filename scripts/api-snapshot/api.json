@@ -540,7 +540,9 @@
     "run_program": "function"
   },
   "smithy_core.response": {
+    "EMPTY_ERROR_RESPONSE_METADATA": "ErrorResponseMetadata",
     "EMPTY_RESPONSE_METADATA": "ResponseMetadata",
+    "ErrorResponseMetadata": "class",
     "ResponseMetadata": "class"
   },
   "smithy_core.retries": {
