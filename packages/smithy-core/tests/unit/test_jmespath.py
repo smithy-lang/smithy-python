@@ -1,8 +1,10 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-"""The JMESPath subset that operationContextParams paths use."""
+"""The JMESPath subset that operation context parameters and waiters use."""
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from decimal import Decimal
 from types import ModuleType
 from typing import Any
 
@@ -215,3 +217,33 @@ def test_waiter_paths_over_shapes() -> None:
     )
     assert compile("length(TransactItems[?Get.TableName == 'g1'])")(value) == 1
     assert compile("TransactItems[0].Get.TableName.upper")(value) is None
+
+
+@dataclass(kw_only=True)
+class _Resource:
+    blob: bytes | None = None
+    created: datetime | None = None
+    price: Decimal | None = None
+    tags: dict[str, Any] | None = None
+    dates: list[datetime | None] | None = None
+    blobs: list[bytes] | None = None
+
+
+def test_paths_convert_to_jmespath_types() -> None:
+    value = _Resource(
+        blob=b"hi",
+        created=datetime(2024, 1, 1, tzinfo=UTC),
+        price=Decimal("2.5"),
+        tags={"at": datetime(2024, 1, 1)},
+        dates=[None, datetime(2024, 1, 1, tzinfo=UTC)],
+        blobs=[b"hi"],
+    )
+    assert compile("Blob")(value) == "aGk="
+    assert compile("Created")(value) == 1704067200.0
+    assert compile("Created > `1700000000`")(value) is True
+    assert compile("Price > `1.5`")(value) is True
+    assert compile("Tags.at")(value) == 1704067200.0
+    assert compile("Tags.*")(value) == [1704067200.0]
+    assert compile("Dates")(value) == [None, 1704067200.0]
+    assert compile("Dates[1] > `1700000000`")(value) is True
+    assert compile("contains(Blobs, 'aGk=')")(value) is True

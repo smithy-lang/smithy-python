@@ -45,8 +45,10 @@ async def wait_async[I: SerializeableShape, O: DeserializeableShape](
     :param max_delay: Maximum seconds between attempts. Defaults to the waiter's.
     :returns: The matching output, or None if the waiter succeeded on an error.
     :raises ValueError: If a time or the waiter name is invalid.
-    :raises WaiterFailureError: If the waiter reached its failure state.
-    :raises WaiterTimeoutError: If ``max_wait_time`` passed first.
+    :raises WaiterFailureError: If the resource reached a failed state or an attempt
+        raised an error the waiter doesn't expect, such as a connection error. See
+        ``last_error``.
+    :raises WaiterTimeoutError: If the waiter didn't finish within ``max_wait_time``.
     """
     state = WaiterState(
         request,

@@ -148,7 +148,7 @@ class WaiterState:
     ) -> str:
         message = f"Waiter {self._name} failed after {self._attempt_count()}"
         if acceptor is None:
-            return f"{message} on an error no acceptor matched: {type(error).__name__}"
+            return f"{message} on an unexpected {type(error).__name__}."
         if acceptor.message is not None and error is None:
             detail = acceptor.message(output)
             if isinstance(detail, list | tuple) and all(

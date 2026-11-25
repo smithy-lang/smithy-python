@@ -468,8 +468,8 @@ runtime each form's name resolves to `dict`.
 One member-name plan drives signatures, model fields, dictionary keys, and
 runtime metadata. It covers `self`, `plugins`, defaults, and idempotency tokens.
 
-Operation method docstrings use Google style `Args:` and `Returns:` sections, as
-in the Java generator.
+Operation, paginator, and waiter method docstrings use Google style `Args:`,
+`Returns:`, and `Raises:` sections, as in the Java generator.
 
 ## Supported Features
 

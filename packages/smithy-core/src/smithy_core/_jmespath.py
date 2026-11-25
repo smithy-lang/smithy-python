@@ -2,17 +2,22 @@
 #  SPDX-License-Identifier: Apache-2.0
 """Compile the JMESPath subset that operation context parameters and waiters use.
 
-Compiled paths read structures by attribute and maps by key. Functions given the
-wrong type return None instead of raising.
+Compiled paths read structures by attribute and maps by key. Blobs, timestamps,
+and big decimals read as base64 strings, epoch seconds, and floats. Functions
+given the wrong type return None instead of raising.
 """
 
+import base64
 import json
 import re
 from collections.abc import Callable, Iterable
 from dataclasses import fields, is_dataclass
-from typing import Any, NamedTuple
+from datetime import datetime
+from decimal import Decimal
+from typing import Any, NamedTuple, cast
 
 from ._model_naming import member_field_name
+from .utils import ensure_utc
 
 type _Closure = Callable[[Any], Any]
 
@@ -285,12 +290,38 @@ def _field(name: str) -> _Closure:
 
     def field(value: Any) -> Any:
         if isinstance(value, dict):
-            return value.get(name)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            return _convert(value.get(name))  # pyright: ignore[reportUnknownMemberType]
         if value is None or isinstance(value, str | int | float | list | tuple):
             return None
-        return getattr(value, attribute, None)
+        return _convert(getattr(value, attribute, None))
 
     return field
+
+
+_CONVERTED = (bytes, bytearray, datetime, Decimal)
+
+
+def _convert(value: Any) -> Any:
+    """Convert a blob, timestamp, or bigDecimal to its JMESPath type.
+
+    A list of them is converted item by item. A list's items all have one type,
+    so its first set item decides.
+    """
+    if isinstance(value, list):
+        items = cast("list[Any]", value)
+        for item in items:
+            if item is not None:
+                if isinstance(item, _CONVERTED):
+                    return [_convert(each) for each in items]
+                break
+        return items
+    if not isinstance(value, _CONVERTED):
+        return value
+    if isinstance(value, datetime):
+        return ensure_utc(value).timestamp()
+    if isinstance(value, Decimal):
+        return float(value)
+    return base64.b64encode(value).decode()
 
 
 def _literal(value: Any) -> _Closure:
@@ -328,9 +359,9 @@ def _list_items(value: Any) -> Any:
 
 def _object_values(value: Any) -> Iterable[Any] | None:
     if isinstance(value, dict):
-        return value.values()  # pyright: ignore[reportUnknownVariableType]
+        return [_convert(item) for item in value.values()]  # pyright: ignore[reportUnknownVariableType]
     if is_dataclass(value) and not isinstance(value, type):
-        return [getattr(value, field.name) for field in fields(value)]
+        return [_convert(getattr(value, field.name)) for field in fields(value)]
     return None
 
 

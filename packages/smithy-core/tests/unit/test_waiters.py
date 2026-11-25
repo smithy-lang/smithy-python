@@ -337,8 +337,7 @@ def test_an_unmatched_error_fails(aio: bool, clock: _Clock) -> None:
     assert raised.value.__cause__ is error
     assert raised.value.last_output is None
     assert str(raised.value) == (
-        "Waiter ThingReady failed after 1 attempt on an error no acceptor matched: "
-        "CallError"
+        "Waiter ThingReady failed after 1 attempt on an unexpected CallError."
     )
 
 

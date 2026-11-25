@@ -717,8 +717,10 @@ final class ClientGenerator implements Runnable {
 
                     Raises:
                         ValueError: If a time is invalid.
-                        WaiterFailureError: If the waiter reached its failure state.
-                        WaiterTimeoutError: If `max_wait_time` passed first.
+                        WaiterFailureError: If the resource reached a failed state or an
+                            attempt raised an error the waiter doesn't expect, such as a
+                            connection error. See `last_error`.
+                        WaiterTimeoutError: If the waiter didn't finish within `max_wait_time`.
                     """, waiter.getMinDelay(), waiter.getMaxDelay(), outputName);
         });
     }

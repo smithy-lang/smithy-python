@@ -92,18 +92,29 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         **kwargs: Unpack[models.DescribeNoteInputDict],
     ) -> models.DescribeNoteOutput | None:
         """
-        Polls ``describe_note`` until the NoteDeleted waiter succeeds or fails.
+        Polls `describe_note` until the NoteDeleted waiter succeeds or fails.
 
-        :param plugins: Callables that change the configuration for each
-        attempt.
-        :param max_wait_time: Maximum seconds to wait, including requests.
-        :param min_delay: Minimum seconds between attempts. Defaults to 2.
-        :param max_delay: Maximum seconds between attempts. Defaults to 120.
-        :returns: The matching output, or None if the waiter succeeded on an
-        error.
-        :raises ValueError: If a time is invalid.
-        :raises WaiterFailureError: If the waiter reached its failure state.
-        :raises WaiterTimeoutError: If ``max_wait_time`` passed first.
+        Args:
+            plugins:
+                Callables that change the configuration for each attempt.
+            max_wait_time:
+                Maximum seconds to wait, including requests.
+            min_delay:
+                Minimum seconds between attempts. Defaults to 2.
+            max_delay:
+                Maximum seconds between attempts. Defaults to 120.
+
+        Returns:
+            The matching `DescribeNoteOutput`, or None if the waiter succeeded
+            on an error.
+
+        Raises:
+            ValueError: If a time is invalid.
+            WaiterFailureError: If the resource reached a failed state or an
+                attempt raised an error the waiter doesn't expect, such as a
+                connection error. See `last_error`.
+            WaiterTimeoutError: If the waiter didn't finish within
+                `max_wait_time`.
         """
 
     async def wait_until_note_deleted(
@@ -156,18 +167,29 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         """
         Waits until the note is saved.
 
-        Polls ``describe_note`` until the NoteSaved waiter succeeds or fails.
+        Polls `describe_note` until the NoteSaved waiter succeeds or fails.
 
-        :param plugins: Callables that change the configuration for each
-        attempt.
-        :param max_wait_time: Maximum seconds to wait, including requests.
-        :param min_delay: Minimum seconds between attempts. Defaults to 1.
-        :param max_delay: Maximum seconds between attempts. Defaults to 4.
-        :returns: The matching output, or None if the waiter succeeded on an
-        error.
-        :raises ValueError: If a time is invalid.
-        :raises WaiterFailureError: If the waiter reached its failure state.
-        :raises WaiterTimeoutError: If ``max_wait_time`` passed first.
+        Args:
+            plugins:
+                Callables that change the configuration for each attempt.
+            max_wait_time:
+                Maximum seconds to wait, including requests.
+            min_delay:
+                Minimum seconds between attempts. Defaults to 1.
+            max_delay:
+                Maximum seconds between attempts. Defaults to 4.
+
+        Returns:
+            The matching `DescribeNoteOutput`, or None if the waiter succeeded
+            on an error.
+
+        Raises:
+            ValueError: If a time is invalid.
+            WaiterFailureError: If the resource reached a failed state or an
+                attempt raised an error the waiter doesn't expect, such as a
+                connection error. See `last_error`.
+            WaiterTimeoutError: If the waiter didn't finish within
+                `max_wait_time`.
         """
 
     async def wait_until_note_saved(
@@ -372,15 +394,21 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         request's token starts the first page. Pagination ends at a page with no
         token or an empty one. By default, it also ends, normally, at a page
         whose token equals the one its request sent, including the starting
-        token. ``items()`` iterates the items of each page instead.
+        token. `items()` iterates the items of each page instead.
 
-        :param plugins: Callables that change the configuration for each call of
-        this traversal only.
-        :param stop_on_same_token: Whether to end pagination at a page whose
-        token equals, by value, the one its request sent. Set to False to keep
-        requesting pages when tokens repeat, such as when polling for new
-        results. A page with no token, or an empty one, still ends pagination.
-        This option is not sent to the service.
+        Args:
+            plugins:
+                Callables that change the configuration for each call of this
+                traversal only.
+            stop_on_same_token:
+                Whether to end pagination at a page whose token equals, by
+                value, the one its request sent. Set to False to keep requesting
+                pages when tokens repeat, such as when polling for new results.
+                A page with no token, or an empty one, still ends pagination.
+                This option is not sent to the service.
+
+        Returns:
+            An iterator of `ListNotesOutput` pages.
         """
 
     def paginate_list_notes(
