@@ -12,7 +12,7 @@
     "src/rpcv2json_client/client.py": "ed4c8a9ab606629fa3939917143fcc26d6f23672913d713331672515489e3bcd",
     "src/rpcv2json_client/config.py": "00baba7c50d6b791decf919878107d39ba19d83a73d4c7985ef8f37b89f6d240",
     "src/rpcv2json_client/models.py": "94050bb13fbc2a62b3299790c28b270e6f42fb038f77fdd72f54077269a9c9a0",
-    "src/rpcv2json_client/models.pyi": "5f129d34dd7fd48915deb1396753bcd848eda16d5f1c043e988c605216cb4a8f",
+    "src/rpcv2json_client/models.pyi": "6df5dae50878d22cc7f205d4644ddb8ba941df34d25498678901c09a34c86ef2",
     "src/rpcv2json_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

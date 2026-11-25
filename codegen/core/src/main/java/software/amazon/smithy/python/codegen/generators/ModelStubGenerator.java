@@ -266,7 +266,15 @@ public final class ModelStubGenerator implements Runnable {
                 }
                 writeMemberDocs(writer, member);
             }
-            if (carriesResponseMetadata(shape)) {
+            if (isError) {
+                writer.write("response_metadata: $T = ...", RuntimeTypes.ERROR_RESPONSE_METADATA);
+                writer.writeDocs("""
+                        Metadata about the response that produced this error.
+
+                        Use this to read the error code or to recover the request identifiers \
+                        a service's support team needs in order to investigate a call. Members \
+                        of the metadata are individually optional.""", context);
+            } else if (carriesResponseMetadata(shape)) {
                 writer.write("response_metadata: $T = ...", RuntimeTypes.RESPONSE_METADATA);
                 writer.writeDocs("""
                         Metadata about the response that produced this output.

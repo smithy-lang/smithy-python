@@ -2,7 +2,12 @@
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
 
-__all__ = ["EMPTY_RESPONSE_METADATA", "ResponseMetadata"]
+__all__ = [
+    "EMPTY_ERROR_RESPONSE_METADATA",
+    "EMPTY_RESPONSE_METADATA",
+    "ErrorResponseMetadata",
+    "ResponseMetadata",
+]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -41,9 +46,24 @@ class ResponseMetadata:
     """
 
 
+@dataclass(frozen=True, kw_only=True)
+class ErrorResponseMetadata(ResponseMetadata):
+    """Metadata about the response that produced an error."""
+
+    error_code: str | None = None
+    """The code that identifies the error, such as ``ThrottlingException``.
+
+    A value of ``None`` indicates that no code is available, such as when the
+    response didn't carry one or when no response was received.
+    """
+
+
 EMPTY_RESPONSE_METADATA = ResponseMetadata()
 """Metadata used when no response information is available.
 
 Since :py:class:`ResponseMetadata` is immutable, this is shared rather than
 allocated at each use.
 """
+
+EMPTY_ERROR_RESPONSE_METADATA = ErrorResponseMetadata()
+"""Error metadata used when no response information is available."""

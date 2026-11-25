@@ -863,9 +863,9 @@
     "resolve_static_uri": "rex-function"
   },
   "smithy_core.exceptions": {
-    "EMPTY_RESPONSE_METADATA": "rex-ResponseMetadata",
-    "Fault": "rex-type_alias",
-    "ResponseMetadata": "rex-class"
+    "EMPTY_ERROR_RESPONSE_METADATA": "rex-ErrorResponseMetadata",
+    "ErrorResponseMetadata": "rex-class",
+    "Fault": "rex-type_alias"
   },
   "smithy_core.identity": {
     "Identity": "rex-protocol",
@@ -1229,6 +1229,7 @@
     "DiscriminatorError": "rex-exception",
     "Document": "rex-class",
     "Endpoint": "rex-protocol",
+    "ErrorResponseMetadata": "rex-class",
     "ExpectationNotMetError": "rex-exception",
     "HTTPBindingSerializer": "rex-class",
     "HTTPErrorIdentifier": "rex-class",

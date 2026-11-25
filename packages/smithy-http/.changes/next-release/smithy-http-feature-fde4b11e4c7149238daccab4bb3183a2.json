@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "HTTP binding and RPCv2 protocols now report the error code in the `response_metadata.error_code` of the errors they raise. Query-compatible services report the awsQuery code from the `x-amzn-query-error` header."
+}

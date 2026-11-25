@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Generated error stubs now declare `response_metadata` as `ErrorResponseMetadata`."
+}

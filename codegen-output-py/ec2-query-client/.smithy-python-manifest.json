@@ -15,7 +15,7 @@
     "src/ec2query_client/client.py": "c3f61fcf30b6a8a3e807105328603e25badddf42b6896e3a0d952a04d595d669",
     "src/ec2query_client/config.py": "c67f2a35e85a5c525026b14e4840abe7aa1649d8b9f268715a0fee496405581d",
     "src/ec2query_client/models.py": "5940a13b794437fdb3e2c07beed5113568acea02b15386c567cb264eaaa2d265",
-    "src/ec2query_client/models.pyi": "d8c4f4a7ee329c145f60143cc5714c60490c58ca65a56151d4270f69360dec4d",
+    "src/ec2query_client/models.pyi": "43a4e230bb98973121d2007175c484f5301be0540bc6c37bd8d3831af2344785",
     "src/ec2query_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/ec2query_client/user_agent.py": "afad584c1fe2c495213c8c13e0610ce685e47669271a2b6b83e6db80db19453a"
   },

@@ -6,7 +6,7 @@
     "src/querycompatiblerpcv2cbor/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/querycompatiblerpcv2cbor/_private/schemas.py": "0e861502208c667082a4d65e87a97cae90bdb577c8ebeb065bb457e0c8824432",
     "src/querycompatiblerpcv2cbor/models.py": "d1e4cf7e66b6cc7211088bf97f26733ebe0e5ef9e3bb4a6e299147706fc25f57",
-    "src/querycompatiblerpcv2cbor/models.pyi": "1a81b46fde33b8cf3ea25608e2d26f8369a8338c8a668c2383866945176c61a9",
+    "src/querycompatiblerpcv2cbor/models.pyi": "6868f425490f9eb526c8b523ce0f183adf2e45bf286d7048aae8b5f9308e8d43",
     "src/querycompatiblerpcv2cbor/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

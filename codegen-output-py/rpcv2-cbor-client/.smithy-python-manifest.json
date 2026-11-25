@@ -12,7 +12,7 @@
     "src/rpcv2cbor_client/client.py": "e870140715db50766fe1bea93142a4c17c479e6c1251e466830b19c9ca404f84",
     "src/rpcv2cbor_client/config.py": "74d2852501f5ca5063e974a9fb7872cf7192d65783e2363da540d3f5fbb637a5",
     "src/rpcv2cbor_client/models.py": "4f7443ca5d6a248346c39518734d165e4c6aa272347da8b12938dd4300368681",
-    "src/rpcv2cbor_client/models.pyi": "1034372fafed1220d9ba996c3a50a274c43a6cd8932c7091011fab068078067f",
+    "src/rpcv2cbor_client/models.pyi": "d7c756843f2392e432b9330aa5f3f75c396b0d931ba9d0318dce6718f36d8352",
     "src/rpcv2cbor_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

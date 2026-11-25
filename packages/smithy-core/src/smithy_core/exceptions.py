@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
-from .response import EMPTY_RESPONSE_METADATA, ResponseMetadata
+from .response import EMPTY_ERROR_RESPONSE_METADATA, ErrorResponseMetadata
 
 __all__ = [
     "AsyncBodyError",
@@ -77,10 +77,10 @@ class CallError(SmithyError):
     is_timeout_error: bool = False
     """Whether the error represents a timeout condition."""
 
-    response_metadata: ResponseMetadata = field(
-        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    response_metadata: ErrorResponseMetadata = field(
+        default=EMPTY_ERROR_RESPONSE_METADATA, repr=False, compare=False
     )
-    """Metadata about the response that produced this error.
+    """Metadata about the response that produced this error, including its code.
 
     Members of the metadata are individually optional, and an
     ``http_status_code`` of ``None`` indicates that no response

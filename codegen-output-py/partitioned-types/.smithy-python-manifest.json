@@ -4,7 +4,7 @@
     "pyproject.toml": "7c77ad886214636fa2a9f6de5d491b190a407f619f3833af880309ce031a6a18",
     "src/partitioned_types/__init__.py": "27ea4bc5ba93a6fc6e1f11e9784565de24e9249f0d3e77a9e2fb64fa47d11012",
     "src/partitioned_types/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "src/partitioned_types/_private/models_0.pyi": "43e2d95e8b75e1a63f4a6d7a60ead524045f688617e6433271a82b9d6eec3b95",
+    "src/partitioned_types/_private/models_0.pyi": "438e21922069e72ae009a773483a88f11913d51d8c1d88536fc16d505bbb95bd",
     "src/partitioned_types/_private/models_1.pyi": "84d482c80640d546ced883fc90ee028e1a67b0606c956f4bedc4e997c4b34b81",
     "src/partitioned_types/_private/schemas.py": "75979037be2a7661bc63a376e34538eaf27ddf31830da43f9bc3a0ec1cb7a199",
     "src/partitioned_types/_private/schemas_0.py": "8e9b5aa9fdc9a3a3dfd06537532b1091426c6c8a785616646f1dd0ab86d52c2b",

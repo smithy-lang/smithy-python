@@ -6,7 +6,7 @@
     "src/rpcv2cbor/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/rpcv2cbor/_private/schemas.py": "2a75caf22b711ae4dec15bba8a4e327b7f8ad6c02b3ff32e539c277847fb395f",
     "src/rpcv2cbor/models.py": "eaa2ad0e465fca15726e933adba4b0a2fe981e0746ffac21de01283136d8c187",
-    "src/rpcv2cbor/models.pyi": "32f751c92a3ac1bab5aeb4b65ceb733d0d0d7e9a5e25c05a9d32a1001cc4cf33",
+    "src/rpcv2cbor/models.pyi": "a42a54eac08d1ac03e2702ac0e262cf92af25b7cd2d1ea288882557b7414d331",
     "src/rpcv2cbor/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

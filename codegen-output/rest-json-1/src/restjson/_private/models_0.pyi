@@ -10,7 +10,7 @@ from smithy_core.aio.interfaces import StreamingBlob
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
-from smithy_core.response import ResponseMetadata
+from smithy_core.response import ErrorResponseMetadata, ResponseMetadata
 from smithy_core.types import JsonString, UnknownEnumMixin
 
 from ..models import (
@@ -118,12 +118,12 @@ class ComplexError(ServiceError, _SerdeShape):
     header: str | None = ...
     top_level: str | None = ...
     nested: ComplexNestedErrorData | None = ...
-    response_metadata: ResponseMetadata = ...
+    response_metadata: ErrorResponseMetadata = ...
     """
-    Metadata about the response that produced this output. Use this to
-    recover the request identifiers a service's support team needs in order
-    to investigate a call. Members of the metadata are individually
-    optional.
+    Metadata about the response that produced this error. Use this to read
+    the error code or to recover the request identifiers a service's
+    support team needs in order to investigate a call. Members of the
+    metadata are individually optional.
     """
 
 @dataclass(kw_only=True)
@@ -506,12 +506,12 @@ class EndpointWithHostLabelOperationOutput(_SerdeShape):
 class ErrorEvent(ServiceError, _SerdeShape):
     """Dataclass for ErrorEvent structure."""
 
-    response_metadata: ResponseMetadata = ...
+    response_metadata: ErrorResponseMetadata = ...
     """
-    Metadata about the response that produced this output. Use this to
-    recover the request identifiers a service's support team needs in order
-    to investigate a call. Members of the metadata are individually
-    optional.
+    Metadata about the response that produced this error. Use this to read
+    the error code or to recover the request identifiers a service's
+    support team needs in order to investigate a call. Members of the
+    metadata are individually optional.
     """
 
 @dataclass
@@ -589,12 +589,12 @@ class FooError(ServiceError, _SerdeShape):
     service framework history. It should only be implemented by clients.
     """
 
-    response_metadata: ResponseMetadata = ...
+    response_metadata: ErrorResponseMetadata = ...
     """
-    Metadata about the response that produced this output. Use this to
-    recover the request identifiers a service's support team needs in order
-    to investigate a call. Members of the metadata are individually
-    optional.
+    Metadata about the response that produced this error. Use this to read
+    the error code or to recover the request identifiers a service's
+    support team needs in order to investigate a call. Members of the
+    metadata are individually optional.
     """
 
 @dataclass(kw_only=True)
@@ -1270,12 +1270,12 @@ class InputStreamWithInitialRequestOutput(_SerdeShape):
 class InvalidGreeting(ServiceError, _SerdeShape):
     """This error is thrown when an invalid greeting value is provided."""
 
-    response_metadata: ResponseMetadata = ...
+    response_metadata: ErrorResponseMetadata = ...
     """
-    Metadata about the response that produced this output. Use this to
-    recover the request identifiers a service's support team needs in order
-    to investigate a call. Members of the metadata are individually
-    optional.
+    Metadata about the response that produced this error. Use this to read
+    the error code or to recover the request identifiers a service's
+    support team needs in order to investigate a call. Members of the
+    metadata are individually optional.
     """
 
 @dataclass(kw_only=True)
@@ -3104,12 +3104,12 @@ class ResponseCodeRequiredOutput(_SerdeShape):
 class ServiceUnavailableError(ServiceError, _SerdeShape):
     """Dataclass for ServiceUnavailableError structure."""
 
-    response_metadata: ResponseMetadata = ...
+    response_metadata: ErrorResponseMetadata = ...
     """
-    Metadata about the response that produced this output. Use this to
-    recover the request identifiers a service's support team needs in order
-    to investigate a call. Members of the metadata are individually
-    optional.
+    Metadata about the response that produced this error. Use this to read
+    the error code or to recover the request identifiers a service's
+    support team needs in order to investigate a call. Members of the
+    metadata are individually optional.
     """
 
 @dataclass(kw_only=True)

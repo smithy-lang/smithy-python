@@ -3,7 +3,7 @@ from enum import IntEnum, StrEnum
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
-from smithy_core.response import ResponseMetadata
+from smithy_core.response import ErrorResponseMetadata, ResponseMetadata
 from smithy_core.types import UnknownEnumMixin
 
 from ..models import (
@@ -793,13 +793,13 @@ class ExampleError(ServiceError, _SerdeShape):
     "An example modeled error."
 
     retry_after_seconds: int | None = ...
-    response_metadata: ResponseMetadata = ...
+    response_metadata: ErrorResponseMetadata = ...
     """
-    Metadata about the response that produced this output.
+    Metadata about the response that produced this error.
 
-    Use this to recover the request identifiers a service's support team
-    needs in order to investigate a call. Members of the metadata are
-    individually optional.
+    Use this to read the error code or to recover the request identifiers a
+    service's support team needs in order to investigate a call. Members of
+    the metadata are individually optional.
     """
 
 @dataclass(kw_only=True)

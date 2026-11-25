@@ -17,7 +17,7 @@
     "src/restjson_client/client.py": "c13f41ef72f63849e43865341de01a7938b6c390f8acac4c2721b6257a2dc5a9",
     "src/restjson_client/config.py": "48d53981c5e60fbd8ff8d4fb6e18de0124c6a2f90e43809045d63c32e087349e",
     "src/restjson_client/models.py": "2ef5c492a6cf5922580732d19f28df88821bf8eb2c4ffaa8339ddc2d3c9cf52d",
-    "src/restjson_client/models.pyi": "22ffb750b64a6640e5eac1c38a3d52465d4aab181669d59b626a5cf33171f0d2",
+    "src/restjson_client/models.pyi": "199c69c5822a4daa522b52cd32935e7c42ea76443597c2566f7417b5efebc426",
     "src/restjson_client/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "src/restjson_client/user_agent.py": "694266638801aaf33af2627ee4ff5b8c0d2b55e46de206bbbdcab7cf17d1c9fc"
   },
