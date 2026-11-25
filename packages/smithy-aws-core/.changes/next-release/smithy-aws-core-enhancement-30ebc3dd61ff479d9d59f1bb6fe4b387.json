@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Added the `CREDENTIALS_PROFILE_SSO` and `CREDENTIALS_SSO` feature IDs for tracking IAM Identity Center (SSO) credentials in the User-Agent header."
+}

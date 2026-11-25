@@ -21,3 +21,23 @@ class APIKeyIdentityProperties(TypedDict, total=False):
     """Identity properties that may carry an explicit API key."""
 
     api_key: str
+
+
+@dataclass(kw_only=True)
+class TokenIdentity(Identity):
+    """The identity for auth that uses a bearer token."""
+
+    token: str = field(repr=False)
+    """The token to add to requests.
+
+    It is opaque to the client: never decoded or introspected. The signer only
+    refuses an empty one.
+    """
+
+    expiration: datetime | None = None
+
+
+class TokenIdentityProperties(TypedDict, total=False):
+    """Identity properties that may carry an explicit token."""
+
+    token: str

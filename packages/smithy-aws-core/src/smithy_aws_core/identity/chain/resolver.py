@@ -12,6 +12,7 @@ from smithy_core.program import Program, run_program
 from smithy_http.interfaces import HTTPClient
 
 from ...config.merged_config import MergedConfig
+from ..components import AWSCredentialsIdentity
 from .exceptions import (
     IdentityChainConfigurationError,
     IdentityChainError,
@@ -179,7 +180,14 @@ def _assemble(
     """Run each discovered provider's setup in chain order."""
     _validate_providers(discovered_providers)
     providers = _sort_by_ordering(discovered_providers)
-    unclaimed_sources = _find_unclaimed_sources(discovered_providers)
+    # Standard slots describe credential sources, so only a credentials chain
+    # can report one as detected but unclaimed. A token chain would otherwise
+    # repeat the warning and suggest a package that cannot supply a token.
+    unclaimed_sources = (
+        _find_unclaimed_sources(discovered_providers)
+        if identity_type is AWSCredentialsIdentity
+        else ()
+    )
 
     for provider in providers:
         setup.set_current_provider(provider)
@@ -233,7 +241,7 @@ def _validate_providers(providers: Sequence[Any]) -> None:
         normalized_name = provider.name.casefold()
         if (previous := discovered_names.get(normalized_name)) is not None:
             raise IdentityChainConfigurationError(
-                f"Credential providers {type(previous).__name__} and "
+                f"Identity providers {type(previous).__name__} and "
                 f"{type(provider).__name__} use the same name: {provider.name}."
             )
         discovered_names[normalized_name] = provider
@@ -242,7 +250,7 @@ def _validate_providers(providers: Sequence[Any]) -> None:
         if isinstance(ordering, Standard):
             if (previous := discovered_standard_slots.get(ordering.slot)) is not None:
                 raise IdentityChainConfigurationError(
-                    f"Credential providers {type(previous).__name__} and "
+                    f"Identity providers {type(previous).__name__} and "
                     f"{type(provider).__name__} both claim standard slot: "
                     f"{ordering.slot.name}."
                 )

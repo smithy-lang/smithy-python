@@ -107,7 +107,7 @@ def _quote(value: str) -> str:
 _API_KEY_LOCATION: Final = _core("APIKeyLocation", "traits")
 _API_KEY_IDENTITY: Final = _http("APIKeyIdentity", "identity")
 _API_KEY_IDENTITY_PROPERTIES: Final = _http("APIKeyIdentityProperties", "identity")
-_IDENTITY_ARGUMENTS: Final = (
+_API_KEY_ARGUMENTS: Final = (
     "[",
     _API_KEY_IDENTITY,
     ", ",
@@ -136,12 +136,12 @@ HTTP_API_KEY_AUTH: Final = AuthContribution(
             name="api_key_identity_resolver",
             annotation=(
                 _core("IdentityResolver", "interfaces.identity"),
-                *_IDENTITY_ARGUMENTS,
+                *_API_KEY_ARGUMENTS,
                 " | None",
             ),
             async_annotation=(
                 _core("AsyncIdentityResolver", "aio.interfaces.identity"),
-                *_IDENTITY_ARGUMENTS,
+                *_API_KEY_ARGUMENTS,
                 " | None",
             ),
             documentation="Resolves the API key.",
@@ -155,7 +155,60 @@ HTTP_API_KEY_AUTH: Final = AuthContribution(
 )
 """API key auth, from the ``smithy.api#httpApiKeyAuth`` trait."""
 
+_TOKEN_IDENTITY: Final = _http("TokenIdentity", "identity")
+_TOKEN_IDENTITY_PROPERTIES: Final = _http("TokenIdentityProperties", "identity")
+_TOKEN_ARGUMENTS: Final = (
+    "[",
+    _TOKEN_IDENTITY,
+    ", ",
+    _TOKEN_IDENTITY_PROPERTIES,
+    "]",
+)
+
+TOKEN_IDENTITY_RESOLVER: Final = ConfigField(
+    name="token_identity_resolver",
+    annotation=(
+        _core("IdentityResolver", "interfaces.identity"),
+        *_TOKEN_ARGUMENTS,
+        " | None",
+    ),
+    async_annotation=(
+        _core("AsyncIdentityResolver", "aio.interfaces.identity"),
+        *_TOKEN_ARGUMENTS,
+        " | None",
+    ),
+    documentation="Resolves the bearer token.",
+    default=(_http("StaticTokenResolver", "identity.token"), "()"),
+    async_default=(_http("AsyncStaticTokenResolver", "aio.identity.token"), "()"),
+)
+"""The bearer token resolver field, defaulting to the static resolver."""
+
+HTTP_BEARER_AUTH: Final = AuthContribution(
+    scheme_id=_model.ShapeId("smithy.api", "httpBearerAuth"),
+    # The trait has no parameters, so the scheme takes none.
+    scheme=lambda trait: (_http("BearerAuthScheme", "auth.bearer"), "()"),
+    async_scheme=lambda trait: (
+        _http("AsyncBearerAuthScheme", "aio.auth.bearer"),
+        "()",
+    ),
+    fields=(
+        ConfigField(
+            name="token",
+            annotation=("str | None",),
+            async_annotation=("str | None",),
+            documentation="The bearer token to send along with requests.",
+        ),
+        TOKEN_IDENTITY_RESOLVER,
+    ),
+)
+"""Bearer token auth, from the ``smithy.api#httpBearerAuth`` trait."""
+
 DEFAULT_AUTH_SCHEMES: Final[Mapping[_model.ShapeId, AuthContribution]] = (
-    MappingProxyType({HTTP_API_KEY_AUTH.scheme_id: HTTP_API_KEY_AUTH})
+    MappingProxyType(
+        {
+            HTTP_API_KEY_AUTH.scheme_id: HTTP_API_KEY_AUTH,
+            HTTP_BEARER_AUTH.scheme_id: HTTP_BEARER_AUTH,
+        }
+    )
 )
 """The auth schemes generated clients support, by auth trait ID."""

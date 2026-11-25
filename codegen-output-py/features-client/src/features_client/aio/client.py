@@ -3,11 +3,14 @@ from __future__ import annotations
 from typing import Unpack, cast, overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
+from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.components import AWSCredentialsIdentity
 from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.pagination import AsyncItemPaginator
+from smithy_http.aio.identity.token import AsyncStaticTokenResolver
 from smithy_http.aio.interfaces import AsyncHTTPClient
+from smithy_http.identity import TokenIdentity
 from smithy_http.plugins import user_agent_plugin
 
 from features_client import models
@@ -21,7 +24,7 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
 
     Its endpoint rules read config, input, and operation values. Its
     operations
-    use SigV4, API key auth, optional auth, and no auth.
+    use SigV4, bearer token auth, API key auth, optional auth, and no auth.
     """
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
@@ -60,6 +63,44 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         return await self._invoke(
             self._select_input(models.ECHO, args, kwargs),
             models.ECHO,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def get_note(
+        self,
+        request: models.GetNoteInput | models.GetNoteInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.GetNoteOutput: ...
+
+    @overload
+    async def get_note(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.GetNoteInputDict],
+    ) -> models.GetNoteOutput:
+        """
+        Reads a note, with a bearer token.
+
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GetNoteOutput`.
+        """
+
+    async def get_note(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.GetNoteOutput:
+        return await self._invoke(
+            self._select_input(models.GET_NOTE, args, kwargs),
+            models.GET_NOTE,
             [],
             plugins,
         )
@@ -317,13 +358,7 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
 
     async def _post_setup(self, config: AsyncFieldNotesConfig) -> None:
         if config.aws_credentials_identity_resolver is None:
-            config_context = config.resolution_context()
-            config_file = None
-            profile_name = None
-            if config_context is not None:
-                config_file = await config_context.parsed_profiles()
-                if config_context.profile_source is ConfigSource.OVERRIDE:
-                    profile_name = config_context.profile_name
+            config_file, profile_name = await self._profile_overrides(config)
             config.aws_credentials_identity_resolver = await AsyncIdentityChain.create(
                 AWSCredentialsIdentity,
                 config_file=config_file,
@@ -331,3 +366,28 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
                 region_override=config.region,
                 http_client=cast(AsyncHTTPClient | None, config.transport),
             )
+
+        if config.token_identity_resolver is None:
+            if config.token is not None:
+                config.token_identity_resolver = AsyncStaticTokenResolver()
+            else:
+                config_file, profile_name = await self._profile_overrides(config)
+                config.token_identity_resolver = await AsyncIdentityChain.create(
+                    TokenIdentity,
+                    config_file=config_file,
+                    profile_name=profile_name,
+                    region_override=config.region,
+                    http_client=cast(AsyncHTTPClient | None, config.transport),
+                )
+
+    async def _profile_overrides(
+        self, config: AsyncFieldNotesConfig
+    ) -> tuple[MergedConfig | None, str | None]:
+        config_context = config.resolution_context()
+        config_file = None
+        profile_name = None
+        if config_context is not None:
+            config_file = await config_context.parsed_profiles()
+            if config_context.profile_source is ConfigSource.OVERRIDE:
+                profile_name = config_context.profile_name
+        return config_file, profile_name

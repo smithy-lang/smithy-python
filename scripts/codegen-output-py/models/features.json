@@ -25,6 +25,9 @@
                     "target": "example.features#Echo"
                 },
                 {
+                    "target": "example.features#GetNote"
+                },
+                {
                     "target": "example.features#GetThing"
                 },
                 {
@@ -47,12 +50,13 @@
                 "aws.auth#sigv4": {
                     "name": "fieldnotes"
                 },
-                "smithy.api#documentation": "An AWS service that uses every client feature the generator supports.\n\nIts endpoint rules read config, input, and operation values. Its operations\nuse SigV4, API key auth, optional auth, and no auth.",
+                "smithy.api#documentation": "An AWS service that uses every client feature the generator supports.\n\nIts endpoint rules read config, input, and operation values. Its operations\nuse SigV4, bearer token auth, API key auth, optional auth, and no auth.",
                 "smithy.api#httpApiKeyAuth": {
                     "name": "Authorization",
                     "in": "header",
                     "scheme": "ApiKey"
                 },
+                "smithy.api#httpBearerAuth": {},
                 "smithy.protocols#rpcv2Cbor": {},
                 "smithy.rules#clientContextParams": {
                     "Stage": {
@@ -696,6 +700,43 @@
                         }
                     ]
                 }
+            }
+        },
+        "example.features#GetNote": {
+            "type": "operation",
+            "input": {
+                "target": "example.features#GetNoteInput"
+            },
+            "output": {
+                "target": "example.features#GetNoteOutput"
+            },
+            "traits": {
+                "smithy.api#auth": [
+                    "smithy.api#httpBearerAuth"
+                ],
+                "smithy.api#documentation": "Reads a note, with a bearer token."
+            }
+        },
+        "example.features#GetNoteInput": {
+            "type": "structure",
+            "members": {
+                "id": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#input": {}
+            }
+        },
+        "example.features#GetNoteOutput": {
+            "type": "structure",
+            "members": {
+                "text": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#output": {}
             }
         },
         "example.features#GetThing": {

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Unpack, cast, overload
 
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
+from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.components import AWSCredentialsIdentity
 from smithy_core.aio.client import AsyncClient
@@ -4113,13 +4114,7 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
 
     async def _post_setup(self, config: AsyncRestJsonProtocolConfig) -> None:
         if config.aws_credentials_identity_resolver is None:
-            config_context = config.resolution_context()
-            config_file = None
-            profile_name = None
-            if config_context is not None:
-                config_file = await config_context.parsed_profiles()
-                if config_context.profile_source is ConfigSource.OVERRIDE:
-                    profile_name = config_context.profile_name
+            config_file, profile_name = await self._profile_overrides(config)
             config.aws_credentials_identity_resolver = await AsyncIdentityChain.create(
                 AWSCredentialsIdentity,
                 config_file=config_file,
@@ -4127,3 +4122,15 @@ class AsyncRestJsonProtocolClient(AsyncClient[AsyncRestJsonProtocolConfig]):
                 region_override=config.region,
                 http_client=cast(AsyncHTTPClient | None, config.transport),
             )
+
+    async def _profile_overrides(
+        self, config: AsyncRestJsonProtocolConfig
+    ) -> tuple[MergedConfig | None, str | None]:
+        config_context = config.resolution_context()
+        config_file = None
+        profile_name = None
+        if config_context is not None:
+            config_file = await config_context.parsed_profiles()
+            if config_context.profile_source is ConfigSource.OVERRIDE:
+                profile_name = config_context.profile_name
+        return config_file, profile_name

@@ -12,13 +12,13 @@
   "smithy_core": 5,
   "smithy_core (all public modules)": 49,
   "smithy_http": 12,
-  "smithy_http (all public modules)": 92,
+  "smithy_http (all public modules)": 96,
   "smithy_json": 21,
   "smithy_json (all public modules)": 21,
   "smithy_python": 1,
   "smithy_python (all public modules)": 35,
-  "smithy_test": 48,
-  "smithy_test (all public modules)": 66,
+  "smithy_test": 50,
+  "smithy_test (all public modules)": 70,
   "smithy_xml": 20,
   "smithy_xml (all public modules)": 20
 }

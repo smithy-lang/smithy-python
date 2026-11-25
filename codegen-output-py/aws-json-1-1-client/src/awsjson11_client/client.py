@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Unpack, cast, overload
 
+from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.chain.resolver import IdentityChain
 from smithy_aws_core.identity.components import AWSCredentialsIdentity
@@ -729,13 +730,7 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
 
     def _post_setup(self, config: JsonProtocolConfig) -> None:
         if config.aws_credentials_identity_resolver is None:
-            config_context = config.resolution_context()
-            config_file = None
-            profile_name = None
-            if config_context is not None:
-                config_file = config_context.parsed_profiles()
-                if config_context.profile_source is ConfigSource.OVERRIDE:
-                    profile_name = config_context.profile_name
+            config_file, profile_name = self._profile_overrides(config)
             config.aws_credentials_identity_resolver = IdentityChain.create(
                 AWSCredentialsIdentity,
                 config_file=config_file,
@@ -743,3 +738,15 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
                 region_override=config.region,
                 http_client=cast(HTTPClient | None, config.transport),
             )
+
+    def _profile_overrides(
+        self, config: JsonProtocolConfig
+    ) -> tuple[MergedConfig | None, str | None]:
+        config_context = config.resolution_context()
+        config_file = None
+        profile_name = None
+        if config_context is not None:
+            config_file = config_context.parsed_profiles()
+            if config_context.profile_source is ConfigSource.OVERRIDE:
+                profile_name = config_context.profile_name
+        return config_file, profile_name

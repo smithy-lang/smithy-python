@@ -415,13 +415,13 @@
     "StandardProvider": "rex-class"
   },
   "smithy_aws_core.identity.chain.providers.shared_config": {
-    "AWSCredentialsIdentity": "rex-class",
     "Identity": "rex-protocol",
     "Program": "rex-type_alias",
     "Standard": "rex-class",
     "StandardProvider": "rex-class"
   },
   "smithy_aws_core.identity.chain.resolver": {
+    "AWSCredentialsIdentity": "rex-class",
     "After": "rex-class",
     "Before": "rex-class",
     "ChainIdentityProvider": "rex-protocol",
@@ -1008,6 +1008,14 @@
     "HTTPRequest": "rex-protocol",
     "PropertyKey": "rex-class"
   },
+  "smithy_http.aio.auth.bearer": {
+    "AsyncAuthScheme": "rex-protocol",
+    "AsyncIdentityResolver": "rex-protocol[async]",
+    "HTTPRequest": "rex-protocol",
+    "PropertyKey": "rex-class",
+    "TokenIdentity": "rex-class",
+    "TokenIdentityProperties": "rex-class"
+  },
   "smithy_http.aio.crt": {
     "AsyncBytesReader": "rex-class[async]",
     "Field": "rex-class",
@@ -1026,6 +1034,12 @@
     "APIKeyIdentityProperties": "rex-class",
     "APIKeyIdentityResolver": "rex-class",
     "AsyncIdentityResolver": "rex-protocol[async]"
+  },
+  "smithy_http.aio.identity.token": {
+    "AsyncIdentityResolver": "rex-protocol[async]",
+    "StaticTokenResolver": "rex-class",
+    "TokenIdentity": "rex-class",
+    "TokenIdentityProperties": "rex-class"
   },
   "smithy_http.aio.interfaces": {
     "AsyncClientTransport": "rex-protocol[async]",
@@ -1080,7 +1094,8 @@
     "list_async": "rex-function"
   },
   "smithy_http.auth": {
-    "apikey": "rex-module"
+    "apikey": "rex-module",
+    "bearer": "rex-module"
   },
   "smithy_http.auth.apikey": {
     "APIKeyIdentity": "rex-class",
@@ -1095,6 +1110,19 @@
     "Signer": "rex-protocol",
     "SmithyIdentityError": "rex-exception",
     "URI": "rex-class"
+  },
+  "smithy_http.auth.bearer": {
+    "AuthScheme": "rex-protocol",
+    "Field": "rex-class",
+    "HTTPBearerAuthTrait": "rex-class",
+    "HTTPRequest": "rex-protocol",
+    "IdentityResolver": "rex-protocol",
+    "ShapeID": "rex-class",
+    "Signer": "rex-protocol",
+    "SmithyHTTPError": "rex-exception",
+    "SmithyIdentityError": "rex-exception",
+    "TokenIdentity": "rex-class",
+    "TokenIdentityProperties": "rex-class"
   },
   "smithy_http.bindings": {
     "ErrorFault": "rex-class",
@@ -1148,13 +1176,20 @@
   },
   "smithy_http.identity": {
     "Identity": "rex-protocol",
-    "apikey": "rex-module"
+    "apikey": "rex-module",
+    "token": "rex-module"
   },
   "smithy_http.identity.apikey": {
     "APIKeyIdentity": "rex-class",
     "APIKeyIdentityProperties": "rex-class",
     "IdentityResolver": "rex-protocol",
     "SmithyIdentityError": "rex-exception"
+  },
+  "smithy_http.identity.token": {
+    "IdentityResolver": "rex-protocol",
+    "SmithyIdentityError": "rex-exception",
+    "TokenIdentity": "rex-class",
+    "TokenIdentityProperties": "rex-class"
   },
   "smithy_http.interceptors": {
     "user_agent": "rex-module"
@@ -1343,7 +1378,7 @@
     "AWS_QUERY": "rex-ProtocolContribution",
     "AwsConfigIntegration": "rex-class",
     "AwsEndpointsIntegration": "rex-class",
-    "AwsSigV4Integration": "rex-class",
+    "AwsIdentityIntegration": "rex-class",
     "EC2_QUERY": "rex-ProtocolContribution",
     "REST_JSON": "rex-ProtocolContribution",
     "REST_XML": "rex-ProtocolContribution",
@@ -1448,12 +1483,14 @@
     "AsyncClient": "rex-class[async]",
     "AsyncHTTPClient": "rex-protocol[async]",
     "AsyncMockHTTPClient": "rex-class[async]",
+    "AsyncStaticTokenResolver": "rex-class[async]",
     "HTTPMockController": "rex-class",
     "HTTPMockError": "rex-exception",
     "HTTPRequest": "rex-protocol",
     "HTTPRequestConfiguration": "rex-class",
     "HTTPResponse": "rex-class",
     "NoResponse": "rex-exception",
+    "mock_install": "rex-function",
     "read_streaming_blob_async": "rex-function[async]",
     "take_over": "rex-function",
     "track_operation": "rex-function"
@@ -1490,7 +1527,9 @@
     "MockHTTPClientBase": "rex-class",
     "NoResponse": "rex-exception",
     "SmithyError": "rex-exception",
+    "StaticTokenResolver": "rex-class",
     "mismatches": "rex-function",
+    "mock_install": "rex-function",
     "read_streaming_blob": "rex-function",
     "take_over": "rex-function",
     "track_operation": "rex-function"

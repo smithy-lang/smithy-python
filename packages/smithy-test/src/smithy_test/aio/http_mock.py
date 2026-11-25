@@ -13,11 +13,12 @@ from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.types import AsyncBytesProvider
 from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_http import HTTPResponse
+from smithy_http.aio.identity.token import AsyncStaticTokenResolver
 from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.aio.testing import AsyncMockHTTPClient
 from smithy_http.interfaces import HTTPRequest, HTTPRequestConfiguration
 
-from .._private.http_mock import NoResponse, take_over
+from .._private.http_mock import NoResponse, mock_install, take_over
 from ..http_mock import HTTPMockController, HTTPMockError
 from ._tracking import track_operation
 
@@ -36,7 +37,12 @@ async def mock_async[C](client: AsyncClient[C]) -> "AsyncHTTPMockController":
         )
     controller = AsyncHTTPMockController()
     controller._capture = _AsyncMockTransport(controller)
-    take_over(client, controller._capture, _none_without_response)
+    take_over(
+        client,
+        controller._capture,
+        _none_without_response,
+        mock_install(AsyncStaticTokenResolver),
+    )
     return controller
 
 

@@ -25,7 +25,13 @@ from smithy_core.interfaces.identity import IdentityResolver
 from smithy_core.shapes import ShapeID
 from smithy_core.traits import APIKeyLocation
 from smithy_http.auth.apikey import APIKeyAuthScheme
-from smithy_http.identity import APIKeyIdentity, APIKeyIdentityProperties
+from smithy_http.auth.bearer import BearerAuthScheme
+from smithy_http.identity import (
+    APIKeyIdentity,
+    APIKeyIdentityProperties,
+    TokenIdentity,
+    TokenIdentityProperties,
+)
 from smithy_http.identity.apikey import APIKeyIdentityResolver
 from smithy_http.protocols import RpcV2CborClientProtocol
 from smithy_http.urllib3 import Urllib3HTTPClient
@@ -53,6 +59,10 @@ class _FieldNotesConfigOverrides(AwsConfigOverrides, total=False):
     api_key: str | None
     api_key_identity_resolver: (
         IdentityResolver[APIKeyIdentity, APIKeyIdentityProperties] | None
+    )
+    token: str | None
+    token_identity_resolver: (
+        IdentityResolver[TokenIdentity, TokenIdentityProperties] | None
     )
     stage: str | None
     force_path_style: bool | None
@@ -88,6 +98,14 @@ class FieldNotesConfig(AwsConfig):
     ) = None
     "Resolves the API key."
 
+    token: str | None = None
+    "The bearer token to send along with requests."
+
+    token_identity_resolver: (
+        IdentityResolver[TokenIdentity, TokenIdentityProperties] | None
+    ) = None
+    "Resolves the bearer token."
+
     stage: str | None = None
     "The deployment stage."
 
@@ -119,6 +137,7 @@ class FieldNotesConfig(AwsConfig):
                     location=APIKeyLocation.HEADER,
                     scheme="ApiKey",
                 ),
+                ShapeID("smithy.api#httpBearerAuth"): BearerAuthScheme(),
             }
         ),
         "auth_scheme_resolver": FieldSpec(default_factory=DefaultAuthResolver),
@@ -126,6 +145,8 @@ class FieldNotesConfig(AwsConfig):
         "api_key_identity_resolver": FieldSpec(
             default_factory=lambda: APIKeyIdentityResolver()
         ),
+        "token": FieldSpec(default=None),
+        "token_identity_resolver": FieldSpec(default=None),
         "stage": FieldSpec(default=None),
         "force_path_style": FieldSpec(default=None),
         "use_fips_endpoint": FieldSpec(
@@ -133,6 +154,12 @@ class FieldNotesConfig(AwsConfig):
         ),
         "transport": FieldSpec(default_factory=lambda: Urllib3HTTPClient()),
     }
+
+    _SHARED_FIELDS: ClassVar[tuple[str, ...]] = (
+        *AwsConfig._SHARED_FIELDS,
+        "api_key_identity_resolver",
+        "token_identity_resolver",
+    )
 
     def set_auth_scheme(self, scheme: AuthScheme[Any, Any, Any, Any]) -> None:
         "Set an auth scheme under its scheme ID."

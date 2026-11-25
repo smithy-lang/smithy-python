@@ -20,6 +20,7 @@ use aws.api#service
 @title("AWS REST JSON Service")
 @paginated(inputToken: "nextToken", outputToken: "nextToken", pageSize: "pageSize")
 @httpApiKeyAuth(name: "weather-auth", in: "header")
+@httpBearerAuth
 service RestJsonService {
     version: "2006-03-01"
     operations: [

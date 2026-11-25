@@ -11,6 +11,7 @@ from urllib.parse import parse_qsl
 
 from smithy_core._client import ClientBase
 from smithy_core.exceptions import SmithyError
+from smithy_http.identity import TokenIdentity
 from smithy_http.interfaces import HTTPRequest
 
 MOCK_CREDENTIAL = "HTTP_MOCK"
@@ -47,38 +48,38 @@ def take_over(
     client: ClientBase[Any],
     transport: Any,
     wrap_invoke: Callable[[Callable[..., Any]], Callable[..., Any]],
-    install: Callable[[Any, Any], None] | None = None,
+    install: Callable[[Any, Any], None],
 ) -> None:
     """Route the client's calls to the transport.
 
-    :param install: Puts the transport into a config. Defaults to replacing the
-        config's transport and credentials, as a mock does.
+    :param install: Puts the transport into a config. A mock passes
+        :py:func:`mock_install`, which also replaces the config's credentials and
+        bearer token; a recorder keeps them.
     :raises TypeError: If the client's internals aren't the ones this relies on.
     """
-    _scrub = install or _scrub_config
     _check_client(client)
     # Typed as Any so instance attributes can shadow the client's methods.
     target: Any = client
     if target._setup_done:
-        _scrub(target._config, transport)
+        install(target._config, transport)
         target._transport = transport
     elif target._config is not None:
         # Copied so the caller's config, possibly shared, keeps its own values.
         target._config = deepcopy(target._config)
-        _scrub(target._config, transport)
+        install(target._config, transport)
 
     post_setup = target._post_setup
     build_call = target._build_call
 
     # Client and operation plugins may set credentials or a transport after this.
     def _post_setup(config: Any) -> Any:
-        _scrub(config, transport)
+        install(config, transport)
         return post_setup(config)
 
     def _build_call(
         input: Any, operation: Any, *, config: Any, retry_strategy: Any
     ) -> Any:
-        _scrub(config, transport)
+        install(config, transport)
         return build_call(
             input, operation, config=config, retry_strategy=retry_strategy
         )
@@ -127,6 +128,21 @@ def operation_name(invoke: Callable[..., Any], args: Any, kwargs: Any) -> str:
     return operation.schema.id.name
 
 
+def mock_install(
+    static_token_resolver: Callable[..., Any],
+) -> Callable[[Any, Any], None]:
+    """Build the ``install`` of a mock: it replaces a config's transport and secrets.
+
+    :param static_token_resolver: Builds the sync or async static token resolver
+        that replaces an AWS bearer client's, from its ``identity`` keyword.
+    """
+
+    def install(config: Any, transport: MockTransport) -> None:
+        _scrub_config(config, transport, static_token_resolver)
+
+    return install
+
+
 def _check_client(client: ClientBase[Any]) -> None:
     name = type(client).__name__
     missing = [a for a in _CLIENT_ATTRIBUTES if not hasattr(client, a)]
@@ -144,12 +160,17 @@ def _check_config(config: Any) -> None:
     name = type(config).__name__
     if not hasattr(config, "transport"):
         raise TypeError(f"{name} has no transport; it can't be mocked.")
+    # A bare `token` field may be a client context param; only a resolver marks bearer auth.
+    if hasattr(config, "token_identity_resolver") and not hasattr(config, "token"):
+        raise TypeError(
+            f"{name} has token_identity_resolver, but the mock needs the bearer auth "
+            "fields token and token_identity_resolver to replace them."
+        )
     aws = ("aws_credentials_identity_resolver", *_CREDENTIAL_FIELDS)
     present = [f for f in aws if hasattr(config, f)]
-    if not present:
-        return
-    if len(present) < len(aws) or not callable(
-        getattr(config, "_static_credentials_resolver", None)
+    if present and (
+        len(present) < len(aws)
+        or not callable(getattr(config, "_static_credentials_resolver", None))
     ):
         raise TypeError(
             f"{name} has the AWS credential fields {present}, but the mock needs all "
@@ -157,7 +178,9 @@ def _check_config(config: Any) -> None:
         )
 
 
-def _scrub_config(config: Any, transport: MockTransport) -> None:
+def _scrub_config(
+    config: Any, transport: MockTransport, static_token_resolver: Callable[..., Any]
+) -> None:
     _check_config(config)
     source_of = getattr(config, "source_of", None)
     # A default transport belongs to the config, so the mock closes it in its place.
@@ -172,7 +195,8 @@ def _scrub_config(config: Any, transport: MockTransport) -> None:
         # Imported here so clients without AWS auth don't need smithy-aws-core.
         from smithy_aws_core.identity.components import AWSCredentialsIdentity
 
-        # CAUTION: bypasses AwsConfig.__setattr__, which locks resolved credentials.
+        # CAUTION: bypasses AwsConfig.__setattr__, which locks resolved secrets
+        # (the credential fields and, below, the token).
         for name in _CREDENTIAL_FIELDS:
             object.__setattr__(config, name, MOCK_CREDENTIAL)
         config.aws_credentials_identity_resolver = config._static_credentials_resolver(
@@ -182,6 +206,13 @@ def _scrub_config(config: Any, transport: MockTransport) -> None:
                 session_token=MOCK_CREDENTIAL,
             )
         )
+        # AWS services with bearer auth also resolve a token; replace it before
+        # the client's setup consults the default token identity chain.
+        if hasattr(config, "token_identity_resolver"):
+            object.__setattr__(config, "token", MOCK_CREDENTIAL)
+            config.token_identity_resolver = static_token_resolver(
+                identity=TokenIdentity(token=MOCK_CREDENTIAL)
+            )
 
 
 def _subjects(

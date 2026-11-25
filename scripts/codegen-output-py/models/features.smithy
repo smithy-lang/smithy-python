@@ -14,11 +14,12 @@ use smithy.rules#staticContextParams
 /// An AWS service that uses every client feature the generator supports.
 ///
 /// Its endpoint rules read config, input, and operation values. Its operations
-/// use SigV4, API key auth, optional auth, and no auth.
+/// use SigV4, bearer token auth, API key auth, optional auth, and no auth.
 @service(sdkId: "Field Notes")
 @sigv4(name: "fieldnotes")
 @rpcv2Cbor
 @httpApiKeyAuth(name: "Authorization", in: "header", scheme: "ApiKey")
+@httpBearerAuth
 @clientContextParams(
     Stage: { type: "string", documentation: "The deployment stage." }
     ForcePathStyle: { type: "boolean", documentation: "Forces path-style addressing." }
@@ -214,13 +215,24 @@ use smithy.rules#staticContextParams
 })
 service FieldNotes {
     version: "2026-11-20"
-    operations: [Echo, GetThing, ListNotes, Ping, PutNote, PutThing]
+    operations: [Echo, GetNote, GetThing, ListNotes, Ping, PutNote, PutThing]
 }
 
 /// Uses API key auth, but sends no key when it has none.
 @auth([httpApiKeyAuth])
 @optionalAuth
 operation Echo {}
+
+/// Reads a note, with a bearer token.
+@auth([httpBearerAuth])
+operation GetNote {
+    input := {
+        id: String
+    }
+    output := {
+        text: String
+    }
+}
 
 /// Uses API key auth.
 @auth([httpApiKeyAuth])

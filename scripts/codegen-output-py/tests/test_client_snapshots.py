@@ -16,7 +16,10 @@ from types import ModuleType
 from typing import Any
 
 import pytest
+from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
 from smithy_aws_core.config.exceptions import ConfigError
+from smithy_aws_core.identity.chain.exceptions import IdentityChainError
+from smithy_aws_core.identity.chain.resolver import IdentityChain
 from smithy_cbor import loads
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.exceptions import SmithyIdentityError
@@ -322,6 +325,33 @@ def test_sigv4_clients_default_to_the_credentials_chain(
     (request,) = transport.requests
     authorization = request.fields["Authorization"].as_string()
     assert "Credential=AKIDFROMENV/" in authorization
+
+
+@pytest.mark.parametrize("aio", [False, True])
+def test_bearer_auth_sends_the_configured_token(
+    features: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
+) -> None:
+    client, transport = _client(features, aio, endpoint_uri=_ENDPOINT, token="t0k3n")
+    _call(aio, client.get_note(id="n1"))
+    # SigV4 stays the default for operations that do not choose bearer auth.
+    _call(aio, client.put_note(text="hi"))
+    get_note, put_note = transport.requests
+    assert get_note.fields["Authorization"].as_string() == "Bearer t0k3n"
+    assert put_note.fields["Authorization"].as_string().startswith("AWS4-HMAC-SHA256")
+
+
+@pytest.mark.parametrize("aio", [False, True])
+def test_bearer_clients_default_to_the_token_chain(
+    features: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
+) -> None:
+    # No token provider is installed here, so the chain, not the static resolver,
+    # reports the miss.
+    client, transport = _client(features, aio, endpoint_uri=_ENDPOINT)
+    with pytest.raises(IdentityChainError, match="No identity providers"):
+        _call(aio, client.get_note(id="n1"))
+    assert transport.requests == []
+    chain = AsyncIdentityChain if aio else IdentityChain
+    assert isinstance(client._config.token_identity_resolver, chain)
 
 
 @pytest.fixture(scope="module")

@@ -1,5 +1,8 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from dataclasses import dataclass
+from typing import Any, ClassVar
+
 import pytest
 
 pytest.importorskip("restjson")
@@ -8,6 +11,8 @@ from restjson.aio.client import AsyncRestJsonProtocolClient
 from restjson.aio.config import AsyncRestJsonProtocolConfig
 from restjson.client import RestJsonProtocolClient
 from restjson.models import SimpleScalarPropertiesInput
+from smithy_aws_core.config.types import FieldSpec
+from smithy_http.aio.identity.token import AsyncStaticTokenResolver
 from smithy_test import HTTPMockError, HTTPMockMismatchError
 from smithy_test.aio import mock_async
 
@@ -63,6 +68,35 @@ async def test_raises_on_exit_with_unmet_expectations() -> None:
                 controller.expect_request().times(2)
 
                 await client.simple_scalar_properties(SimpleScalarPropertiesInput())
+
+
+async def test_replaces_the_bearer_token() -> None:
+    @dataclass(kw_only=True, repr=False, init=False)
+    class BearerConfig(AsyncRestJsonProtocolConfig):
+        # The fields codegen adds to the config of a service with bearer auth.
+        token: str | None = None
+        token_identity_resolver: Any = None
+
+        _FIELDS: ClassVar[dict[str, FieldSpec]] = {
+            "token": FieldSpec(default=None),
+            "token_identity_resolver": FieldSpec(default=None),
+            **AsyncRestJsonProtocolConfig._FIELDS,
+        }
+
+    overrides: Any = {"token": "real"}
+    config = await BearerConfig.resolve(region="us-west-2", **overrides)
+    async with AsyncRestJsonProtocolClient(config) as client:
+        (await mock_async(client)).expect_request()
+
+        await client.simple_scalar_properties(SimpleScalarPropertiesInput())
+
+        mocked: Any = client._config  # pyright: ignore[reportPrivateUsage]
+
+    assert config.token == "real"
+    assert mocked.token == "HTTP_MOCK"
+    assert isinstance(mocked.token_identity_resolver, AsyncStaticTokenResolver)
+    identity = await mocked.token_identity_resolver.get_identity(properties={})
+    assert identity.token == "HTTP_MOCK"
 
 
 async def test_rejects_a_sync_client() -> None:

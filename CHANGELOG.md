@@ -1,5 +1,19 @@
 # Change Log
 
+## Unreleased
+
+### Features
+
+* Generated clients support the `smithy.api#httpBearerAuth` trait. A service that
+  models it gets `token` and `token_identity_resolver` configuration settings,
+  and an operation whose selected auth scheme is bearer auth sends an
+  `Authorization: Bearer` header. Auth scheme selection is unchanged: the first
+  scheme in an operation's effective auth list that the client supports is used,
+  so a service that lists SigV4 before bearer auth keeps signing with SigV4. AWS
+  clients default `token_identity_resolver` during setup: a configured `token`
+  is used through a static resolver, otherwise the default token identity chain
+  is consulted, so neither needs a resolver wired by hand.
+
 ## v0.7.0
 
 ### Breaking Changes

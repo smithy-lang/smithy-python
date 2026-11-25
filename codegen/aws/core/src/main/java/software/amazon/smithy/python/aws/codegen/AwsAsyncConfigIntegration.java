@@ -401,6 +401,25 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
 
             writer.closeBlock("}");
             writer.write("");
+
+            // Identity resolvers added by auth schemes hold caches and locks, so a
+            // deep copy of the config must share them like the base resolvers.
+            var sharedFields = pluginProperties.keySet()
+                    .stream()
+                    .filter(name -> name.endsWith("_identity_resolver"))
+                    // The base class already shares the SigV4 credentials resolver.
+                    .filter(name -> !PREDEFINED_CONFIG_FIELDS.contains(name))
+                    .sorted()
+                    .toList();
+            if (!sharedFields.isEmpty()) {
+                writer.openBlock("_SHARED_FIELDS: ClassVar[tuple[str, ...]] = (", ")", () -> {
+                    writer.write("*$T._SHARED_FIELDS,", asyncAwsConfigSymbol);
+                    for (var name : sharedFields) {
+                        writer.write("$S,", name);
+                    }
+                });
+                writer.write("");
+            }
             if (hasAuth) {
                 writer.write("def set_auth_scheme(self, scheme: $T) -> None:", authSchemeSymbol);
                 writer.indent();

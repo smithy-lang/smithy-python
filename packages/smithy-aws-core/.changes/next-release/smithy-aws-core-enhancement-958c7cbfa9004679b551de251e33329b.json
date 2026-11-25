@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "AWS configs now treat the generated `token` and `api_key` fields as secrets: hidden from `repr` and frozen after resolution. Deep copies share every identity resolver that a generated config lists in `_SHARED_FIELDS`, not only the credentials resolver. The identity chain's \"no providers\" error now reads \"No identity providers\" instead of \"No credential providers\"."
+}

@@ -308,8 +308,8 @@ def test_generated_client_type_checks_for_consumers(tmp_path: Path) -> None:
     assert checked.returncode == 0, checked.stdout + checked.stderr
 
 
-def _add_auth(shapes: dict[str, Any]) -> None:
-    shapes["example#Greeter"]["traits"]["smithy.api#httpBearerAuth"] = {}
+def _add_basic_auth(shapes: dict[str, Any]) -> None:
+    shapes["example#Greeter"]["traits"]["smithy.api#httpBasicAuth"] = {}
 
 
 def _add_rules(shapes: dict[str, Any]) -> None:
@@ -331,7 +331,7 @@ def _remove_protocol(shapes: dict[str, Any]) -> None:
 @pytest.mark.parametrize(
     ("change", "message"),
     [
-        (_add_auth, "Operation example#Greet requires auth"),
+        (_add_basic_auth, "Operation example#Greet requires auth"),
         (_add_rules, "smithy.rules#endpointRuleSet"),
         (_add_stream, "Operation example#Greet streams"),
         (_remove_protocol, "has no supported protocol"),
@@ -1279,12 +1279,57 @@ def test_api_key_auth_signs_requests_in_the_query(
 def test_an_operation_needs_one_supported_auth_scheme(tmp_path: Path) -> None:
     shapes = _shapes()
     _add_api_key(shapes)
-    _add_auth(shapes)
-    # Bearer auth is unsupported, but API key auth is a fallback.
+    _add_basic_auth(shapes)
+    # Basic auth is unsupported, but API key auth is a fallback.
     _generate(tmp_path / "fallback", "greeter_fallback", shapes)
-    shapes["example#Greet"]["traits"]["smithy.api#auth"] = ["smithy.api#httpBearerAuth"]
+    shapes["example#Greet"]["traits"]["smithy.api#auth"] = ["smithy.api#httpBasicAuth"]
     with pytest.raises(CodegenError, match="Operation example#Greet requires auth"):
-        _generate(tmp_path / "bearer", "greeter_bearer", shapes)
+        _generate(tmp_path / "basic", "greeter_basic", shapes)
+
+
+def _add_bearer(shapes: dict[str, Any]) -> None:
+    shapes["example#Greeter"]["traits"]["smithy.api#httpBearerAuth"] = {}
+
+
+def test_bearer_auth_signs_requests_in_the_authorization_header(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    shapes = _shapes()
+    _add_bearer(shapes)
+    _generate(tmp_path, "greeter_bearer", shapes)
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "src")
+    )
+    package = importlib.import_module("greeter_bearer")
+    transport = _Transport(body=_cbor_map({}))
+    config = package.Config(
+        token="s3cret",
+        endpoint_uri="https://example.com",
+        transport=transport,
+        retry_strategy=SimpleRetryStrategy(max_attempts=1),
+    )
+    package.Greeter(config).greet(name="Ana")
+    (request,) = transport.requests
+    assert request.fields["Authorization"].as_string() == "Bearer s3cret"
+
+
+def test_bearer_auth_defaults_to_the_static_token_resolver(tmp_path: Path) -> None:
+    # A service outside AWS has no token provider chain, so the config reads the
+    # token it was given and the client needs no setup step.
+    shapes = _shapes()
+    _add_bearer(shapes)
+    _generate(tmp_path, "greeter_bearer_static", shapes)
+    source = tmp_path / "src/greeter_bearer_static"
+    config = (source / "config.py").read_text()
+    assert (
+        "self.token_identity_resolver = token_identity_resolver or "
+        "StaticTokenResolver()"
+    ) in config
+    assert 'ShapeID("smithy.api#httpBearerAuth"): BearerAuthScheme()' in config
+    assert "_post_setup" not in (source / "client.py").read_text()
+    async_config = (source / "aio/config.py").read_text()
+    assert "AsyncStaticTokenResolver()" in async_config
+    assert "AsyncBearerAuthScheme()" in async_config
 
 
 def test_api_key_auth_trait_must_name_a_location(tmp_path: Path) -> None:
@@ -1456,6 +1501,21 @@ def test_integrations_apply_only_to_services_they_match(tmp_path: Path) -> None:
     assert not (tmp_path / "src/greeter_plain/user_agent.py").exists()
 
 
+def test_bearer_auth_outside_aws_keeps_the_static_token_resolver(
+    tmp_path: Path,
+) -> None:
+    # The token chain reads an AWS config, which a service without aws.api#service
+    # lacks, so the AWS integrations leave its bearer auth alone.
+    shapes = _shapes()
+    _add_bearer(shapes)
+    _aws_generate(tmp_path, "greeter_bearer_plain", shapes)
+    source = tmp_path / "src/greeter_bearer_plain"
+    config = (source / "config.py").read_text()
+    assert "class Config:" in config
+    assert "token_identity_resolver or StaticTokenResolver()" in config
+    assert "_post_setup" not in (source / "client.py").read_text()
+
+
 def test_aws_services_need_an_sdk_id(tmp_path: Path) -> None:
     shapes = _shapes()
     shapes["example#Greeter"]["traits"]["aws.api#service"] = {}
@@ -1510,10 +1570,56 @@ def test_sigv4_services_sign_with_the_signing_name(tmp_path: Path) -> None:
     )
     client = (source / "aio/client.py").read_text()
     assert "async def _post_setup(self, config: AsyncGreeterConfig) -> None:" in client
+    assert "config_file, profile_name = await self._profile_overrides(config)" in client
     assert "await AsyncIdentityChain.create(" in client
+    assert "token_identity_resolver" not in client
     assert "return await AsyncGreeterConfig.resolve()" in client
+    assert "_SHARED_FIELDS" not in config
     models = (source / "models.py").read_text()
     assert '("aws.auth#sigv4",)' in models
+
+
+def test_aws_bearer_auth_falls_back_to_the_token_chain(tmp_path: Path) -> None:
+    shapes = _shapes()
+    shapes["example#Greeter"]["traits"]["aws.api#service"] = {"sdkId": "Greeter"}
+    _add_bearer(shapes)
+    _aws_generate(tmp_path, "greeter_bearer_aws", shapes)
+    source = tmp_path / "src/greeter_bearer_aws"
+    config = (source / "config.py").read_text()
+    assert 'ShapeID("smithy.api#httpBearerAuth"): BearerAuthScheme()' in config
+    # The resolver has no default, so _post_setup chooses one.
+    assert '"token_identity_resolver": FieldSpec(default=None),' in config
+    assert "StaticTokenResolver" not in config
+    # A deep copy of the config shares the resolver, which caches the token.
+    assert (
+        "_SHARED_FIELDS: ClassVar[tuple[str, ...]] = (\n"
+        "        *AwsConfig._SHARED_FIELDS,\n"
+        '        "token_identity_resolver",\n'
+        "    )"
+    ) in config
+    client = (source / "client.py").read_text()
+    assert "def _post_setup(self, config: GreeterConfig) -> None:" in client
+    assert "if config.token_identity_resolver is None:" in client
+    assert "config.token_identity_resolver = StaticTokenResolver()" in client
+    assert "config.token_identity_resolver = IdentityChain.create(" in client
+    assert "TokenIdentity," in client
+    assert "aws_credentials_identity_resolver" not in client
+    async_client = (source / "aio/client.py").read_text()
+    assert "AsyncStaticTokenResolver()" in async_client
+    assert "await AsyncIdentityChain.create(" in async_client
+
+
+def test_sigv4_and_bearer_auth_share_one_setup_step(tmp_path: Path) -> None:
+    shapes = _shapes()
+    _add_sigv4(shapes)
+    _add_bearer(shapes)
+    _aws_generate(tmp_path, "greeter_both", shapes)
+    client = (tmp_path / "src/greeter_both/client.py").read_text()
+    assert client.count("def _post_setup(") == 1
+    assert client.count("def _profile_overrides(") == 1
+    assert client.index("config.aws_credentials_identity_resolver = ") < client.index(
+        "config.token_identity_resolver = StaticTokenResolver()"
+    )
 
 
 def test_sigv4_needs_the_aws_integrations(tmp_path: Path) -> None:

@@ -618,6 +618,7 @@
     "EventHeaderTrait": "class",
     "EventPayloadTrait": "class",
     "HTTPAPIKeyAuthTrait": "class",
+    "HTTPBearerAuthTrait": "class",
     "HTTPChecksumRequiredTrait": "class",
     "HTTPErrorTrait": "class",
     "HTTPHeaderTrait": "class",
@@ -699,6 +700,11 @@
     "AsyncAPIKeyAuthScheme": "class",
     "AsyncAPIKeyResolverConfig": "protocol"
   },
+  "smithy_http.aio.auth.bearer": {
+    "AsyncBearerAuthScheme": "class",
+    "AsyncTokenResolverConfig": "protocol",
+    "TOKEN_RESOLVER_CONFIG": "PropertyKey"
+  },
   "smithy_http.aio.crt": {
     "AWSCRTHTTPClient": "class[async]",
     "AWSCRTHTTPClientConfig": "class",
@@ -710,6 +716,9 @@
   "smithy_http.aio.identity": {},
   "smithy_http.aio.identity.apikey": {
     "AsyncAPIKeyIdentityResolver": "class[async]"
+  },
+  "smithy_http.aio.identity.token": {
+    "AsyncStaticTokenResolver": "class[async]"
   },
   "smithy_http.aio.interfaces": {
     "AsyncHTTPClient": "protocol[async]"
@@ -731,6 +740,11 @@
     "APIKeyAuthScheme": "class",
     "APIKeyResolverConfig": "protocol",
     "APIKeySigner": "class"
+  },
+  "smithy_http.auth.bearer": {
+    "BearerAuthScheme": "class",
+    "BearerSigner": "class",
+    "TokenResolverConfig": "protocol"
   },
   "smithy_http.bindings": {
     "Binding": "class",
@@ -754,10 +768,15 @@
   },
   "smithy_http.identity": {
     "APIKeyIdentity": "class",
-    "APIKeyIdentityProperties": "class"
+    "APIKeyIdentityProperties": "class",
+    "TokenIdentity": "class",
+    "TokenIdentityProperties": "class"
   },
   "smithy_http.identity.apikey": {
     "APIKeyIdentityResolver": "class"
+  },
+  "smithy_http.identity.token": {
+    "StaticTokenResolver": "class"
   },
   "smithy_http.interceptors": {},
   "smithy_http.interceptors.user_agent": {
