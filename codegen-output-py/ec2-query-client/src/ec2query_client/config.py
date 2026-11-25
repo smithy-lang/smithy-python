@@ -43,6 +43,7 @@ class _EC2ProtocolConfigOverrides(AwsConfigOverrides, total=False):
     )
     auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None
     auth_scheme_resolver: AuthSchemeResolver | None
+    disable_host_prefix_injection: bool | None
 
 
 @dataclass(kw_only=True, repr=False, init=False)
@@ -66,6 +67,9 @@ class EC2ProtocolConfig(AwsConfig):
     auth_scheme_resolver: AuthSchemeResolver | None = None
     "Determines the auth scheme for each operation."
 
+    disable_host_prefix_injection: bool | None = None
+    "Whether to skip prepending operations' modeled host prefixes to the endpoint host."
+
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
         **AwsConfig._FIELDS,
         "endpoint_uri": FieldSpec(
@@ -86,6 +90,7 @@ class EC2ProtocolConfig(AwsConfig):
             }
         ),
         "auth_scheme_resolver": FieldSpec(default_factory=DefaultAuthResolver),
+        "disable_host_prefix_injection": FieldSpec(default=None),
         "transport": FieldSpec(default_factory=lambda: Urllib3HTTPClient()),
     }
 

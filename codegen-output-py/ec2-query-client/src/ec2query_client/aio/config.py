@@ -48,6 +48,7 @@ class _AsyncEC2ProtocolConfigOverrides(AsyncAwsConfigOverrides, total=False):
     )
     auth_schemes: dict[ShapeID, AsyncAuthScheme[Any, Any, Any, Any]] | None
     auth_scheme_resolver: AuthSchemeResolver | None
+    disable_host_prefix_injection: bool | None
 
 
 @dataclass(kw_only=True, repr=False, init=False)
@@ -71,6 +72,9 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
     auth_scheme_resolver: AuthSchemeResolver | None = None
     "Determines the auth scheme for each operation."
 
+    disable_host_prefix_injection: bool | None = None
+    "Whether to skip prepending operations' modeled host prefixes to the endpoint host."
+
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
         **AsyncAwsConfig._FIELDS,
         "endpoint_uri": FieldSpec(
@@ -91,6 +95,7 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
             }
         ),
         "auth_scheme_resolver": FieldSpec(default_factory=DefaultAuthResolver),
+        "disable_host_prefix_injection": FieldSpec(default=None),
         "transport": FieldSpec(default_factory=lambda: AIOHTTPClient()),
     }
 

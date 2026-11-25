@@ -385,6 +385,32 @@ def test_client_optional_input_members_may_be_omitted(
     assert loads(_body(request)) == {}
 
 
+def test_configs_can_turn_off_modeled_host_prefixes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _generate(tmp_path / "plain", "greeter_no_prefix")
+    config = (tmp_path / "plain/src/greeter_no_prefix/config.py").read_text()
+    assert "disable_host_prefix_injection" not in config
+
+    shapes = _shapes()
+    shapes["example#Ping"].setdefault("traits", {})["smithy.api#endpoint"] = {
+        "hostPrefix": "data."
+    }
+    _generate(tmp_path / "prefix", "greeter_prefix", shapes)
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "prefix/src")
+    )
+    package = importlib.import_module("greeter_prefix")
+    hosts: list[str] = []
+    for disable in (None, True):
+        transport = _Transport(body=_cbor_map({}))
+        config = _config(package, transport, aio=False)
+        config.disable_host_prefix_injection = disable
+        package.Greeter(config).ping()
+        hosts.extend(request.destination.host for request in transport.requests)
+    assert hosts == ["data.example.com", "example.com"]
+
+
 def test_rpcv2_json_service_sends_json_and_requires_the_json_extra(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

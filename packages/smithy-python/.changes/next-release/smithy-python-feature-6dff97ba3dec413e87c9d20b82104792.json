@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added the `disable_host_prefix_injection` config field to generated clients whose operations have modeled host prefixes."
+}

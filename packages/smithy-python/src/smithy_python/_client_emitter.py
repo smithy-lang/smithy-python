@@ -130,6 +130,10 @@ def write_client(
                 bdd=TypeReference("BDD", endpoints_module),
                 auth_schemes=_auth_schemes(service, integrations),
                 protocol_settings="_PROTOCOL_SETTINGS",
+                host_prefix=any(
+                    operation.operation.has_trait(_ENDPOINT)
+                    for operation in plan.operations
+                ),
             ),
             integrations,
         )
@@ -297,10 +301,18 @@ def _modes(
 
 _NO_AUTH: Final = _model.ShapeId("smithy.api", "noAuth")
 _XML_NAMESPACE: Final = _model.ShapeId("smithy.api", "xmlNamespace")
+_ENDPOINT: Final = _model.ShapeId("smithy.api", "endpoint")
+HOST_PREFIX_FIELD: Final = (
+    "disable_host_prefix_injection",
+    "Whether to skip prepending operations' modeled host prefixes to the "
+    "endpoint host.",
+)
+"""The name and documentation of the config field that turns off host prefixes."""
 _CONFIG_FIELDS: Final = frozenset(
     {
         "auth_scheme_resolver",
         "auth_schemes",
+        HOST_PREFIX_FIELD[0],
         "endpoint_resolver",
         "endpoint_uri",
         "interceptors",
@@ -445,6 +457,11 @@ def _write_core_config(writer: PythonWriter, config: ConfigPlan) -> None:
             (field.attribute, (field.type, " | None"), field.documentation)
             for field in endpoints.client_context_fields
         ),
+        *(
+            ((HOST_PREFIX_FIELD[0], ("bool | None",), HOST_PREFIX_FIELD[1]),)
+            if config.host_prefix
+            else ()
+        ),
     )
     writer.line("@", _DATACLASS, "(init=False)")
     writer.line("class ", mode.config, ":")
@@ -482,6 +499,8 @@ def _write_core_config(writer: PythonWriter, config: ConfigPlan) -> None:
             writer.line("transport: ", mode.transport_type, " | None = None,")
             for field in endpoints.client_context_fields:
                 writer.line(field.attribute, ": ", field.type, " | None = None,")
+            if config.host_prefix:
+                writer.line(HOST_PREFIX_FIELD[0], ": bool | None = None,")
         writer.line(") -> None:")
         with writer.indent():
             for field in auth_fields:
@@ -539,6 +558,8 @@ def _write_core_config(writer: PythonWriter, config: ConfigPlan) -> None:
             writer.line("self.transport = transport or ", mode.transport, "()")
             for field in endpoints.client_context_fields:
                 writer.line("self.", field.attribute, " = ", field.attribute)
+            if config.host_prefix:
+                writer.line("self.", HOST_PREFIX_FIELD[0], " = ", HOST_PREFIX_FIELD[0])
         if schemes:
             writer.line()
             writer.line(
