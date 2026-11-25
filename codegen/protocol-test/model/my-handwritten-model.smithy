@@ -3,6 +3,7 @@ $version: "2.0"
 namespace smithy.python.tests.handwritten
 
 use smithy.protocols#rpcv2Cbor
+use smithy.waiters#waitable
 
 @rpcv2Cbor(
     http: ["h2", "http/1.1"]
@@ -16,7 +17,72 @@ service MyHandwrittenModel {
         PublishEvents
         SubscribeToEvents
         ListItems
+        GetItem
     ]
+}
+
+/// Gets an item and its status.
+@readonly
+@waitable(
+    ItemReady: {
+        documentation: "Waits until the item is ready."
+        minDelay: 1
+        maxDelay: 5
+        acceptors: [
+            {
+                state: "success"
+                matcher: {
+                    output: { path: "status", expected: "READY", comparator: "stringEquals" }
+                }
+            }
+            {
+                state: "failure"
+                matcher: {
+                    output: { path: "status", expected: "FAILED", comparator: "stringEquals" }
+                }
+                message: "reason"
+            }
+            {
+                state: "retry"
+                matcher: { errorType: "ItemNotFound" }
+            }
+        ]
+    }
+    ItemDeleted: {
+        acceptors: [
+            {
+                state: "success"
+                matcher: { errorType: "ItemNotFound" }
+            }
+        ]
+    }
+)
+operation GetItem {
+    input := {
+        @required
+        id: String
+    }
+
+    output := {
+        id: String
+        status: ItemStatus
+        reason: String
+    }
+
+    errors: [
+        ItemNotFound
+    ]
+}
+
+enum ItemStatus {
+    PENDING
+    READY
+    FAILED
+}
+
+@error("client")
+structure ItemNotFound {
+    message: String
 }
 
 /// Lists items a page at a time.

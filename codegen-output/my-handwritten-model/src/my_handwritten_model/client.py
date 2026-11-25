@@ -7,6 +7,7 @@ from typing import Unpack as _Unpack, overload as _overload
 
 from smithy_core.client import Client
 from smithy_core.pagination import ItemPaginator
+from smithy_core.waiters import wait
 from smithy_http.plugins import user_agent_plugin
 
 from . import models as _models
@@ -16,7 +17,7 @@ from .user_agent import aws_user_agent_plugin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .models import ListItemsOutput
+    from .models import GetItemOutput, ListItemsOutput
 
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,201 @@ class MyHandwrittenModel(Client[Config]):
     """Client for MyHandwrittenModel"""
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
+
+    @_overload
+    def get_item(
+        self,
+        request: _models.GetItemInput | _models.GetItemInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> GetItemOutput: ...
+
+    @_overload
+    def get_item(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: _Unpack[_models.GetItemInputDict],
+    ) -> GetItemOutput:
+        """
+        Gets an item and its status.
+
+        Args:
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `GetItemOutput`.
+        """
+
+    def get_item(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> GetItemOutput:
+        return self._invoke(
+            self._select_input(_models.GET_ITEM, args, kwargs),
+            _models.GET_ITEM,
+            [],
+            plugins,
+        )
+
+    @_overload
+    def wait_until_item_deleted(
+        self,
+        request: _models.GetItemInput | _models.GetItemInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+    ) -> _models.GetItemOutput | None: ...
+
+    @_overload
+    def wait_until_item_deleted(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: _Unpack[_models.GetItemInputDict],
+    ) -> _models.GetItemOutput | None:
+        """
+        Waits for the ItemDeleted state of the GetItem operation.
+
+        Calls `get_item` until an acceptor of the ItemDeleted waiter reports success or failure. Takes the same request as `get_item`, and checks it before any request. Each attempt sends a copy of it.
+
+        Args:
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                They apply to each attempt of this wait only, and will not
+                affect any other operation invocations.
+            max_wait_time:
+                The maximum number of seconds to wait, counting requests and
+                delays. This option is not sent to the service.
+            min_delay:
+                The minimum number of seconds between attempts. Defaults to
+                the waiter's 2. This option is not sent to the service.
+            max_delay:
+                The maximum number of seconds between attempts. Defaults to
+                the waiter's 120. This option is not sent to the service.
+
+        Returns:
+            The `GetItemOutput` that matched a success acceptor. None if the waiter
+            succeeded on an error.
+
+        Raises:
+            ValueError: If a time is not a positive number of seconds or if
+                `min_delay` is above `max_delay`. Raised before any request.
+            WaiterFailureError: If the waiter reached its failure state.
+            WaiterTimeoutError: If `max_wait_time` passed first.
+        """
+
+    def wait_until_item_deleted(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: object,
+    ) -> _models.GetItemOutput | None:
+        return wait(
+            self._build_input(
+                self._select_input(_models.GET_ITEM, args, kwargs), _models.GET_ITEM
+            ),
+            _models.GET_ITEM,
+            self.get_item,
+            "ItemDeleted",
+            plugins,
+            max_wait_time=max_wait_time,
+            min_delay=min_delay,
+            max_delay=max_delay,
+        )
+
+    @_overload
+    def wait_until_item_ready(
+        self,
+        request: _models.GetItemInput | _models.GetItemInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+    ) -> _models.GetItemOutput | None: ...
+
+    @_overload
+    def wait_until_item_ready(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: _Unpack[_models.GetItemInputDict],
+    ) -> _models.GetItemOutput | None:
+        """
+        Waits until the item is ready.
+
+        Calls `get_item` until an acceptor of the ItemReady waiter reports success or failure. Takes the same request as `get_item`, and checks it before any request. Each attempt sends a copy of it.
+
+        Args:
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                They apply to each attempt of this wait only, and will not
+                affect any other operation invocations.
+            max_wait_time:
+                The maximum number of seconds to wait, counting requests and
+                delays. This option is not sent to the service.
+            min_delay:
+                The minimum number of seconds between attempts. Defaults to
+                the waiter's 1. This option is not sent to the service.
+            max_delay:
+                The maximum number of seconds between attempts. Defaults to
+                the waiter's 5. This option is not sent to the service.
+
+        Returns:
+            The `GetItemOutput` that matched a success acceptor. None if the waiter
+            succeeded on an error.
+
+        Raises:
+            ValueError: If a time is not a positive number of seconds or if
+                `min_delay` is above `max_delay`. Raised before any request.
+            WaiterFailureError: If the waiter reached its failure state.
+            WaiterTimeoutError: If `max_wait_time` passed first.
+        """
+
+    def wait_until_item_ready(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: object,
+    ) -> _models.GetItemOutput | None:
+        return wait(
+            self._build_input(
+                self._select_input(_models.GET_ITEM, args, kwargs), _models.GET_ITEM
+            ),
+            _models.GET_ITEM,
+            self.get_item,
+            "ItemReady",
+            plugins,
+            max_wait_time=max_wait_time,
+            min_delay=min_delay,
+            max_delay=max_delay,
+        )
 
     @_overload
     def list_items(

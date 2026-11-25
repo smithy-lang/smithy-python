@@ -391,6 +391,12 @@ def _token_operation(
             "stop_on_same_token__",
             id="sdk-option-beside-sibling",
         ),
+        # So are the waiters' time limit and delays.
+        pytest.param(
+            ("maxWaitTime",), "maxWaitTime", True, "max_wait_time_", id="max-wait"
+        ),
+        pytest.param(("minDelay",), "minDelay", True, "min_delay_", id="min-delay"),
+        pytest.param(("maxDelay",), "maxDelay", True, "max_delay_", id="max-delay"),
         # The sibling that already has the suffixed name keeps it.
         pytest.param(
             ("plugins", "plugins_"),

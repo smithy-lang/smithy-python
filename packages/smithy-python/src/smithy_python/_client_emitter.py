@@ -7,7 +7,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Final
 
-from . import _auth, _endpoint_tests, _endpoints, _package, _pagination
+from . import _auth, _endpoint_tests, _endpoints, _package, _pagination, _waiters
 from . import dependencies as _dependencies
 from . import exceptions as _exceptions
 from . import model as _model
@@ -90,6 +90,7 @@ def write_client(
     protocol: _protocols.ProtocolContribution,
     endpoints: _endpoints.EndpointPlan,
     paginators: tuple[_pagination.PaginatorPlan | None, ...],
+    waiters: tuple[tuple[_waiters.WaiterPlan, ...], ...],
     integrations: Sequence[ClientIntegration] = (),
 ) -> None:
     """Register client, config, endpoints, and package modules for both modes.
@@ -144,6 +145,7 @@ def write_client(
             f"{module}config",
             service,
             paginators,
+            waiters,
             integrations,
         )
     for integration in integrations:
@@ -581,6 +583,7 @@ def _write_client(
     config_module: str,
     service: _model.ServiceShape,
     paginators: tuple[_pagination.PaginatorPlan | None, ...],
+    waiters: tuple[tuple[_waiters.WaiterPlan, ...], ...],
     integrations: Sequence[ClientIntegration],
 ) -> None:
     config = TypeReference(mode.config, config_module)
@@ -602,8 +605,8 @@ def _write_client(
             )
         ]
         writer.line("_client_plugins = (", *_items((*plugins, _USER_AGENT_PLUGIN)), ")")
-        for operation, export, paginator in zip(
-            plan.operations, plan.models.operations, paginators, strict=True
+        for operation, export, paginator, operation_waiters in zip(
+            plan.operations, plan.models.operations, paginators, waiters, strict=True
         ):
             _write_operation(writer, plan, mode, operation, export.name, models, plugin)
             if paginator is not None:
@@ -616,6 +619,10 @@ def _write_client(
                     models,
                     plugin,
                     paginator,
+                )
+            for waiter in operation_waiters:
+                _write_waiter(
+                    writer, plan, mode, operation, export.name, models, plugin, waiter
                 )
         writer.line()
         create = _new_config(mode, config, integrations)
@@ -811,6 +818,133 @@ def _write_paginator(
             if paginator.items is not None:
                 writer.line("items=", _path(paginator.items), ",")
             writer.line("stop_on_same_token=stop_on_same_token,")
+        writer.line(")")
+
+
+def _write_waiter(
+    writer: PythonWriter,
+    plan: ClientPlan,
+    mode: ClientMode,
+    operation: OperationPlan,
+    constant: str,
+    models: TypeReference,
+    plugin: TypeReference,
+    waiter: _waiters.WaiterPlan,
+) -> None:
+    # The waiter definition is read at runtime from the operation's schema.
+    name = waiter.method_name
+    dict_name = plan.models.input_dict_names[operation.operation.input]
+    define = "async def " if mode.is_async else "def "
+    runtime = (
+        _core("wait_async", "aio.waiters")
+        if mode.is_async
+        else _core("wait", "waiters")
+    )
+    result: tuple[str | TypeReference, ...] = (
+        models,
+        ".",
+        operation.output_name,
+        " | None",
+    )
+    # SDK options, never sent to the service. The time limit has no default.
+    options: tuple[tuple[str | TypeReference, ...], ...] = (
+        ("plugins: list[", plugin, "] | None = None"),
+        ("max_wait_time: float",),
+        ("min_delay: float | None = None",),
+        ("max_delay: float | None = None",),
+    )
+    docs = (
+        waiter.documentation
+        or f"Waits for the {waiter.name} state of the "
+        f"{operation.operation.id.name} operation."
+    )
+    docs += (
+        f"\n\nCalls ``{operation.method_name}`` until an acceptor of the "
+        f"{waiter.name} waiter reports success or failure. Takes the same request "
+        f"as ``{operation.method_name}``, and checks it before any request. Each "
+        "attempt sends a copy of it."
+    )
+    if waiter.deprecated:
+        docs += " This waiter is deprecated."
+    docs += (
+        "\n\n:param plugins: Callables that change the configuration for each "
+        "attempt of this wait only."
+        "\n:param max_wait_time: The maximum number of seconds to wait, counting "
+        "requests and delays. This option is not sent to the service."
+        "\n:param min_delay: The minimum number of seconds between attempts. "
+        f"Defaults to the waiter's {waiter.min_delay}. This option is not sent to "
+        "the service."
+        "\n:param max_delay: The maximum number of seconds between attempts. "
+        f"Defaults to the waiter's {waiter.max_delay}. This option is not sent to "
+        "the service."
+        "\n:returns: The output that matched a success acceptor. None if the waiter "
+        "succeeded on an error."
+        "\n:raises ValueError: If a time is not a positive number of seconds or if "
+        "``min_delay`` is above ``max_delay``. Raised before any request."
+        "\n:raises WaiterFailureError: If the waiter reached its failure state."
+        "\n:raises WaiterTimeoutError: If ``max_wait_time`` passed first."
+    )
+    writer.line()
+    writer.line("@", _OVERLOAD)
+    writer.line(define, name, "(")
+    with writer.indent():
+        writer.line("self,")
+        writer.line(
+            "request: ",
+            models,
+            ".",
+            operation.input_name,
+            " | ",
+            models,
+            ".",
+            dict_name,
+            ",",
+        )
+        writer.line("/,")
+        writer.line("*,")
+        for option in options:
+            writer.line(*option, ",")
+    writer.line(") -> ", *result, ": ...")
+    writer.line()
+    writer.line("@", _OVERLOAD)
+    writer.line(define, name, "(")
+    with writer.indent():
+        writer.line("self,")
+        writer.line("/,")
+        writer.line("*,")
+        for option in options:
+            writer.line(*option, ",")
+        writer.line("**kwargs: ", _UNPACK, "[", models, ".", dict_name, "],")
+    writer.line(") -> ", *result, ":")
+    with writer.indent():
+        _models._write_docstring(writer, docs)  # pyright: ignore[reportPrivateUsage]
+    writer.line()
+    writer.line(define, name, "(")
+    with writer.indent():
+        writer.line("self,")
+        writer.line("/,")
+        writer.line("*args: object,")
+        for option in options:
+            writer.line(*option, ",")
+        writer.line("**kwargs: object,")
+    writer.line(") -> ", *result, ":")
+    with writer.indent():
+        writer.line("return ", "await " if mode.is_async else "", runtime, "(")
+        with writer.indent():
+            writer.line("self._build_input(")
+            with writer.indent():
+                writer.line(
+                    "self._select_input(", models, ".", constant, ", args, kwargs),"
+                )
+                writer.line(models, ".", constant, ",")
+            writer.line("),")
+            writer.line(models, ".", constant, ",")
+            writer.line("self.", operation.method_name, ",")
+            writer.line(_models._quote(waiter.name), ",")  # pyright: ignore[reportPrivateUsage]
+            writer.line("plugins,")
+            writer.line("max_wait_time=max_wait_time,")
+            writer.line("min_delay=min_delay,")
+            writer.line("max_delay=max_delay,")
         writer.line(")")
 
 

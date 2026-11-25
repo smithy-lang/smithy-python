@@ -1,15 +1,18 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Required, Self, TypedDict
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
-from smithy_core.response import ResponseMetadata
+from smithy_core.response import ErrorResponseMetadata, ResponseMetadata
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import ShapeSerializer
+from smithy_core.types import UnknownEnumMixin
 
 __all__ = [
     "ECHO",
+    "GET_NOTE",
     "GET_THING",
     "LIST_NOTES",
     "PING",
@@ -17,10 +20,14 @@ __all__ = [
     "PUT_THING",
     "EchoInput",
     "EchoOutput",
+    "GetNoteInput",
+    "GetNoteOutput",
     "GetThingInput",
     "GetThingOutput",
     "ListNotesInput",
     "ListNotesOutput",
+    "NoteNotFound",
+    "NoteState",
     "PingInput",
     "PingOutput",
     "PutNoteInput",
@@ -43,6 +50,33 @@ class ServiceError(ModeledError):
 
     Some exceptions do not extend from this class, including synthetic,
     implicit, and shared exception types.
+    """
+
+@dataclass(kw_only=True)
+class GetNoteInput(_SerdeShape):
+    "Dataclass for GetNoteInput structure."
+
+    id: str | None = ...
+
+class GetNoteInputDict(TypedDict, total=False):
+    "Dictionary form of `GetNoteInput`."
+
+    id: Required[str]
+
+@dataclass(kw_only=True)
+class GetNoteOutput(_SerdeShape):
+    "Dataclass for GetNoteOutput structure."
+
+    id: str | None = ...
+    state: str | None = ...
+    reason: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
     """
 
 @dataclass(kw_only=True)
@@ -97,6 +131,24 @@ class ListNotesOutput(_SerdeShape):
     needs in order to investigate a call. Members of the metadata are
     individually optional.
     """
+
+@dataclass(kw_only=True)
+class NoteNotFound(ServiceError, _SerdeShape):
+    "Dataclass for NoteNotFound structure."
+
+    response_metadata: ErrorResponseMetadata = ...
+    """
+    Metadata about the response that produced this error.
+
+    Use this to read the error code or to recover the request identifiers a
+    service's support team needs in order to investigate a call. Members of
+    the metadata are individually optional.
+    """
+
+class NoteState(UnknownEnumMixin, StrEnum):
+    DRAFT = "DRAFT"
+    SAVED = "SAVED"
+    REJECTED = "REJECTED"
 
 @dataclass(kw_only=True)
 class PutNoteInput(_SerdeShape):
@@ -205,6 +257,7 @@ class PutThingOutput(_SerdeShape):
     """
 
 ECHO: APIOperation[EchoInput, EchoOutput]
+GET_NOTE: APIOperation[GetNoteInput, GetNoteOutput]
 GET_THING: APIOperation[GetThingInput, GetThingOutput]
 LIST_NOTES: APIOperation[ListNotesInput, ListNotesOutput]
 PING: APIOperation[PingInput, PingOutput]

@@ -164,6 +164,101 @@
         }
       }
     },
+    "smithy.python.tests.handwritten#GetItem": {
+      "type": "operation",
+      "input": {
+        "target": "smithy.python.tests.handwritten#GetItemInput"
+      },
+      "output": {
+        "target": "smithy.python.tests.handwritten#GetItemOutput"
+      },
+      "errors": [
+        {
+          "target": "smithy.python.tests.handwritten#ItemNotFound"
+        }
+      ],
+      "traits": {
+        "smithy.api#documentation": "Gets an item and its status.",
+        "smithy.api#readonly": {},
+        "smithy.waiters#waitable": {
+          "ItemReady": {
+            "documentation": "Waits until the item is ready.",
+            "minDelay": 1,
+            "maxDelay": 5,
+            "acceptors": [
+              {
+                "state": "success",
+                "matcher": {
+                  "output": {
+                    "path": "status",
+                    "expected": "READY",
+                    "comparator": "stringEquals"
+                  }
+                }
+              },
+              {
+                "state": "failure",
+                "matcher": {
+                  "output": {
+                    "path": "status",
+                    "expected": "FAILED",
+                    "comparator": "stringEquals"
+                  }
+                },
+                "message": "reason"
+              },
+              {
+                "state": "retry",
+                "matcher": {
+                  "errorType": "ItemNotFound"
+                }
+              }
+            ]
+          },
+          "ItemDeleted": {
+            "acceptors": [
+              {
+                "state": "success",
+                "matcher": {
+                  "errorType": "ItemNotFound"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "smithy.python.tests.handwritten#GetItemInput": {
+      "type": "structure",
+      "members": {
+        "id": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "smithy.python.tests.handwritten#GetItemOutput": {
+      "type": "structure",
+      "members": {
+        "id": {
+          "target": "smithy.api#String"
+        },
+        "status": {
+          "target": "smithy.python.tests.handwritten#ItemStatus"
+        },
+        "reason": {
+          "target": "smithy.api#String"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
     "smithy.python.tests.handwritten#HeartbeatEvent": {
       "type": "structure",
       "members": {
@@ -182,6 +277,40 @@
       "type": "list",
       "member": {
         "target": "smithy.api#String"
+      }
+    },
+    "smithy.python.tests.handwritten#ItemNotFound": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "smithy.api#String"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "smithy.python.tests.handwritten#ItemStatus": {
+      "type": "enum",
+      "members": {
+        "PENDING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "PENDING"
+          }
+        },
+        "READY": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "READY"
+          }
+        },
+        "FAILED": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "FAILED"
+          }
+        }
       }
     },
     "smithy.python.tests.handwritten#ListItems": {
@@ -256,6 +385,9 @@
       "type": "service",
       "version": "2020-07-14",
       "operations": [
+        {
+          "target": "smithy.python.tests.handwritten#GetItem"
+        },
         {
           "target": "smithy.python.tests.handwritten#ListItems"
         },
@@ -492,6 +624,275 @@
       },
       "traits": {
         "smithy.api#streaming": {}
+      }
+    },
+    "smithy.waiters#Acceptor": {
+      "type": "structure",
+      "members": {
+        "state": {
+          "target": "smithy.waiters#AcceptorState",
+          "traits": {
+            "smithy.api#documentation": "The state the acceptor transitions to when matched.",
+            "smithy.api#required": {}
+          }
+        },
+        "matcher": {
+          "target": "smithy.waiters#Matcher",
+          "traits": {
+            "smithy.api#documentation": "The matcher used to test if the resource is in a given state.",
+            "smithy.api#required": {}
+          }
+        },
+        "message": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "A JMESPath expression that extracts a human-readable message from\nthe operation output when this acceptor matches. The expression\nMUST resolve to a string. This field is only valid on acceptors\nwith a ``failure`` state."
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "Represents an acceptor in a waiter's state machine.",
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.waiters#AcceptorState": {
+      "type": "enum",
+      "members": {
+        "SUCCESS": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#documentation": "The waiter successfully finished waiting. This is a terminal\nstate that causes the waiter to stop.",
+            "smithy.api#enumValue": "success"
+          }
+        },
+        "FAILURE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#documentation": "The waiter failed to enter into the desired state. This is a\nterminal state that causes the waiter to stop.",
+            "smithy.api#enumValue": "failure"
+          }
+        },
+        "RETRY": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#documentation": "The waiter will retry the operation. This state transition is\nimplicit if no accepter causes a state transition.",
+            "smithy.api#enumValue": "retry"
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "The transition state of a waiter.",
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.waiters#Acceptors": {
+      "type": "list",
+      "member": {
+        "target": "smithy.waiters#Acceptor"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1
+        },
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.waiters#Matcher": {
+      "type": "union",
+      "members": {
+        "output": {
+          "target": "smithy.waiters#PathMatcher",
+          "traits": {
+            "smithy.api#documentation": "Matches on the successful output of an operation using a\nJMESPath expression."
+          }
+        },
+        "inputOutput": {
+          "target": "smithy.waiters#PathMatcher",
+          "traits": {
+            "smithy.api#documentation": "Matches on both the input and output of an operation using a JMESPath\nexpression. Input parameters are available through the top-level\n`input` field, and output data is available through the top-level\n`output` field. This matcher can only be used on operations that\ndefine both input and output. This matcher is checked only if an\noperation completes successfully."
+          }
+        },
+        "errorType": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "Matches if an operation returns an error and the error matches\nthe expected error type. If an absolute shape ID is provided, the\nerror is matched exactly on the shape ID. A shape name can be\nprovided to match an error in any namespace with the given name."
+          }
+        },
+        "success": {
+          "target": "smithy.api#Boolean",
+          "traits": {
+            "smithy.api#documentation": "When set to `true`, matches when an operation returns a successful\nresponse. When set to `false`, matches when an operation fails with\nany error."
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "Defines how an acceptor determines if it matches the current state of\na resource.",
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.waiters#NonEmptyString": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1
+        },
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.waiters#NonEmptyStringList": {
+      "type": "list",
+      "member": {
+        "target": "smithy.waiters#NonEmptyString"
+      },
+      "traits": {
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.waiters#PathComparator": {
+      "type": "enum",
+      "members": {
+        "STRING_EQUALS": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#documentation": "Matches if the return value is a string that is equal to the expected string.",
+            "smithy.api#enumValue": "stringEquals"
+          }
+        },
+        "BOOLEAN_EQUALS": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#documentation": "Matches if the return value is a boolean that is equal to the string literal 'true' or 'false'.",
+            "smithy.api#enumValue": "booleanEquals"
+          }
+        },
+        "ALL_STRING_EQUALS": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#documentation": "Matches if all values in the list matches the expected string.",
+            "smithy.api#enumValue": "allStringEquals"
+          }
+        },
+        "ANY_STRING_EQUALS": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#documentation": "Matches if any value in the list matches the expected string.",
+            "smithy.api#enumValue": "anyStringEquals"
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "Defines a comparison to perform in a PathMatcher.",
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.waiters#PathMatcher": {
+      "type": "structure",
+      "members": {
+        "path": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "A JMESPath expression applied to the input or output of an operation.",
+            "smithy.api#required": {}
+          }
+        },
+        "expected": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "The expected return value of the expression.",
+            "smithy.api#required": {}
+          }
+        },
+        "comparator": {
+          "target": "smithy.waiters#PathComparator",
+          "traits": {
+            "smithy.api#documentation": "The comparator used to compare the result of the expression with the\nexpected value.",
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "Defines how to test the result of a JMESPath expression against\nan expected value.",
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.waiters#Waiter": {
+      "type": "structure",
+      "members": {
+        "documentation": {
+          "target": "smithy.api#String",
+          "traits": {
+            "smithy.api#documentation": "Documentation about the waiter. Can use CommonMark."
+          }
+        },
+        "acceptors": {
+          "target": "smithy.waiters#Acceptors",
+          "traits": {
+            "smithy.api#documentation": "An ordered array of acceptors to check after executing an operation.",
+            "smithy.api#required": {}
+          }
+        },
+        "minDelay": {
+          "target": "smithy.waiters#WaiterDelay",
+          "traits": {
+            "smithy.api#default": 2,
+            "smithy.api#documentation": "The minimum amount of time in seconds to delay between each retry.\nThis value defaults to 2 if not specified. If specified, this value\nMUST be greater than or equal to 1 and less than or equal to\n`maxDelay`."
+          }
+        },
+        "maxDelay": {
+          "target": "smithy.waiters#WaiterDelay",
+          "traits": {
+            "smithy.api#default": 120,
+            "smithy.api#documentation": "The maximum amount of time in seconds to delay between each retry.\nThis value defaults to 120 if not specified (or, 2 minutes). If\nspecified, this value MUST be greater than or equal to 1."
+          }
+        },
+        "deprecated": {
+          "target": "smithy.api#Boolean",
+          "traits": {
+            "smithy.api#documentation": "Indicates if the waiter is considered deprecated. A waiter SHOULD\nbe marked as deprecated if it has been replaced by another waiter or\nif it is no longer needed (for example, if a resource changes from\neventually consistent to strongly consistent)."
+          }
+        },
+        "tags": {
+          "target": "smithy.waiters#NonEmptyStringList",
+          "traits": {
+            "smithy.api#documentation": "A list of tags associated with the waiter that allow waiters to be\ncategorized and grouped."
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "Defines an individual operation waiter.",
+        "smithy.api#private": {}
+      }
+    },
+    "smithy.waiters#WaiterDelay": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 1
+        }
+      }
+    },
+    "smithy.waiters#WaiterName": {
+      "type": "string",
+      "traits": {
+        "smithy.api#pattern": "^[A-Z]+[A-Za-z0-9]*$"
+      }
+    },
+    "smithy.waiters#waitable": {
+      "type": "map",
+      "key": {
+        "target": "smithy.waiters#WaiterName"
+      },
+      "value": {
+        "target": "smithy.waiters#Waiter"
+      },
+      "traits": {
+        "smithy.api#documentation": "Indicates that an operation has various named \"waiters\" that can be used\nto poll a resource until it enters a desired state.",
+        "smithy.api#length": {
+          "min": 1
+        },
+        "smithy.api#trait": {
+          "selector": "operation :not(-[input, output]-> structure > member > union[trait|streaming])"
+        }
       }
     }
   }

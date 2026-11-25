@@ -25,6 +25,9 @@
                     "target": "example.features#Echo"
                 },
                 {
+                    "target": "example.features#GetNote"
+                },
+                {
                     "target": "example.features#GetThing"
                 },
                 {
@@ -698,6 +701,102 @@
                 }
             }
         },
+        "example.features#GetNote": {
+            "type": "operation",
+            "input": {
+                "target": "example.features#GetNoteInput"
+            },
+            "output": {
+                "target": "example.features#GetNoteOutput"
+            },
+            "errors": [
+                {
+                    "target": "example.features#NoteNotFound"
+                }
+            ],
+            "traits": {
+                "smithy.api#auth": [],
+                "smithy.api#documentation": "Gets a note and its state. Needs no auth.",
+                "smithy.api#readonly": {},
+                "smithy.waiters#waitable": {
+                    "NoteSaved": {
+                        "documentation": "Waits until the note is saved.",
+                        "minDelay": 1,
+                        "maxDelay": 4,
+                        "acceptors": [
+                            {
+                                "state": "success",
+                                "matcher": {
+                                    "output": {
+                                        "path": "state",
+                                        "expected": "SAVED",
+                                        "comparator": "stringEquals"
+                                    }
+                                }
+                            },
+                            {
+                                "state": "failure",
+                                "matcher": {
+                                    "output": {
+                                        "path": "state",
+                                        "expected": "REJECTED",
+                                        "comparator": "stringEquals"
+                                    }
+                                },
+                                "message": "reason"
+                            },
+                            {
+                                "state": "retry",
+                                "matcher": {
+                                    "errorType": "NoteNotFound"
+                                }
+                            }
+                        ]
+                    },
+                    "NoteDeleted": {
+                        "acceptors": [
+                            {
+                                "state": "success",
+                                "matcher": {
+                                    "errorType": "NoteNotFound"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        "example.features#GetNoteInput": {
+            "type": "structure",
+            "members": {
+                "id": {
+                    "target": "smithy.api#String",
+                    "traits": {
+                        "smithy.api#required": {}
+                    }
+                }
+            },
+            "traits": {
+                "smithy.api#input": {}
+            }
+        },
+        "example.features#GetNoteOutput": {
+            "type": "structure",
+            "members": {
+                "id": {
+                    "target": "smithy.api#String"
+                },
+                "state": {
+                    "target": "example.features#NoteState"
+                },
+                "reason": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#output": {}
+            }
+        },
         "example.features#GetThing": {
             "type": "operation",
             "input": {
@@ -791,6 +890,40 @@
             "type": "list",
             "member": {
                 "target": "smithy.api#String"
+            }
+        },
+        "example.features#NoteNotFound": {
+            "type": "structure",
+            "members": {
+                "message": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#error": "client"
+            }
+        },
+        "example.features#NoteState": {
+            "type": "enum",
+            "members": {
+                "DRAFT": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": "DRAFT"
+                    }
+                },
+                "SAVED": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": "SAVED"
+                    }
+                },
+                "REJECTED": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": "REJECTED"
+                    }
+                }
             }
         },
         "example.features#Ping": {

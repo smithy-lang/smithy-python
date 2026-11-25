@@ -7,6 +7,7 @@ from smithy_aws_core.identity.chain.resolver import IdentityChain
 from smithy_aws_core.identity.components import AWSCredentialsIdentity
 from smithy_core.client import Client
 from smithy_core.pagination import ItemPaginator
+from smithy_core.waiters import wait
 from smithy_http.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
 
@@ -58,6 +59,180 @@ class FieldNotesClient(Client[FieldNotesConfig]):
             models.ECHO,
             [],
             plugins,
+        )
+
+    @overload
+    def get_note(
+        self,
+        request: models.GetNoteInput | models.GetNoteInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.GetNoteOutput: ...
+
+    @overload
+    def get_note(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.GetNoteInputDict],
+    ) -> models.GetNoteOutput:
+        """
+        Gets a note and its state. Needs no auth.
+
+        :param plugins: Callables that change the configuration for this call
+        only.
+        """
+
+    def get_note(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.GetNoteOutput:
+        return self._invoke(
+            self._select_input(models.GET_NOTE, args, kwargs),
+            models.GET_NOTE,
+            [],
+            plugins,
+        )
+
+    @overload
+    def wait_until_note_deleted(
+        self,
+        request: models.GetNoteInput | models.GetNoteInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+    ) -> models.GetNoteOutput | None: ...
+
+    @overload
+    def wait_until_note_deleted(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: Unpack[models.GetNoteInputDict],
+    ) -> models.GetNoteOutput | None:
+        """
+        Waits for the NoteDeleted state of the GetNote operation.
+
+        Calls ``get_note`` until an acceptor of the NoteDeleted waiter reports
+        success or failure. Takes the same request as ``get_note``, and checks
+        it before any request. Each attempt sends a copy of it.
+
+        :param plugins: Callables that change the configuration for each attempt
+        of this wait only.
+        :param max_wait_time: The maximum number of seconds to wait, counting
+        requests and delays. This option is not sent to the service.
+        :param min_delay: The minimum number of seconds between attempts.
+        Defaults to the waiter's 2. This option is not sent to the service.
+        :param max_delay: The maximum number of seconds between attempts.
+        Defaults to the waiter's 120. This option is not sent to the service.
+        :returns: The output that matched a success acceptor. None if the waiter
+        succeeded on an error.
+        :raises ValueError: If a time is not a positive number of seconds or if
+        ``min_delay`` is above ``max_delay``. Raised before any request.
+        :raises WaiterFailureError: If the waiter reached its failure state.
+        :raises WaiterTimeoutError: If ``max_wait_time`` passed first.
+        """
+
+    def wait_until_note_deleted(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: object,
+    ) -> models.GetNoteOutput | None:
+        return wait(
+            self._build_input(
+                self._select_input(models.GET_NOTE, args, kwargs),
+                models.GET_NOTE,
+            ),
+            models.GET_NOTE,
+            self.get_note,
+            "NoteDeleted",
+            plugins,
+            max_wait_time=max_wait_time,
+            min_delay=min_delay,
+            max_delay=max_delay,
+        )
+
+    @overload
+    def wait_until_note_saved(
+        self,
+        request: models.GetNoteInput | models.GetNoteInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+    ) -> models.GetNoteOutput | None: ...
+
+    @overload
+    def wait_until_note_saved(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: Unpack[models.GetNoteInputDict],
+    ) -> models.GetNoteOutput | None:
+        """
+        Waits until the note is saved.
+
+        Calls ``get_note`` until an acceptor of the NoteSaved waiter reports
+        success or failure. Takes the same request as ``get_note``, and checks
+        it before any request. Each attempt sends a copy of it.
+
+        :param plugins: Callables that change the configuration for each attempt
+        of this wait only.
+        :param max_wait_time: The maximum number of seconds to wait, counting
+        requests and delays. This option is not sent to the service.
+        :param min_delay: The minimum number of seconds between attempts.
+        Defaults to the waiter's 1. This option is not sent to the service.
+        :param max_delay: The maximum number of seconds between attempts.
+        Defaults to the waiter's 4. This option is not sent to the service.
+        :returns: The output that matched a success acceptor. None if the waiter
+        succeeded on an error.
+        :raises ValueError: If a time is not a positive number of seconds or if
+        ``min_delay`` is above ``max_delay``. Raised before any request.
+        :raises WaiterFailureError: If the waiter reached its failure state.
+        :raises WaiterTimeoutError: If ``max_wait_time`` passed first.
+        """
+
+    def wait_until_note_saved(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: object,
+    ) -> models.GetNoteOutput | None:
+        return wait(
+            self._build_input(
+                self._select_input(models.GET_NOTE, args, kwargs),
+                models.GET_NOTE,
+            ),
+            models.GET_NOTE,
+            self.get_note,
+            "NoteSaved",
+            plugins,
+            max_wait_time=max_wait_time,
+            min_delay=min_delay,
+            max_delay=max_delay,
         )
 
     @overload

@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Generated clients have a `wait_until_<waiter>` method for each waiter of an operation with the `@waitable` trait. It polls the operation until the waiter succeeds, fails, or reaches the required `max_wait_time`. Generated schemas keep the trait for the waiter runtime. An operation input member whose Python name would be `max_wait_time`, `min_delay`, or `max_delay` is generated with a trailing underscore, adding more underscores if a sibling already uses that name."
+}

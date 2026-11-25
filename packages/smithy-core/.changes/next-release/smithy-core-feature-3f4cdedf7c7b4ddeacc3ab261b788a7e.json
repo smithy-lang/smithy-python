@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Add `wait` in `smithy_core.waiters` and `wait_async` in `smithy_core.aio.waiters`, which generated clients use to poll an operation until a waiter from its `@waitable` trait succeeds. Waits that fail raise `WaiterFailureError` and waits that time out raise `WaiterTimeoutError`. Both are `WaiterError` subclasses. Operation input members whose Python name would be `max_wait_time`, `min_delay`, or `max_delay` are built with a trailing underscore, like `plugins`, adding more underscores if a sibling already uses that name."
+}

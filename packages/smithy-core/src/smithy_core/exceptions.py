@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 from .response import EMPTY_ERROR_RESPONSE_METADATA, ErrorResponseMetadata
 
@@ -24,6 +24,9 @@ __all__ = [
     "UnsupportedAuthSchemeError",
     "UnsupportedStreamError",
     "UnsupportedTransportError",
+    "WaiterError",
+    "WaiterFailureError",
+    "WaiterTimeoutError",
 ]
 
 
@@ -183,3 +186,41 @@ class PaginationError(SmithyError):
     Raised when an async paginator is advanced before its previous advance
     finished, which neither ends pagination nor affects that advance.
     """
+
+
+class WaiterError(SmithyError):
+    """A waiter ended without reaching its success state."""
+
+    attempts: int
+    """The number of attempts made."""
+
+    last_output: Any
+    """The output the last attempt returned, or None."""
+
+    last_error: Exception | None
+    """The error the last attempt raised, or None."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        attempts: int,
+        last_output: Any = None,
+        last_error: Exception | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.attempts = attempts
+        self.last_output = last_output
+        self.last_error = last_error
+
+
+class WaiterFailureError(WaiterError):
+    """A waiter reached its failure state.
+
+    Raised when a failure acceptor matches, or when an attempt raises an error that
+    no acceptor matches. That error is in ``last_error``.
+    """
+
+
+class WaiterTimeoutError(WaiterError):
+    """A waiter's time limit passed before it reached its success or failure state."""

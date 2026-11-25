@@ -125,6 +125,12 @@ public final class RuntimeTypes {
     public static final Symbol ASYNC_ITEM_PAGINATOR =
             createSymbol("aio.pagination", "AsyncItemPaginator", SmithyPythonDependency.SMITHY_CORE);
 
+    // The wait loops of modeled waiters. Their names don't follow the Async prefix
+    // convention, so each client picks its own instead of mapping the async one.
+    public static final Symbol ASYNC_WAIT =
+            createSymbol("aio.waiters", "wait_async", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol WAIT = createSymbol("waiters", "wait", SmithyPythonDependency.SMITHY_CORE);
+
     // smithy_core.aio.interfaces
     public static final Symbol ASYNC_BYTE_STREAM =
             createSymbol("aio.interfaces", "AsyncByteStream", SmithyPythonDependency.SMITHY_CORE);

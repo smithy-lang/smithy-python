@@ -10,6 +10,7 @@ use smithy.rules#contextParam
 use smithy.rules#endpointRuleSet
 use smithy.rules#endpointTests
 use smithy.rules#staticContextParams
+use smithy.waiters#waitable
 
 /// An AWS service that uses every client feature the generator supports.
 ///
@@ -214,13 +215,72 @@ use smithy.rules#staticContextParams
 })
 service FieldNotes {
     version: "2026-11-20"
-    operations: [Echo, GetThing, ListNotes, Ping, PutNote, PutThing]
+    operations: [Echo, GetNote, GetThing, ListNotes, Ping, PutNote, PutThing]
 }
 
 /// Uses API key auth, but sends no key when it has none.
 @auth([httpApiKeyAuth])
 @optionalAuth
 operation Echo {}
+
+/// Gets a note and its state. Needs no auth.
+@auth([])
+@readonly
+@waitable(
+    NoteSaved: {
+        documentation: "Waits until the note is saved."
+        minDelay: 1
+        maxDelay: 4
+        acceptors: [
+            {
+                state: "success"
+                matcher: { output: { path: "state", expected: "SAVED", comparator: "stringEquals" } }
+            }
+            {
+                state: "failure"
+                matcher: { output: { path: "state", expected: "REJECTED", comparator: "stringEquals" } }
+                message: "reason"
+            }
+            {
+                state: "retry"
+                matcher: { errorType: "NoteNotFound" }
+            }
+        ]
+    }
+    NoteDeleted: {
+        acceptors: [
+            {
+                state: "success"
+                matcher: { errorType: "NoteNotFound" }
+            }
+        ]
+    }
+)
+operation GetNote {
+    input := {
+        @required
+        id: String
+    }
+    output := {
+        id: String
+        state: NoteState
+        reason: String
+    }
+    errors: [
+        NoteNotFound
+    ]
+}
+
+enum NoteState {
+    DRAFT
+    SAVED
+    REJECTED
+}
+
+@error("client")
+structure NoteNotFound {
+    message: String
+}
 
 /// Uses API key auth.
 @auth([httpApiKeyAuth])

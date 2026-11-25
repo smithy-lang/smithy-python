@@ -49,7 +49,10 @@ import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.sections.ClientSetupSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
+import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.SmithyInternalApi;
+import software.amazon.smithy.waiters.WaitableTrait;
+import software.amazon.smithy.waiters.Waiter;
 
 /**
  * Generates the actual client and implements operations.
@@ -189,6 +192,7 @@ final class ClientGenerator implements Runnable {
                     var paginatedIndex = PaginatedIndex.of(model);
                     var operations = topDownIndex.getContainedOperations(service);
                     var paginatorNames = paginatorNames(operations, eventStreamIndex);
+                    var waiterNames = waiterNames(operations, eventStreamIndex, paginatorNames);
                     for (OperationShape operation : operations) {
                         if (eventStreamIndex.getInputInfo(operation).isPresent()
                                 || eventStreamIndex.getOutputInfo(operation).isPresent()) {
@@ -205,6 +209,16 @@ final class ClientGenerator implements Runnable {
                                         paginatorName,
                                         paginationInfo(paginatedIndex, operation),
                                         sync);
+                            }
+                            var waiters = waiterNames.get(operation.getId());
+                            if (waiters != null) {
+                                var trait = operation.expectTrait(WaitableTrait.class);
+                                waiters.forEach((waiterName, methodName) -> generateWaiter(writer,
+                                        operation,
+                                        waiterName,
+                                        trait.getWaiters().get(waiterName),
+                                        methodName,
+                                        sync));
                             }
                         }
                     }
@@ -261,7 +275,7 @@ final class ClientGenerator implements Runnable {
                 input,
                 sync,
                 true,
-                false,
+                List.of(),
                 outputSymbol.getName(),
                 w -> writeOperationDocs(w, operation, output),
                 """
@@ -459,7 +473,7 @@ final class ClientGenerator implements Runnable {
                 input,
                 sync,
                 false,
-                true,
+                List.of("stop_on_same_token: bool = True"),
                 returns,
                 w -> writePaginatorDocs(w, operation, methodName, outputName, !itemsPath.isEmpty()),
                 """
@@ -576,6 +590,180 @@ final class ClientGenerator implements Runnable {
     }
 
     /**
+     * Names the waiters of each operation that has them, keyed by waiter name in
+     * waiter name order.
+     *
+     * <p>A waiter is named {@code wait_until_} plus its snake-cased name. A waiter
+     * whose name is an operation method's, a paginator's, or an inherited client
+     * method's gets trailing underscores until its name is also free of every other
+     * waiter's preferred name, so no name depends on the order of operations.
+     *
+     * <p>Event stream operations get no waiters, nor do operations with a streaming
+     * input member, since that input can't be sent again for each attempt.
+     */
+    private Map<ShapeId, Map<String, String>> waiterNames(
+            Collection<OperationShape> operations,
+            EventStreamIndex eventStreamIndex,
+            Map<ShapeId, String> paginatorNames
+    ) {
+        var taken = new HashSet<>(PythonSymbolProvider.CLIENT_RESERVED_METHOD_NAMES);
+        taken.addAll(paginatorNames.values());
+        var preferred = new TreeMap<String, ShapeId>();
+        for (OperationShape operation : operations) {
+            taken.add(symbolProvider.toSymbol(operation).expectProperty(OPERATION_METHOD).getName());
+            var trait = operation.getTrait(WaitableTrait.class);
+            if (trait.isPresent()
+                    && eventStreamIndex.getInputInfo(operation).isEmpty()
+                    && eventStreamIndex.getOutputInfo(operation).isEmpty()
+                    && !hasStreamingInput(operation)) {
+                for (var name : trait.get().getWaiters().keySet()) {
+                    preferred.put(name, operation.getId());
+                }
+            }
+        }
+        var reserved = new HashSet<>(taken);
+        for (var name : preferred.keySet()) {
+            reserved.add(waiterMethod(name));
+        }
+        var names = new TreeMap<ShapeId, Map<String, String>>();
+        for (var entry : preferred.entrySet()) {
+            var method = waiterMethod(entry.getKey());
+            if (taken.contains(method)) {
+                while (reserved.contains(method)) {
+                    method += "_";
+                }
+                reserved.add(method);
+            }
+            names.computeIfAbsent(entry.getValue(), id -> new TreeMap<>()).put(entry.getKey(), method);
+        }
+        return names;
+    }
+
+    private static String waiterMethod(String waiterName) {
+        return "wait_until_" + CaseUtils.toSnakeCase(waiterName);
+    }
+
+    /**
+     * Generates the method that waits for one of an operation's waiters.
+     *
+     * <p>It takes the same request as the operation's method, and checks and builds
+     * it at once, before any request. The runtime wait loop then calls the operation's
+     * method for each attempt, so each call runs the operation's default plugins and
+     * the caller's. It also takes the keyword-only SDK options {@code max_wait_time},
+     * which has no default, and {@code min_delay} and {@code max_delay}, which default
+     * to the waiter's. It hands them to the runtime, never to the request. The waiter
+     * definition itself is read at runtime from the operation's schema.
+     */
+    private void generateWaiter(
+            PythonWriter writer,
+            OperationShape operation,
+            String waiterName,
+            Waiter waiter,
+            String methodName,
+            boolean sync
+    ) {
+        // A model built without validation could hold delays the runtime rejects.
+        if (waiter.getMinDelay() > waiter.getMaxDelay()) {
+            throw new CodegenException(String.format(
+                    "Waiter %s of %s has a minDelay of %d, above its maxDelay of %d.",
+                    waiterName,
+                    operation.getId(),
+                    waiter.getMinDelay(),
+                    waiter.getMaxDelay()));
+        }
+        var operationSymbol = symbolProvider.toSymbol(operation);
+        var operationMethod = operationSymbol.expectProperty(OPERATION_METHOD).getName();
+        var input = model.expectShape(operation.getInputShape());
+        var output = symbolProvider.toSymbol(model.expectShape(operation.getOutputShape()));
+        // The sync loop's name doesn't follow the Async prefix convention, so it isn't
+        // mapped from the async one.
+        var runtime = sync ? RuntimeTypes.WAIT : RuntimeTypes.ASYNC_WAIT;
+
+        writer.putContext("operationName", methodName);
+        writer.putContext("operation", "_models." + operationSymbol.getName());
+        writer.putContext("plugin", CodegenUtils.getPluginSymbol(context.settings()));
+        writeOverloadedOperation(writer,
+                input,
+                sync,
+                true,
+                List.of("max_wait_time: float",
+                        "min_delay: float | None = None",
+                        "max_delay: float | None = None"),
+                annotation(writer, output) + " | None",
+                w -> writeWaiterDocs(w, operation, waiterName, waiter, operationMethod, output.getName()),
+                """
+                        return await $T(
+                            self._build_input(
+                                self._select_input(${operation:L}, args, kwargs),
+                                ${operation:L},
+                            ),
+                            ${operation:L},
+                            self.$L,
+                            $S,
+                            plugins,
+                            max_wait_time=max_wait_time,
+                            min_delay=min_delay,
+                            max_delay=max_delay,
+                        )""",
+                runtime,
+                operationMethod,
+                waiterName);
+    }
+
+    private void writeWaiterDocs(
+            PythonWriter writer,
+            OperationShape operation,
+            String waiterName,
+            Waiter waiter,
+            String operationMethod,
+            String outputName
+    ) {
+        writer.writeMultiLineDocs(() -> {
+            var summary = waiter.getDocumentation()
+                    .map(docs -> writer.formatDocs(docs, context))
+                    .orElse(String.format("Waits for the %s state of the %s operation.",
+                            waiterName,
+                            operation.getId().getName()));
+            writer.write("$L\n", summary);
+            writer.write("""
+                    Calls `$L` until an acceptor of the $L waiter reports success or \
+                    failure. Takes the same request as `$L`, and checks it before any \
+                    request. Each attempt sends a copy of it.$L
+                    """,
+                    operationMethod,
+                    waiterName,
+                    operationMethod,
+                    waiter.isDeprecated() ? " This waiter is deprecated." : "");
+            writer.write("Args:");
+            writer.write("""
+                        plugins:
+                            A list of callables that modify the configuration dynamically.
+                            They apply to each attempt of this wait only, and will not
+                            affect any other operation invocations.
+                        max_wait_time:
+                            The maximum number of seconds to wait, counting requests and
+                            delays. This option is not sent to the service.
+                        min_delay:
+                            The minimum number of seconds between attempts. Defaults to
+                            the waiter's $L. This option is not sent to the service.
+                        max_delay:
+                            The maximum number of seconds between attempts. Defaults to
+                            the waiter's $L. This option is not sent to the service.
+
+                    Returns:
+                        The `$L` that matched a success acceptor. None if the waiter
+                        succeeded on an error.
+
+                    Raises:
+                        ValueError: If a time is not a positive number of seconds or if
+                            `min_delay` is above `max_delay`. Raised before any request.
+                        WaiterFailureError: If the waiter reached its failure state.
+                        WaiterTimeoutError: If `max_wait_time` passed first.
+                    """, waiter.getMinDelay(), waiter.getMaxDelay(), outputName);
+        });
+    }
+
+    /**
      * Writes an operation method: two overloads for callers and one implementation.
      *
      * <p>A caller passes either the whole request, positional-only so that it takes
@@ -596,9 +784,10 @@ final class ClientGenerator implements Runnable {
      * @param sync Whether the method is for the sync client.
      * @param coroutine Whether the async client's method is a coroutine. A sync
      *     client's method never is.
-     * @param paginator Whether the method is a paginator, which also takes the
-     *     SDK's keyword-only {@code stop_on_same_token} option in every definition.
-     *     The option is not a member of the request, so it is never sent.
+     * @param options The SDK's keyword-only options the method also takes in every
+     *     definition, after {@code plugins}, such as a paginator's
+     *     {@code stop_on_same_token}. They are written as declared. They are not
+     *     members of the request, so they are never sent.
      * @param returns The method's return type, as written.
      * @param docs Writes the method's documentation.
      * @param body The async code template of the implementation's body.
@@ -609,7 +798,7 @@ final class ClientGenerator implements Runnable {
             Shape input,
             boolean sync,
             boolean coroutine,
-            boolean paginator,
+            List<String> options,
             String returns,
             Consumer<PythonWriter> docs,
             String body,
@@ -622,7 +811,8 @@ final class ClientGenerator implements Runnable {
         writer.addStdlibImport("typing", "overload", "_overload");
         writer.addStdlibImport("typing", "Unpack", "_Unpack");
         // Set on every call, since the writer's context outlives this method.
-        writer.putContext("paginator", paginator);
+        writer.putContext("hasOptions", !options.isEmpty());
+        writer.putContext("options", writer.consumer(w -> options.forEach(option -> w.write("$L,", option))));
         writer.putContext("returns", returns);
         writer.putContext("request", requestType(writer, input, sync));
         writer.putContext("keywords", keywordsType(writer, input, sync));
@@ -636,9 +826,9 @@ final class ClientGenerator implements Runnable {
                     /,
                     *,
                     plugins: list[${plugin:T}] | None = None,
-                    ${?paginator}
-                    stop_on_same_token: bool = True,
-                    ${/paginator}
+                    ${?hasOptions}
+                    ${options:C|}
+                    ${/hasOptions}
                 ) -> ${returns:L}: ...
 
                 @_overload
@@ -647,9 +837,9 @@ final class ClientGenerator implements Runnable {
                     /,
                     *,
                     plugins: list[${plugin:T}] | None = None,
-                    ${?paginator}
-                    stop_on_same_token: bool = True,
-                    ${/paginator}
+                    ${?hasOptions}
+                    ${options:C|}
+                    ${/hasOptions}
                     **kwargs: _Unpack[${keywords:L}],
                 ) -> ${returns:L}:
                     ${docs:C|}
@@ -659,9 +849,9 @@ final class ClientGenerator implements Runnable {
                     /,
                     *args: object,
                     plugins: list[${plugin:T}] | None = None,
-                    ${?paginator}
-                    stop_on_same_token: bool = True,
-                    ${/paginator}
+                    ${?hasOptions}
+                    ${options:C|}
+                    ${/hasOptions}
                     **kwargs: object,
                 ) -> ${returns:L}:
                     ${body:C|}
@@ -862,7 +1052,7 @@ final class ClientGenerator implements Runnable {
                 input,
                 false,
                 true,
-                false,
+                List.of(),
                 returns,
                 w -> writeOperationDocs(w, operation, output, outputDocs),
                 """

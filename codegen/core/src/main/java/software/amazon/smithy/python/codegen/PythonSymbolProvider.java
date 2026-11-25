@@ -71,13 +71,17 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     static final Set<String> CLIENT_RESERVED_METHOD_NAMES = Set.of("close");
     // The names every generated client method uses besides its input members: the
     // parameters it declares, and the models module alias its body references.
-    // Paginators also take stop_on_same_token. It is reserved on every operation's
-    // input, so a member is named the same whether or not its operation paginates.
+    // Paginators also take stop_on_same_token, and waiters max_wait_time, min_delay,
+    // and max_delay. They are reserved on every operation's input, so a member is
+    // named the same whether or not its operation paginates or has waiters.
     private static final Set<String> OPERATION_PARAMETER_NAMES = Set.of(
             "self",
             "plugins",
             "_models",
-            "stop_on_same_token");
+            "stop_on_same_token",
+            "max_wait_time",
+            "min_delay",
+            "max_delay");
 
     private final Model model;
     private final ReservedWordSymbolProvider.Escaper escaper;
