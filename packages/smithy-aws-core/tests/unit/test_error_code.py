@@ -94,7 +94,15 @@ _CASES = [
 
 _QUERY_COMPATIBLE_CASES = [p for p in _CASES if p.id == "awsJson1_0"]
 _MODELED_CASES = [p for p in _CASES if p.id in ("awsJson1_0", "awsQuery")]
-_HEADER_CASES = [p for p in _CASES if p.id in ("restJson1", "awsJson1_0")]
+_JSON_CASES = [p for p in _CASES if p.id in ("restJson1", "awsJson1_0", "awsJson1_1")]
+
+_URI_SUFFIX = ":http://internal.amazon.com/coral/com.amazon.coral.validate/"
+_ERROR_CODES = [
+    "SomeError",
+    "aws.foo#SomeError",
+    f"SomeError{_URI_SUFFIX}",
+    f"aws.foo#SomeError{_URI_SUFFIX}",
+]
 
 
 def _settings(*, query_compatible: bool = False) -> ProtocolSettings:
@@ -164,6 +172,13 @@ def test_error_code_is_reported(case: _Case) -> None:
     assert metadata.error_code == "SomeError"
 
 
+@pytest.mark.parametrize("case", _JSON_CASES)
+@pytest.mark.parametrize("code", _ERROR_CODES)
+def test_json_error_code_is_reported_by_name(case: _Case, code: str) -> None:
+    metadata = _error_metadata(case, case.body(code))
+    assert metadata.error_code == "SomeError"
+
+
 @pytest.mark.parametrize("case", _QUERY_COMPATIBLE_CASES)
 def test_query_compatible_service_reports_the_query_error_code(case: _Case) -> None:
     metadata = _error_metadata(
@@ -190,7 +205,8 @@ def test_modeled_error_reports_its_code(case: _Case) -> None:
     assert metadata.error_code == "ModeledTestError"
 
 
-@pytest.mark.parametrize("case", _HEADER_CASES)
-def test_error_type_header_code_is_reported(case: _Case) -> None:
-    metadata = _error_metadata(case, b"", fields=(("x-amzn-errortype", "SomeError"),))
+@pytest.mark.parametrize("case", _JSON_CASES)
+@pytest.mark.parametrize("code", _ERROR_CODES)
+def test_error_type_header_code_is_reported(case: _Case, code: str) -> None:
+    metadata = _error_metadata(case, b"", fields=(("x-amzn-errortype", code),))
     assert metadata.error_code == "SomeError"
