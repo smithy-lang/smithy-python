@@ -42,6 +42,11 @@ public final class Rpcv2JsonProtocolGenerator implements ProtocolGenerator {
             "RpcV2JsonRequestClientUsesExplicitlyProvidedMemberValuesOverDefaults",
             "RpcV2JsonRequestClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional");
 
+    // Support for the unstable, optional discriminated trait isn't implemented yet, so
+    // unions marked with it still use the standard union encoding. Smithy tags every
+    // test case for the trait so that implementations without it can skip them.
+    private static final Set<String> TAGS_TO_SKIP = Set.of("discriminated-unions");
+
     @Override
     public ShapeId getProtocol() {
         return Rpcv2JsonTrait.ID;
@@ -81,7 +86,9 @@ public final class Rpcv2JsonProtocolGenerator implements ProtocolGenerator {
                             context,
                             getProtocol(),
                             writer,
-                            (shape, testCase) -> TESTS_TO_SKIP.contains(testCase.getId())).run();
+                            (shape, testCase) -> TESTS_TO_SKIP.contains(testCase.getId())
+                                    || testCase.getTags().stream().anyMatch(TAGS_TO_SKIP::contains))
+                            .run();
                 });
     }
 }

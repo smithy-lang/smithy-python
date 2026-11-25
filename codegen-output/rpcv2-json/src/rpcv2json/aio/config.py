@@ -33,6 +33,8 @@ if TYPE_CHECKING:
         BigDecimalOperationOutput,
         BigIntegerOperationInput,
         BigIntegerOperationOutput,
+        DiscriminatedUnionOperationInput,
+        DiscriminatedUnionOperationOutput,
         EmptyInputOutputInput,
         EmptyInputOutputOutput,
         FractionalSecondsInput,
@@ -64,6 +66,12 @@ if TYPE_CHECKING:
     _ServiceInterceptor = Union[
         Interceptor[BigDecimalOperationInput, BigDecimalOperationOutput, Any, Any],
         Interceptor[BigIntegerOperationInput, BigIntegerOperationOutput, Any, Any],
+        Interceptor[
+            DiscriminatedUnionOperationInput,
+            DiscriminatedUnionOperationOutput,
+            Any,
+            Any,
+        ],
         Interceptor[EmptyInputOutputInput, EmptyInputOutputOutput, Any, Any],
         Interceptor[FractionalSecondsInput, FractionalSecondsOutput, Any, Any],
         Interceptor[GreetingWithErrorsInput, GreetingWithErrorsOutput, Any, Any],

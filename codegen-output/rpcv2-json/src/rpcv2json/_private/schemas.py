@@ -37,6 +37,10 @@ _F = "Foo"
 _CE = "ComplexError"
 _TL = "TopLevel"
 _N = "Nested"
+_DC = "DiscriminatedCircle"
+_r = "radius"
+_DDS = "DefaultDiscriminatedShape"
+_ci = "circle"
 _TE = "TestEnum"
 _FOO = "FOO"
 _sV = "smithy.api#enumValue"
@@ -83,6 +87,14 @@ _DSM = "DenseSetMap"
 _DSMe = "DenseStringMap"
 _GS = "GreetingStruct"
 _DSMen = "DenseStructMap"
+_DL = "DiscriminatedLabel"
+_t = "text"
+_co = "code"
+_DLi = "DiscriminatedLabeled"
+_l = "label"
+_DR = "DiscriminatedRectangle"
+_w = "width"
+_he = "height"
 _EIOI = "EmptyInputOutputInput"
 _sJES = "smithy.protocoltests.rpcv2Json#EmptyStructure"
 _EIOO = "EmptyInputOutputOutput"
@@ -207,16 +219,30 @@ _eSp = "epochSeconds"
 _n = "normal"
 _TFIO = "TimestampFormatIgnoredOutput"
 _TFI = "TimestampFormatIgnored"
+_DF = "DiscriminatedFrame"
+_con = "content"
+_DS = "DiscriminatedShape"
+_re = "rectangle"
+_f = "frame"
+_la = "labeled"
 _RSION = "RecursiveShapesInputOutputNested1"
-_f = "foo"
+_fo = "foo"
 _ne = "nested"
 _RSIONe = "RecursiveShapesInputOutputNested2"
 _ba = "bar"
 _rM = "recursiveMember"
+_DSL = "DiscriminatedShapeList"
 _RSI = "RecursiveShapesInput"
 _sJRSIO = "smithy.protocoltests.rpcv2Json#RecursiveShapesInputOutput"
 _RSO = "RecursiveShapesOutput"
+_DUOI = "DiscriminatedUnionOperationInput"
+_sJDUS = "smithy.protocoltests.rpcv2Json#DiscriminatedUnionStructure"
+_sh = "shape"
+_dSef = "defaultShape"
+_sha = "shapes"
+_DUOO = "DiscriminatedUnionOperationOutput"
 _RS = "RecursiveShapes"
+_DUO = "DiscriminatedUnionOperation"
 _RVJP = "RpcV2JsonProtocol"
 _sJ = "smithy.protocols#rpcv2Json"
 
@@ -314,6 +340,17 @@ COMPLEX_ERROR: StaticSchema = (
     {_sm: _c},
     (_TL, _N),
     ((3, 0), (COMPLEX_NESTED_ERROR_DATA, 0)),
+)
+
+DISCRIMINATED_CIRCLE: StaticSchema = (18, n1, _DC, 0, (_r,), ((7, 0),))
+
+DEFAULT_DISCRIMINATED_SHAPE: StaticSchema = (
+    19,
+    n1,
+    _DDS,
+    0,
+    (_ci,),
+    ((DISCRIMINATED_CIRCLE, 0),),
 )
 
 TEST_ENUM: StaticSchema = (
@@ -415,6 +452,19 @@ DENSE_STRUCT_MAP: StaticSchema = (
     (_k, _v),
     ((3, 0), (GREETING_STRUCT, 0)),
 )
+
+DISCRIMINATED_LABEL: StaticSchema = (19, n1, _DL, 0, (_t, _co), ((3, 0), (7, 0)))
+
+DISCRIMINATED_LABELED: StaticSchema = (
+    18,
+    n1,
+    _DLi,
+    0,
+    (_l,),
+    ((DISCRIMINATED_LABEL, 0),),
+)
+
+DISCRIMINATED_RECTANGLE: StaticSchema = (18, n1, _DR, 0, (_w, _he), ((7, 0), (7, 0)))
 
 EMPTY_INPUT_OUTPUT_INPUT: StaticSchema = (18, n1, _EIOI, {_sSI: _sJES, _smi: None})
 
@@ -875,12 +925,35 @@ TIMESTAMP_FORMAT_IGNORED: StaticOperationSchema = (
     (),
 )
 
+DISCRIMINATED_FRAME: StaticSchema = (
+    18,
+    n1,
+    _DF,
+    0,
+    (_con,),
+    ((lambda: DISCRIMINATED_SHAPE, 0),),
+)
+
+DISCRIMINATED_SHAPE: StaticSchema = (
+    19,
+    n1,
+    _DS,
+    0,
+    (_ci, _re, _f, _la),
+    (
+        (DISCRIMINATED_CIRCLE, 0),
+        (DISCRIMINATED_RECTANGLE, 0),
+        (DISCRIMINATED_FRAME, 0),
+        (DISCRIMINATED_LABELED, 0),
+    ),
+)
+
 RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1: StaticSchema = (
     18,
     n1,
     _RSION,
     0,
-    (_f, _ne),
+    (_fo, _ne),
     ((3, 0), (lambda: RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2, 0)),
 )
 
@@ -891,6 +964,15 @@ RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED2: StaticSchema = (
     0,
     (_ba, _rM),
     ((3, 0), (RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0)),
+)
+
+DISCRIMINATED_SHAPE_LIST: StaticSchema = (
+    16,
+    n1,
+    _DSL,
+    0,
+    (_me,),
+    ((DISCRIMINATED_SHAPE, 0),),
 )
 
 RECURSIVE_SHAPES_INPUT: StaticSchema = (
@@ -911,6 +993,32 @@ RECURSIVE_SHAPES_OUTPUT: StaticSchema = (
     ((RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1, 0),),
 )
 
+DISCRIMINATED_UNION_OPERATION_INPUT: StaticSchema = (
+    18,
+    n1,
+    _DUOI,
+    {_sSI: _sJDUS, _smi: None},
+    (_sh, _dSef, _sha),
+    (
+        (DISCRIMINATED_SHAPE, 0),
+        (DEFAULT_DISCRIMINATED_SHAPE, 0),
+        (DISCRIMINATED_SHAPE_LIST, 0),
+    ),
+)
+
+DISCRIMINATED_UNION_OPERATION_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _DUOO,
+    {_sSI: _sJDUS, _smit: None},
+    (_sh, _dSef, _sha),
+    (
+        (DISCRIMINATED_SHAPE, 0),
+        (DEFAULT_DISCRIMINATED_SHAPE, 0),
+        (DISCRIMINATED_SHAPE_LIST, 0),
+    ),
+)
+
 RECURSIVE_SHAPES: StaticOperationSchema = (
     23,
     n1,
@@ -918,6 +1026,16 @@ RECURSIVE_SHAPES: StaticOperationSchema = (
     0,
     RECURSIVE_SHAPES_INPUT,
     RECURSIVE_SHAPES_OUTPUT,
+    (),
+)
+
+DISCRIMINATED_UNION_OPERATION: StaticOperationSchema = (
+    23,
+    n1,
+    _DUO,
+    0,
+    DISCRIMINATED_UNION_OPERATION_INPUT,
+    DISCRIMINATED_UNION_OPERATION_OUTPUT,
     (),
 )
 
