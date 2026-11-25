@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `aws.protocols#awsQuery` and `aws.protocols#ec2Query` support to generated clients, using the `smithy-aws-core` query protocols."
+}

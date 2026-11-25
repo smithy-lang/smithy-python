@@ -76,6 +76,10 @@ _EXPECTED_FAILURES = frozenset(
         "SDKAppendedGzipAfterProvidedEncoding_restJson1",
         "SDKAppliedContentEncoding_restXml",
         "SDKAppendedGzipAfterProvidedEncoding_restXml",
+        "SDKAppliedContentEncoding_awsQuery",
+        "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_awsQuery",
+        "SDKAppliedContentEncoding_ec2Query",
+        "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_ec2Query",
         "RpcV2CborClientPopulatesDefaultValuesInInput",
         "RpcV2CborClientSkipsTopLevelDefaultValuesInInput",
         "RpcV2CborClientUsesExplicitlyProvidedMemberValuesOverDefaults",
@@ -580,5 +584,6 @@ def test_every_client_vector_is_collected() -> None:
     # response vectors, and rpcv2Json has 34 and 39. restJson1 has 244, less the 8
     # of the streaming operations the client omits. awsJson1_0 has 67, awsJson1_1
     # has 118, and the query-compatible awsJson1_0 service has 3. restXml has
-    # 178, and the restXml service with a namespace has 2.
-    assert len(list(_vectors())) == 72 + 73 + 236 + 67 + 118 + 3 + 178 + 2
+    # 178, and the restXml service with a namespace has 2. awsQuery has 77, and
+    # ec2Query has 59.
+    assert len(list(_vectors())) == (72 + 73 + 236 + 67 + 118 + 3 + 178 + 2 + 77 + 59)

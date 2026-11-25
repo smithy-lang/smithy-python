@@ -11,11 +11,13 @@
   },
   "aws-query": {
     "assembled_sha256": "62332fc9f42c8d044f0dd59376ed922236b8ac19a6ac1b5c8d08a3856208a726",
-    "fixture_sha256": "9d436d4769afe29f40faac4846682cf6127daafe5648819f37e6d1265112ad77"
+    "fixture_sha256": "9d436d4769afe29f40faac4846682cf6127daafe5648819f37e6d1265112ad77",
+    "vectors_sha256": "d78dae3fc2108aac7d39a3b49d4919ab6bc959def9b953c264bca6c004b57017"
   },
   "ec2-query": {
     "assembled_sha256": "d9e345e3801c0ddcde7d24d8e8348bf10251fbb67b85b7908046a1e26abe1d46",
-    "fixture_sha256": "7761c1333e4113092f7e92f98a08a384d596df6c23040261e55b76e5fabb36fe"
+    "fixture_sha256": "7761c1333e4113092f7e92f98a08a384d596df6c23040261e55b76e5fabb36fe",
+    "vectors_sha256": "c4086fcfec09c199f0447569140a1e36ef543cdabfe71ce585205025a2f34faf"
   },
   "my-handwritten-json-model": {
     "assembled_sha256": "fa5bb874b59e09d79b06797012b70f7f0763dd2d93551e8f3f9611508d53d560",

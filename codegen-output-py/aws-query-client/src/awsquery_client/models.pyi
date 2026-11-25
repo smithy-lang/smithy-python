@@ -1,0 +1,1141 @@
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from datetime import datetime
+from enum import IntEnum, StrEnum
+from typing import Required, Self, TypedDict
+
+from smithy_core.deserializers import ShapeDeserializer
+from smithy_core.exceptions import ModeledError
+from smithy_core.response import ResponseMetadata
+from smithy_core.schemas import APIOperation
+from smithy_core.serializers import ShapeSerializer
+from smithy_core.types import UnknownEnumMixin
+
+__all__ = [
+    "DATETIME_OFFSETS",
+    "EMPTY_INPUT_AND_EMPTY_OUTPUT",
+    "ENDPOINT_OPERATION",
+    "ENDPOINT_WITH_HOST_LABEL_OPERATION",
+    "FLATTENED_XML_MAP",
+    "FLATTENED_XML_MAP_WITH_XML_NAME",
+    "FLATTENED_XML_MAP_WITH_XML_NAMESPACE",
+    "FRACTIONAL_SECONDS",
+    "GREETING_WITH_ERRORS",
+    "HOST_WITH_PATH_OPERATION",
+    "IGNORES_WRAPPING_XML_NAME",
+    "NESTED_STRUCTURES",
+    "NO_INPUT_AND_NO_OUTPUT",
+    "NO_INPUT_AND_OUTPUT",
+    "PUT_WITH_CONTENT_ENCODING",
+    "QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL",
+    "QUERY_LISTS",
+    "QUERY_MAPS",
+    "QUERY_TIMESTAMPS",
+    "RECURSIVE_XML_SHAPES",
+    "SIMPLE_INPUT_PARAMS",
+    "SIMPLE_SCALAR_XML_PROPERTIES",
+    "XML_BLOBS",
+    "XML_EMPTY_BLOBS",
+    "XML_EMPTY_LISTS",
+    "XML_EMPTY_MAPS",
+    "XML_ENUMS",
+    "XML_INT_ENUMS",
+    "XML_LISTS",
+    "XML_MAPS",
+    "XML_MAPS_XML_NAME",
+    "XML_NAMESPACES",
+    "XML_TIMESTAMPS",
+    "ComplexError",
+    "ComplexNestedErrorData",
+    "CustomCodeError",
+    "DatetimeOffsetsInput",
+    "DatetimeOffsetsOutput",
+    "EmptyInputAndEmptyOutputInput",
+    "EmptyInputAndEmptyOutputOutput",
+    "EndpointOperationInput",
+    "EndpointOperationOutput",
+    "EndpointWithHostLabelOperationInput",
+    "EndpointWithHostLabelOperationOutput",
+    "FlattenedXmlMapInput",
+    "FlattenedXmlMapOutput",
+    "FlattenedXmlMapWithXmlNameInput",
+    "FlattenedXmlMapWithXmlNameOutput",
+    "FlattenedXmlMapWithXmlNamespaceInput",
+    "FlattenedXmlMapWithXmlNamespaceOutput",
+    "FooEnum",
+    "FractionalSecondsInput",
+    "FractionalSecondsOutput",
+    "GreetingStruct",
+    "GreetingWithErrorsInput",
+    "GreetingWithErrorsOutput",
+    "HostWithPathOperationInput",
+    "HostWithPathOperationOutput",
+    "IgnoresWrappingXmlNameInput",
+    "IgnoresWrappingXmlNameOutput",
+    "IntegerEnum",
+    "InvalidGreeting",
+    "NestedStructWithList",
+    "NestedStructWithMap",
+    "NestedStructuresInput",
+    "NestedStructuresOutput",
+    "NoInputAndNoOutputInput",
+    "NoInputAndNoOutputOutput",
+    "NoInputAndOutputInput",
+    "NoInputAndOutputOutput",
+    "PutWithContentEncodingInput",
+    "PutWithContentEncodingOutput",
+    "QueryIdempotencyTokenAutoFillInput",
+    "QueryIdempotencyTokenAutoFillOutput",
+    "QueryListsInput",
+    "QueryListsOutput",
+    "QueryMapsInput",
+    "QueryMapsOutput",
+    "QueryTimestampsInput",
+    "QueryTimestampsOutput",
+    "RecursiveXmlShapesInput",
+    "RecursiveXmlShapesOutput",
+    "RecursiveXmlShapesOutputNested1",
+    "RecursiveXmlShapesOutputNested2",
+    "ServiceError",
+    "SimpleInputParamsInput",
+    "SimpleInputParamsOutput",
+    "SimpleScalarXmlPropertiesInput",
+    "SimpleScalarXmlPropertiesOutput",
+    "StructArg",
+    "StructureListMember",
+    "XmlBlobsInput",
+    "XmlBlobsOutput2",
+    "XmlEmptyBlobsInput",
+    "XmlEmptyBlobsOutput",
+    "XmlEmptyListsInput",
+    "XmlEmptyListsOutput",
+    "XmlEmptyMapsInput",
+    "XmlEmptyMapsOutput",
+    "XmlEnumsInput",
+    "XmlEnumsOutput",
+    "XmlIntEnumsInput",
+    "XmlIntEnumsOutput",
+    "XmlListsInput",
+    "XmlListsOutput2",
+    "XmlMapsInput",
+    "XmlMapsOutput2",
+    "XmlMapsXmlNameInput",
+    "XmlMapsXmlNameOutput",
+    "XmlNamespaceNested",
+    "XmlNamespacesInput",
+    "XmlNamespacesOutput",
+    "XmlTimestampsInput",
+    "XmlTimestampsOutput",
+]
+
+class _SerdeShape:
+    def serialize(self, serializer: ShapeSerializer) -> None: ...
+    def serialize_members(self, serializer: ShapeSerializer) -> None: ...
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self: ...
+
+class ServiceError(ModeledError):
+    """
+    Base error for all errors in the service.
+
+    Some exceptions do not extend from this class, including synthetic,
+    implicit, and shared exception types.
+    """
+
+@dataclass(kw_only=True)
+class ComplexError(ServiceError, _SerdeShape):
+    "This error is thrown when a request is invalid."
+
+    top_level: str | None = ...
+    nested: ComplexNestedErrorData | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class ComplexNestedErrorData(_SerdeShape):
+    "Dataclass for ComplexNestedErrorData structure."
+
+    foo: str | None = ...
+
+@dataclass(kw_only=True)
+class CustomCodeError(ServiceError, _SerdeShape):
+    "Dataclass for CustomCodeError structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class DatetimeOffsetsOutput(_SerdeShape):
+    "Dataclass for DatetimeOffsetsOutput structure."
+
+    datetime_: datetime | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class EmptyInputAndEmptyOutputInput(_SerdeShape):
+    "Dataclass for EmptyInputAndEmptyOutputInput structure."
+
+class EmptyInputAndEmptyOutputInputDict(TypedDict, total=False):
+    "Dictionary form of `EmptyInputAndEmptyOutputInput`."
+
+@dataclass(kw_only=True)
+class EmptyInputAndEmptyOutputOutput(_SerdeShape):
+    "Dataclass for EmptyInputAndEmptyOutputOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class FlattenedXmlMapOutput(_SerdeShape):
+    "Dataclass for FlattenedXmlMapOutput structure."
+
+    my_map: dict[str, str] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class FlattenedXmlMapWithXmlNameOutput(_SerdeShape):
+    "Dataclass for FlattenedXmlMapWithXmlNameOutput structure."
+
+    my_map: dict[str, str] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class FlattenedXmlMapWithXmlNamespaceOutput(_SerdeShape):
+    "Dataclass for FlattenedXmlMapWithXmlNamespaceOutput structure."
+
+    my_map: dict[str, str] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class FractionalSecondsOutput(_SerdeShape):
+    "Dataclass for FractionalSecondsOutput structure."
+
+    datetime_: datetime | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class GreetingWithErrorsOutput(_SerdeShape):
+    "Dataclass for GreetingWithErrorsOutput structure."
+
+    greeting: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class IgnoresWrappingXmlNameOutput(_SerdeShape):
+    "Dataclass for IgnoresWrappingXmlNameOutput structure."
+
+    foo: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class InvalidGreeting(ServiceError, _SerdeShape):
+    "This error is thrown when an invalid greeting value is provided."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class NestedStructWithList(_SerdeShape):
+    "Dataclass for NestedStructWithList structure."
+
+    list_arg: list[str] | None = ...
+
+class NestedStructWithListDict(TypedDict, total=False):
+    "Dictionary form of `NestedStructWithList`."
+
+    list_arg: Sequence[str] | None
+
+@dataclass(kw_only=True)
+class NestedStructWithMap(_SerdeShape):
+    "Dataclass for NestedStructWithMap structure."
+
+    map_arg: dict[str, str] | None = ...
+
+class NestedStructWithMapDict(TypedDict, total=False):
+    "Dictionary form of `NestedStructWithMap`."
+
+    map_arg: Mapping[str, str] | None
+
+@dataclass(kw_only=True)
+class NestedStructuresInput(_SerdeShape):
+    "Dataclass for NestedStructuresInput structure."
+
+    nested: StructArg | None = ...
+
+class NestedStructuresInputDict(TypedDict, total=False):
+    "Dictionary form of `NestedStructuresInput`."
+
+    nested: StructArg | StructArgDict | None
+
+@dataclass(kw_only=True)
+class NoInputAndOutputInput(_SerdeShape):
+    "Dataclass for NoInputAndOutputInput structure."
+
+class NoInputAndOutputInputDict(TypedDict, total=False):
+    "Dictionary form of `NoInputAndOutputInput`."
+
+@dataclass(kw_only=True)
+class NoInputAndOutputOutput(_SerdeShape):
+    "Dataclass for NoInputAndOutputOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class PutWithContentEncodingInput(_SerdeShape):
+    "Dataclass for PutWithContentEncodingInput structure."
+
+    encoding: str | None = ...
+    data: str | None = ...
+
+class PutWithContentEncodingInputDict(TypedDict, total=False):
+    "Dictionary form of `PutWithContentEncodingInput`."
+
+    encoding: str | None
+    data: str | None
+
+@dataclass(kw_only=True)
+class QueryIdempotencyTokenAutoFillInput(_SerdeShape):
+    "Dataclass for QueryIdempotencyTokenAutoFillInput structure."
+
+    token: str | None = ...
+    "This field is autopopulated if not provided."
+
+class QueryIdempotencyTokenAutoFillInputDict(TypedDict, total=False):
+    "Dictionary form of `QueryIdempotencyTokenAutoFillInput`."
+
+    token: str | None
+    "This field is autopopulated if not provided."
+
+@dataclass(kw_only=True)
+class QueryListsInput(_SerdeShape):
+    "Dataclass for QueryListsInput structure."
+
+    list_arg: list[str] | None = ...
+    complex_list_arg: list[GreetingStruct] | None = ...
+    flattened_list_arg: list[str] | None = ...
+    list_arg_with_xml_name_member: list[str] | None = ...
+    flattened_list_arg_with_xml_name: list[str] | None = ...
+    nested_with_list: NestedStructWithList | None = ...
+
+class QueryListsInputDict(TypedDict, total=False):
+    "Dictionary form of `QueryListsInput`."
+
+    list_arg: Sequence[str] | None
+    complex_list_arg: Sequence[GreetingStruct | GreetingStructDict] | None
+    flattened_list_arg: Sequence[str] | None
+    list_arg_with_xml_name_member: Sequence[str] | None
+    flattened_list_arg_with_xml_name: Sequence[str] | None
+    nested_with_list: NestedStructWithList | NestedStructWithListDict | None
+
+@dataclass(kw_only=True)
+class QueryMapsInput(_SerdeShape):
+    "Dataclass for QueryMapsInput structure."
+
+    map_arg: dict[str, str] | None = ...
+    renamed_map_arg: dict[str, str] | None = ...
+    complex_map_arg: dict[str, GreetingStruct] | None = ...
+    map_with_xml_member_name: dict[str, str] | None = ...
+    flattened_map: dict[str, str] | None = ...
+    flattened_map_with_xml_name: dict[str, str] | None = ...
+    map_of_lists: dict[str, list[str]] | None = ...
+    nested_struct_with_map: NestedStructWithMap | None = ...
+
+class QueryMapsInputDict(TypedDict, total=False):
+    "Dictionary form of `QueryMapsInput`."
+
+    map_arg: Mapping[str, str] | None
+    renamed_map_arg: Mapping[str, str] | None
+    complex_map_arg: Mapping[str, GreetingStruct | GreetingStructDict] | None
+    map_with_xml_member_name: Mapping[str, str] | None
+    flattened_map: Mapping[str, str] | None
+    flattened_map_with_xml_name: Mapping[str, str] | None
+    map_of_lists: Mapping[str, Sequence[str]] | None
+    nested_struct_with_map: NestedStructWithMap | NestedStructWithMapDict | None
+
+@dataclass(kw_only=True)
+class QueryTimestampsInput(_SerdeShape):
+    "Dataclass for QueryTimestampsInput structure."
+
+    normal_format: datetime | None = ...
+    epoch_member: datetime | None = ...
+    epoch_target: datetime | None = ...
+
+class QueryTimestampsInputDict(TypedDict, total=False):
+    "Dictionary form of `QueryTimestampsInput`."
+
+    normal_format: datetime | None
+    epoch_member: datetime | None
+    epoch_target: datetime | None
+
+@dataclass(kw_only=True)
+class RecursiveXmlShapesOutput(_SerdeShape):
+    "Dataclass for RecursiveXmlShapesOutput structure."
+
+    nested: RecursiveXmlShapesOutputNested1 | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class RecursiveXmlShapesOutputNested1(_SerdeShape):
+    "Dataclass for RecursiveXmlShapesOutputNested1 structure."
+
+    foo: str | None = ...
+    nested: RecursiveXmlShapesOutputNested2 | None = ...
+
+@dataclass(kw_only=True)
+class RecursiveXmlShapesOutputNested2(_SerdeShape):
+    "Dataclass for RecursiveXmlShapesOutputNested2 structure."
+
+    bar: str | None = ...
+    recursive_member: RecursiveXmlShapesOutputNested1 | None = ...
+
+@dataclass(kw_only=True)
+class SimpleInputParamsInput(_SerdeShape):
+    "Dataclass for SimpleInputParamsInput structure."
+
+    foo: str | None = ...
+    bar: str | None = ...
+    baz: bool | None = ...
+    bam: int | None = ...
+    float_value: float | None = ...
+    boo: float | None = ...
+    qux: bytes | None = ...
+    foo_enum: str | None = ...
+    integer_enum: int | None = ...
+
+class SimpleInputParamsInputDict(TypedDict, total=False):
+    "Dictionary form of `SimpleInputParamsInput`."
+
+    foo: str | None
+    bar: str | None
+    baz: bool | None
+    bam: int | None
+    float_value: float | None
+    boo: float | None
+    qux: bytes | None
+    foo_enum: str | None
+    integer_enum: int | None
+
+@dataclass(kw_only=True)
+class SimpleScalarXmlPropertiesOutput(_SerdeShape):
+    "Dataclass for SimpleScalarXmlPropertiesOutput structure."
+
+    string_value: str | None = ...
+    empty_string_value: str | None = ...
+    true_boolean_value: bool | None = ...
+    false_boolean_value: bool | None = ...
+    byte_value: int | None = ...
+    short_value: int | None = ...
+    integer_value: int | None = ...
+    long_value: int | None = ...
+    float_value: float | None = ...
+    double_value: float | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class StructArg(_SerdeShape):
+    "Dataclass for StructArg structure."
+
+    string_arg: str | None = ...
+    other_arg: bool | None = ...
+    recursive_arg: StructArg | None = ...
+
+class StructArgDict(TypedDict, total=False):
+    "Dictionary form of `StructArg`."
+
+    string_arg: str | None
+    other_arg: bool | None
+    recursive_arg: StructArg | StructArgDict | None
+
+@dataclass(kw_only=True)
+class StructureListMember(_SerdeShape):
+    "Dataclass for StructureListMember structure."
+
+    a: str | None = ...
+    b: str | None = ...
+
+@dataclass(kw_only=True)
+class XmlEnumsOutput(_SerdeShape):
+    "Dataclass for XmlEnumsOutput structure."
+
+    foo_enum1: str | None = ...
+    foo_enum2: str | None = ...
+    foo_enum3: str | None = ...
+    foo_enum_list: list[str] | None = ...
+    foo_enum_set: list[str] | None = ...
+    foo_enum_map: dict[str, str] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class XmlIntEnumsOutput(_SerdeShape):
+    "Dataclass for XmlIntEnumsOutput structure."
+
+    int_enum1: int | None = ...
+    int_enum2: int | None = ...
+    int_enum3: int | None = ...
+    int_enum_list: list[int] | None = ...
+    int_enum_set: list[int] | None = ...
+    int_enum_map: dict[str, int] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class XmlMapsXmlNameOutput(_SerdeShape):
+    "Dataclass for XmlMapsXmlNameOutput structure."
+
+    my_map: dict[str, GreetingStruct] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class XmlNamespaceNested(_SerdeShape):
+    "Dataclass for XmlNamespaceNested structure."
+
+    foo: str | None = ...
+    values: list[str] | None = ...
+
+@dataclass(kw_only=True)
+class XmlNamespacesOutput(_SerdeShape):
+    "Dataclass for XmlNamespacesOutput structure."
+
+    nested: XmlNamespaceNested | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class XmlTimestampsOutput(_SerdeShape):
+    "Dataclass for XmlTimestampsOutput structure."
+
+    normal: datetime | None = ...
+    date_time: datetime | None = ...
+    date_time_on_target: datetime | None = ...
+    epoch_seconds: datetime | None = ...
+    epoch_seconds_on_target: datetime | None = ...
+    http_date: datetime | None = ...
+    http_date_on_target: datetime | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+class FooEnum(UnknownEnumMixin, StrEnum):
+    FOO = "Foo"
+    BAZ = "Baz"
+    BAR = "Bar"
+    ONE = "1"
+    ZERO = "0"
+
+@dataclass(kw_only=True)
+class GreetingStruct(_SerdeShape):
+    "Dataclass for GreetingStruct structure."
+
+    hi: str | None = ...
+
+class GreetingStructDict(TypedDict, total=False):
+    "Dictionary form of `GreetingStruct`."
+
+    hi: str | None
+
+class IntegerEnum(UnknownEnumMixin, IntEnum):
+    A = 1
+    B = 2
+    C = 3
+
+@dataclass(kw_only=True)
+class DatetimeOffsetsInput(_SerdeShape):
+    "Dataclass for DatetimeOffsetsInput structure."
+
+class DatetimeOffsetsInputDict(TypedDict, total=False):
+    "Dictionary form of `DatetimeOffsetsInput`."
+
+@dataclass(kw_only=True)
+class EndpointOperationInput(_SerdeShape):
+    "Dataclass for EndpointOperationInput structure."
+
+class EndpointOperationInputDict(TypedDict, total=False):
+    "Dictionary form of `EndpointOperationInput`."
+
+@dataclass(kw_only=True)
+class EndpointOperationOutput(_SerdeShape):
+    "Dataclass for EndpointOperationOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class EndpointWithHostLabelOperationInput(_SerdeShape):
+    "Dataclass for EndpointWithHostLabelOperationInput structure."
+
+    label: str | None = ...
+
+class EndpointWithHostLabelOperationInputDict(TypedDict, total=False):
+    "Dictionary form of `EndpointWithHostLabelOperationInput`."
+
+    label: Required[str]
+
+@dataclass(kw_only=True)
+class EndpointWithHostLabelOperationOutput(_SerdeShape):
+    "Dataclass for EndpointWithHostLabelOperationOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class FlattenedXmlMapInput(_SerdeShape):
+    "Dataclass for FlattenedXmlMapInput structure."
+
+class FlattenedXmlMapInputDict(TypedDict, total=False):
+    "Dictionary form of `FlattenedXmlMapInput`."
+
+@dataclass(kw_only=True)
+class FlattenedXmlMapWithXmlNameInput(_SerdeShape):
+    "Dataclass for FlattenedXmlMapWithXmlNameInput structure."
+
+class FlattenedXmlMapWithXmlNameInputDict(TypedDict, total=False):
+    "Dictionary form of `FlattenedXmlMapWithXmlNameInput`."
+
+@dataclass(kw_only=True)
+class FlattenedXmlMapWithXmlNamespaceInput(_SerdeShape):
+    "Dataclass for FlattenedXmlMapWithXmlNamespaceInput structure."
+
+class FlattenedXmlMapWithXmlNamespaceInputDict(TypedDict, total=False):
+    "Dictionary form of `FlattenedXmlMapWithXmlNamespaceInput`."
+
+@dataclass(kw_only=True)
+class FractionalSecondsInput(_SerdeShape):
+    "Dataclass for FractionalSecondsInput structure."
+
+class FractionalSecondsInputDict(TypedDict, total=False):
+    "Dictionary form of `FractionalSecondsInput`."
+
+@dataclass(kw_only=True)
+class GreetingWithErrorsInput(_SerdeShape):
+    "Dataclass for GreetingWithErrorsInput structure."
+
+class GreetingWithErrorsInputDict(TypedDict, total=False):
+    "Dictionary form of `GreetingWithErrorsInput`."
+
+@dataclass(kw_only=True)
+class HostWithPathOperationInput(_SerdeShape):
+    "Dataclass for HostWithPathOperationInput structure."
+
+class HostWithPathOperationInputDict(TypedDict, total=False):
+    "Dictionary form of `HostWithPathOperationInput`."
+
+@dataclass(kw_only=True)
+class HostWithPathOperationOutput(_SerdeShape):
+    "Dataclass for HostWithPathOperationOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class IgnoresWrappingXmlNameInput(_SerdeShape):
+    "Dataclass for IgnoresWrappingXmlNameInput structure."
+
+class IgnoresWrappingXmlNameInputDict(TypedDict, total=False):
+    "Dictionary form of `IgnoresWrappingXmlNameInput`."
+
+@dataclass(kw_only=True)
+class NestedStructuresOutput(_SerdeShape):
+    "Dataclass for NestedStructuresOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class NoInputAndNoOutputInput(_SerdeShape):
+    "Dataclass for NoInputAndNoOutputInput structure."
+
+class NoInputAndNoOutputInputDict(TypedDict, total=False):
+    "Dictionary form of `NoInputAndNoOutputInput`."
+
+@dataclass(kw_only=True)
+class NoInputAndNoOutputOutput(_SerdeShape):
+    "Dataclass for NoInputAndNoOutputOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class PutWithContentEncodingOutput(_SerdeShape):
+    "Dataclass for PutWithContentEncodingOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class QueryIdempotencyTokenAutoFillOutput(_SerdeShape):
+    "Dataclass for QueryIdempotencyTokenAutoFillOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class QueryListsOutput(_SerdeShape):
+    "Dataclass for QueryListsOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class QueryMapsOutput(_SerdeShape):
+    "Dataclass for QueryMapsOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class QueryTimestampsOutput(_SerdeShape):
+    "Dataclass for QueryTimestampsOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class RecursiveXmlShapesInput(_SerdeShape):
+    "Dataclass for RecursiveXmlShapesInput structure."
+
+class RecursiveXmlShapesInputDict(TypedDict, total=False):
+    "Dictionary form of `RecursiveXmlShapesInput`."
+
+@dataclass(kw_only=True)
+class SimpleInputParamsOutput(_SerdeShape):
+    "Dataclass for SimpleInputParamsOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class SimpleScalarXmlPropertiesInput(_SerdeShape):
+    "Dataclass for SimpleScalarXmlPropertiesInput structure."
+
+class SimpleScalarXmlPropertiesInputDict(TypedDict, total=False):
+    "Dictionary form of `SimpleScalarXmlPropertiesInput`."
+
+@dataclass(kw_only=True)
+class XmlBlobsInput(_SerdeShape):
+    "Dataclass for XmlBlobsInput structure."
+
+class XmlBlobsInputDict(TypedDict, total=False):
+    "Dictionary form of `XmlBlobsInput`."
+
+@dataclass(kw_only=True)
+class XmlBlobsOutput2(_SerdeShape):
+    "Dataclass for XmlBlobsOutput2 structure."
+
+    data: bytes | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class XmlEmptyBlobsInput(_SerdeShape):
+    "Dataclass for XmlEmptyBlobsInput structure."
+
+class XmlEmptyBlobsInputDict(TypedDict, total=False):
+    "Dictionary form of `XmlEmptyBlobsInput`."
+
+@dataclass(kw_only=True)
+class XmlEmptyBlobsOutput(_SerdeShape):
+    "Dataclass for XmlEmptyBlobsOutput structure."
+
+    data: bytes | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class XmlEmptyListsInput(_SerdeShape):
+    "Dataclass for XmlEmptyListsInput structure."
+
+class XmlEmptyListsInputDict(TypedDict, total=False):
+    "Dictionary form of `XmlEmptyListsInput`."
+
+@dataclass(kw_only=True)
+class XmlEmptyListsOutput(_SerdeShape):
+    "Dataclass for XmlEmptyListsOutput structure."
+
+    string_list: list[str] | None = ...
+    string_set: list[str] | None = ...
+    integer_list: list[int] | None = ...
+    boolean_list: list[bool] | None = ...
+    timestamp_list: list[datetime] | None = ...
+    enum_list: list[str] | None = ...
+    int_enum_list: list[int] | None = ...
+    nested_string_list: list[list[str]] | None = ...
+    renamed_list_members: list[str] | None = ...
+    flattened_list: list[str] | None = ...
+    flattened_list2: list[str] | None = ...
+    flattened_list_with_member_namespace: list[str] | None = ...
+    flattened_list_with_namespace: list[str] | None = ...
+    structure_list: list[StructureListMember] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class XmlEmptyMapsInput(_SerdeShape):
+    "Dataclass for XmlEmptyMapsInput structure."
+
+class XmlEmptyMapsInputDict(TypedDict, total=False):
+    "Dictionary form of `XmlEmptyMapsInput`."
+
+@dataclass(kw_only=True)
+class XmlEmptyMapsOutput(_SerdeShape):
+    "Dataclass for XmlEmptyMapsOutput structure."
+
+    my_map: dict[str, GreetingStruct] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class XmlEnumsInput(_SerdeShape):
+    "Dataclass for XmlEnumsInput structure."
+
+class XmlEnumsInputDict(TypedDict, total=False):
+    "Dictionary form of `XmlEnumsInput`."
+
+@dataclass(kw_only=True)
+class XmlIntEnumsInput(_SerdeShape):
+    "Dataclass for XmlIntEnumsInput structure."
+
+class XmlIntEnumsInputDict(TypedDict, total=False):
+    "Dictionary form of `XmlIntEnumsInput`."
+
+@dataclass(kw_only=True)
+class XmlListsInput(_SerdeShape):
+    "Dataclass for XmlListsInput structure."
+
+class XmlListsInputDict(TypedDict, total=False):
+    "Dictionary form of `XmlListsInput`."
+
+@dataclass(kw_only=True)
+class XmlListsOutput2(_SerdeShape):
+    "Dataclass for XmlListsOutput2 structure."
+
+    string_list: list[str] | None = ...
+    string_set: list[str] | None = ...
+    integer_list: list[int] | None = ...
+    boolean_list: list[bool] | None = ...
+    timestamp_list: list[datetime] | None = ...
+    enum_list: list[str] | None = ...
+    int_enum_list: list[int] | None = ...
+    nested_string_list: list[list[str]] | None = ...
+    renamed_list_members: list[str] | None = ...
+    flattened_list: list[str] | None = ...
+    flattened_list2: list[str] | None = ...
+    flattened_list_with_member_namespace: list[str] | None = ...
+    flattened_list_with_namespace: list[str] | None = ...
+    structure_list: list[StructureListMember] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class XmlMapsInput(_SerdeShape):
+    "Dataclass for XmlMapsInput structure."
+
+class XmlMapsInputDict(TypedDict, total=False):
+    "Dictionary form of `XmlMapsInput`."
+
+@dataclass(kw_only=True)
+class XmlMapsOutput2(_SerdeShape):
+    "Dataclass for XmlMapsOutput2 structure."
+
+    my_map: dict[str, GreetingStruct] | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class XmlMapsXmlNameInput(_SerdeShape):
+    "Dataclass for XmlMapsXmlNameInput structure."
+
+class XmlMapsXmlNameInputDict(TypedDict, total=False):
+    "Dictionary form of `XmlMapsXmlNameInput`."
+
+@dataclass(kw_only=True)
+class XmlNamespacesInput(_SerdeShape):
+    "Dataclass for XmlNamespacesInput structure."
+
+class XmlNamespacesInputDict(TypedDict, total=False):
+    "Dictionary form of `XmlNamespacesInput`."
+
+@dataclass(kw_only=True)
+class XmlTimestampsInput(_SerdeShape):
+    "Dataclass for XmlTimestampsInput structure."
+
+class XmlTimestampsInputDict(TypedDict, total=False):
+    "Dictionary form of `XmlTimestampsInput`."
+
+DATETIME_OFFSETS: APIOperation[DatetimeOffsetsInput, DatetimeOffsetsOutput]
+EMPTY_INPUT_AND_EMPTY_OUTPUT: APIOperation[
+    EmptyInputAndEmptyOutputInput, EmptyInputAndEmptyOutputOutput
+]
+ENDPOINT_OPERATION: APIOperation[EndpointOperationInput, EndpointOperationOutput]
+ENDPOINT_WITH_HOST_LABEL_OPERATION: APIOperation[
+    EndpointWithHostLabelOperationInput, EndpointWithHostLabelOperationOutput
+]
+FLATTENED_XML_MAP: APIOperation[FlattenedXmlMapInput, FlattenedXmlMapOutput]
+FLATTENED_XML_MAP_WITH_XML_NAME: APIOperation[
+    FlattenedXmlMapWithXmlNameInput, FlattenedXmlMapWithXmlNameOutput
+]
+FLATTENED_XML_MAP_WITH_XML_NAMESPACE: APIOperation[
+    FlattenedXmlMapWithXmlNamespaceInput, FlattenedXmlMapWithXmlNamespaceOutput
+]
+FRACTIONAL_SECONDS: APIOperation[FractionalSecondsInput, FractionalSecondsOutput]
+GREETING_WITH_ERRORS: APIOperation[GreetingWithErrorsInput, GreetingWithErrorsOutput]
+HOST_WITH_PATH_OPERATION: APIOperation[
+    HostWithPathOperationInput, HostWithPathOperationOutput
+]
+IGNORES_WRAPPING_XML_NAME: APIOperation[
+    IgnoresWrappingXmlNameInput, IgnoresWrappingXmlNameOutput
+]
+NESTED_STRUCTURES: APIOperation[NestedStructuresInput, NestedStructuresOutput]
+NO_INPUT_AND_NO_OUTPUT: APIOperation[NoInputAndNoOutputInput, NoInputAndNoOutputOutput]
+NO_INPUT_AND_OUTPUT: APIOperation[NoInputAndOutputInput, NoInputAndOutputOutput]
+PUT_WITH_CONTENT_ENCODING: APIOperation[
+    PutWithContentEncodingInput, PutWithContentEncodingOutput
+]
+QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL: APIOperation[
+    QueryIdempotencyTokenAutoFillInput, QueryIdempotencyTokenAutoFillOutput
+]
+QUERY_LISTS: APIOperation[QueryListsInput, QueryListsOutput]
+QUERY_MAPS: APIOperation[QueryMapsInput, QueryMapsOutput]
+QUERY_TIMESTAMPS: APIOperation[QueryTimestampsInput, QueryTimestampsOutput]
+RECURSIVE_XML_SHAPES: APIOperation[RecursiveXmlShapesInput, RecursiveXmlShapesOutput]
+SIMPLE_INPUT_PARAMS: APIOperation[SimpleInputParamsInput, SimpleInputParamsOutput]
+SIMPLE_SCALAR_XML_PROPERTIES: APIOperation[
+    SimpleScalarXmlPropertiesInput, SimpleScalarXmlPropertiesOutput
+]
+XML_BLOBS: APIOperation[XmlBlobsInput, XmlBlobsOutput2]
+XML_EMPTY_BLOBS: APIOperation[XmlEmptyBlobsInput, XmlEmptyBlobsOutput]
+XML_EMPTY_LISTS: APIOperation[XmlEmptyListsInput, XmlEmptyListsOutput]
+XML_EMPTY_MAPS: APIOperation[XmlEmptyMapsInput, XmlEmptyMapsOutput]
+XML_ENUMS: APIOperation[XmlEnumsInput, XmlEnumsOutput]
+XML_INT_ENUMS: APIOperation[XmlIntEnumsInput, XmlIntEnumsOutput]
+XML_LISTS: APIOperation[XmlListsInput, XmlListsOutput2]
+XML_MAPS: APIOperation[XmlMapsInput, XmlMapsOutput2]
+XML_MAPS_XML_NAME: APIOperation[XmlMapsXmlNameInput, XmlMapsXmlNameOutput]
+XML_NAMESPACES: APIOperation[XmlNamespacesInput, XmlNamespacesOutput]
+XML_TIMESTAMPS: APIOperation[XmlTimestampsInput, XmlTimestampsOutput]
