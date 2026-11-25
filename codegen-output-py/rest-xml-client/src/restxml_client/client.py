@@ -39,8 +39,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         This example uses all query string types.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `AllQueryStringTypesOutput`.
         """
 
     def all_query_string_types(
@@ -74,8 +78,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The following example serializes a body that uses an XML name,
         changing the wrapper name.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `BodyWithXmlNameOutput`.
         """
 
     def body_with_xml_name(
@@ -112,8 +120,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The fixed query string parameters and variable parameters must both be
         serialized (implementations may need to merge them together).
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ConstantAndVariableQueryStringOutput`.
         """
 
     def constant_and_variable_query_string(
@@ -149,8 +161,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         compatible. The fixed query string parameter named "hello" should
         in no way conflict with the label, `{hello}`.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ConstantQueryStringOutput`.
         """
 
     def constant_query_string(
@@ -185,8 +201,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The example tests how servers must support requests
         containing a `Content-Type` header with parameters.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ContentTypeParametersOutput`.
         """
 
     def content_type_parameters(
@@ -219,8 +239,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the DatetimeOffsets operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
         """
 
     def datetime_offsets(
@@ -257,8 +281,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         and empty output structure that reuses the same shape. While this should
         be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EmptyInputAndEmptyOutputOutput`.
         """
 
     def empty_input_and_empty_output(
@@ -291,8 +319,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the EndpointOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
         """
 
     def endpoint_operation(
@@ -326,8 +358,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelHeaderOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointWithHostLabelHeaderOperationOutput`.
         """
 
     def endpoint_with_host_label_header_operation(
@@ -363,8 +399,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
         """
 
     def endpoint_with_host_label_operation(
@@ -397,8 +437,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Flattened maps
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FlattenedXmlMapOutput`.
         """
 
     def flattened_xml_map(
@@ -432,8 +476,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Flattened maps with @xmlName
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FlattenedXmlMapWithXmlNameOutput`.
         """
 
     def flattened_xml_map_with_xml_name(
@@ -467,8 +515,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Flattened maps with @xmlNamespace and @xmlName
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
         """
 
     def flattened_xml_map_with_xml_namespace(
@@ -503,8 +555,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the FractionalSeconds operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
         """
 
     def fractional_seconds(
@@ -545,8 +601,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         properly (de)serialize successful and error responses based on the
         the presence of the
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
         """
 
     def greeting_with_errors(
@@ -580,8 +640,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Clients that perform this test extract all headers from the response.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpEmptyPrefixHeadersOutput`.
         """
 
     def http_empty_prefix_headers(
@@ -614,8 +678,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the HttpEnumPayload operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpEnumPayloadOutput`.
         """
 
     def http_enum_payload(
@@ -651,8 +719,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         In this example, no XML document is synthesized because the payload is
         not a structure or a union type.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadTraitsOutput`.
         """
 
     def http_payload_traits(
@@ -687,8 +759,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         This example uses a `@mediaType` trait on the payload to force a custom
         content-type to be serialized.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadTraitsWithMediaTypeOutput`.
         """
 
     def http_payload_traits_with_media_type(
@@ -725,8 +801,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The following example serializes a payload that uses an XML name
         on the member, changing the wrapper name.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithMemberXmlNameOutput`.
         """
 
     def http_payload_with_member_xml_name(
@@ -763,8 +843,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Note that serializing a structure changes the wrapper element name
         to match the targeted structure.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithStructureOutput`.
         """
 
     def http_payload_with_structure(
@@ -798,8 +882,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         This example serializes a union in the payload.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithUnionOutput`.
         """
 
     def http_payload_with_union(
@@ -834,8 +922,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The following example serializes a payload that uses an XML name,
         changing the wrapper name.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithXmlNameOutput`.
         """
 
     def http_payload_with_xml_name(
@@ -869,8 +961,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         The following example serializes a payload that uses an XML namespace.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithXmlNamespaceOutput`.
         """
 
     def http_payload_with_xml_namespace(
@@ -904,8 +1000,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         The following example serializes a payload that uses an XML namespace.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPayloadWithXmlNamespaceAndPrefixOutput`.
         """
 
     def http_payload_with_xml_namespace_and_prefix(
@@ -941,8 +1041,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         This examples adds headers to the input of a request and response by
         prefix.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpPrefixHeadersOutput`.
         """
 
     def http_prefix_headers(
@@ -976,8 +1080,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the HttpRequestWithFloatLabels operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithFloatLabelsOutput`.
         """
 
     def http_request_with_float_labels(
@@ -1011,8 +1119,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the HttpRequestWithGreedyLabelInPath operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithGreedyLabelInPathOutput`.
         """
 
     def http_request_with_greedy_label_in_path(
@@ -1049,8 +1161,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The example tests how requests are serialized when there's no input
         payload but there are HTTP labels.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithLabelsOutput`.
         """
 
     def http_request_with_labels(
@@ -1086,8 +1202,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         the
         URI path.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpRequestWithLabelsAndTimestampFormatOutput`.
         """
 
     def http_request_with_labels_and_timestamp_format(
@@ -1122,8 +1242,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the HttpResponseCode operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpResponseCodeOutput`.
         """
 
     def http_response_code(
@@ -1156,8 +1280,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the HttpStringPayload operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HttpStringPayloadOutput`.
         """
 
     def http_string_payload(
@@ -1193,8 +1321,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         serialized in the body of responses if the structure is used in both
         the request and response.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `IgnoreQueryParamsInResponseOutput`.
         """
 
     def ignore_query_params_in_response(
@@ -1230,8 +1362,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         is
         no input or output payload but there are HTTP header bindings.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `InputAndOutputWithHeadersOutput`.
         """
 
     def input_and_output_with_headers(
@@ -1265,8 +1401,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Nested Xml Maps with key/values with @xmlName
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NestedXmlMapWithXmlNameOutput`.
         """
 
     def nested_xml_map_with_xml_name(
@@ -1299,8 +1439,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the NestedXmlMaps operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NestedXmlMapsOutput`.
         """
 
     def nested_xml_maps(
@@ -1336,8 +1480,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         output.
         While this should be rare, code generators must support this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndNoOutputOutput`.
         """
 
     def no_input_and_no_output(
@@ -1374,8 +1522,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         output is empty. While this should be rare, code generators must support
         this.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NoInputAndOutputOutput`.
         """
 
     def no_input_and_output(
@@ -1410,8 +1562,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Null headers are not sent over the wire, empty headers are serialized to
         ""
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NullAndEmptyHeadersClientOutput`.
         """
 
     def null_and_empty_headers_client(
@@ -1446,8 +1602,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         Null headers are not sent over the wire, empty headers are serialized to
         ""
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NullAndEmptyHeadersServerOutput`.
         """
 
     def null_and_empty_headers_server(
@@ -1481,8 +1641,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Omits null, but serializes empty string value.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OmitsNullSerializesEmptyStringOutput`.
         """
 
     def omits_null_serializes_empty_string(
@@ -1516,8 +1680,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
         """
 
     def put_with_content_encoding(
@@ -1551,8 +1719,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Automatically adds idempotency tokens.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryIdempotencyTokenAutoFillOutput`.
         """
 
     def query_idempotency_token_auto_fill(
@@ -1586,8 +1758,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the QueryParamsAsStringListMap operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryParamsAsStringListMapOutput`.
         """
 
     def query_params_as_string_list_map(
@@ -1620,8 +1796,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the QueryPrecedence operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryPrecedenceOutput`.
         """
 
     def query_precedence(
@@ -1654,8 +1834,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Recursive shapes
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `RecursiveShapesOutput`.
         """
 
     def recursive_shapes(
@@ -1689,8 +1873,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the SimpleScalarProperties operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
         """
 
     def simple_scalar_properties(
@@ -1725,8 +1913,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         The example tests how timestamp request and response headers are
         serialized.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `TimestampFormatHeadersOutput`.
         """
 
     def timestamp_format_headers(
@@ -1759,8 +1951,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         This example serializes an XML attributes on synthesized document.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlAttributesOutput`.
         """
 
     def xml_attributes(
@@ -1799,8 +1995,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         which is critical for languages like C# where attribute writing must
         happen before child elements.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlAttributesInMiddleOutput`.
         """
 
     def xml_attributes_in_middle(
@@ -1835,8 +2035,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         This example serializes an XML attributes on a document targeted by
         httpPayload.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlAttributesOnPayloadOutput`.
         """
 
     def xml_attributes_on_payload(
@@ -1869,8 +2073,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Blobs are base64 encoded
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlBlobsOutput`.
         """
 
     def xml_blobs(
@@ -1903,8 +2111,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Blobs are base64 encoded
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyBlobsOutput`.
         """
 
     def xml_empty_blobs(
@@ -1937,8 +2149,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the XmlEmptyLists operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyListsOutput`.
         """
 
     def xml_empty_lists(
@@ -1971,8 +2187,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the XmlEmptyMaps operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyMapsOutput`.
         """
 
     def xml_empty_maps(
@@ -2005,8 +2225,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the XmlEmptyStrings operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEmptyStringsOutput`.
         """
 
     def xml_empty_strings(
@@ -2040,8 +2264,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlEnumsOutput`.
         """
 
     def xml_enums(
@@ -2075,8 +2303,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlIntEnumsOutput`.
         """
 
     def xml_int_enums(
@@ -2120,8 +2352,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         8. Lists of structures.
         9. Flattened XML list of structures
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlListsOutput`.
         """
 
     def xml_lists(
@@ -2155,8 +2391,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Maps with @xmlNamespace and @xmlName
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlMapWithXmlNamespaceOutput`.
         """
 
     def xml_map_with_xml_namespace(
@@ -2189,8 +2429,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         The example tests basic map serialization.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlMapsOutput`.
         """
 
     def xml_maps(
@@ -2223,8 +2467,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the XmlMapsXmlName operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlMapsXmlNameOutput`.
         """
 
     def xml_maps_xml_name(
@@ -2257,8 +2505,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the XmlNamespaces operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlNamespacesOutput`.
         """
 
     def xml_namespaces(
@@ -2293,8 +2545,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         default format of date-time and various @timestampFormat trait
         values.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlTimestampsOutput`.
         """
 
     def xml_timestamps(
@@ -2327,8 +2583,12 @@ class RestXmlProtocolClient(Client[RestXmlProtocolConfig]):
         """
         Invokes the XmlUnions operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `XmlUnionsOutput`.
         """
 
     def xml_unions(

@@ -41,8 +41,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         The example tests how servers must support requests
         containing a `Content-Type` header with parameters.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ContentTypeParametersOutput`.
         """
 
     def content_type_parameters(
@@ -75,8 +79,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the DatetimeOffsets operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
         """
 
     def datetime_offsets(
@@ -109,8 +117,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the EmptyOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EmptyOperationOutput`.
         """
 
     def empty_operation(
@@ -143,8 +155,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the EndpointOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
         """
 
     def endpoint_operation(
@@ -178,8 +194,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
         """
 
     def endpoint_with_host_label_operation(
@@ -212,8 +232,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the FractionalSeconds operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
         """
 
     def fractional_seconds(
@@ -253,8 +277,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         Implementations must be able to successfully take a response and
         properly deserialize successful and error responses.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
         """
 
     def greeting_with_errors(
@@ -288,8 +316,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the HostWithPathOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
         """
 
     def host_with_path_operation(
@@ -323,8 +355,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonEnumsOutput`.
         """
 
     def json_enums(
@@ -358,8 +394,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         This example serializes intEnums as top level properties, in lists,
         sets, and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonIntEnumsOutput`.
         """
 
     def json_int_enums(
@@ -392,8 +432,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         This operation uses unions for inputs and outputs.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonUnionsOutput`.
         """
 
     def json_unions(
@@ -427,8 +471,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the KitchenSinkOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `KitchenSinkOperationOutput`.
         """
 
     def kitchen_sink_operation(
@@ -461,8 +509,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the NullOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NullOperationOutput`.
         """
 
     def null_operation(
@@ -496,8 +548,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the OperationWithOptionalInputOutput operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OperationWithOptionalInputOutputOutput`.
         """
 
     def operation_with_optional_input_output(
@@ -533,8 +589,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         This example serializes an inline document as part of the payload.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutAndGetInlineDocumentsOutput`.
         """
 
     def put_and_get_inline_documents(
@@ -568,8 +628,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
         """
 
     def put_with_content_encoding(
@@ -603,8 +667,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the SimpleScalarProperties operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
         """
 
     def simple_scalar_properties(
@@ -638,8 +706,12 @@ class JsonProtocolClient(Client[JsonProtocolConfig]):
         """
         Invokes the SparseNullsOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SparseNullsOperationOutput`.
         """
 
     def sparse_nulls_operation(

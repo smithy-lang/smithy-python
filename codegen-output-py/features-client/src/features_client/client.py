@@ -46,8 +46,12 @@ class FieldNotesClient(Client[FieldNotesConfig]):
         """
         Uses API key auth, but sends no key when it has none.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EchoOutput`.
         """
 
     def echo(
@@ -80,8 +84,12 @@ class FieldNotesClient(Client[FieldNotesConfig]):
         """
         Uses API key auth.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GetThingOutput`.
         """
 
     def get_thing(
@@ -114,8 +122,12 @@ class FieldNotesClient(Client[FieldNotesConfig]):
         """
         Lists notes a page at a time. Needs no auth.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ListNotesOutput`.
         """
 
     def list_notes(
@@ -206,8 +218,12 @@ class FieldNotesClient(Client[FieldNotesConfig]):
         """
         Needs no auth.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PingOutput`.
         """
 
     def ping(
@@ -240,8 +256,12 @@ class FieldNotesClient(Client[FieldNotesConfig]):
         """
         Saves a note, signed with SigV4.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutNoteOutput`.
         """
 
     def put_note(
@@ -274,8 +294,12 @@ class FieldNotesClient(Client[FieldNotesConfig]):
         """
         Needs no auth.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutThingOutput`.
         """
 
     def put_thing(

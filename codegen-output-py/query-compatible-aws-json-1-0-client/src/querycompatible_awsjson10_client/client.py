@@ -43,8 +43,12 @@ class QueryCompatibleJSONRPC10Client(Client[QueryCompatibleJSONRPC10Config]):
         """
         Invokes the QueryCompatibleOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `QueryCompatibleOperationOutput`.
         """
 
     def query_compatible_operation(

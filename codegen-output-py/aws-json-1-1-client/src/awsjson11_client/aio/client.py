@@ -41,8 +41,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         The example tests how servers must support requests
         containing a `Content-Type` header with parameters.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `ContentTypeParametersOutput`.
         """
 
     async def content_type_parameters(
@@ -75,8 +79,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the DatetimeOffsets operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
         """
 
     async def datetime_offsets(
@@ -109,8 +117,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the EmptyOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EmptyOperationOutput`.
         """
 
     async def empty_operation(
@@ -143,8 +155,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the EndpointOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
         """
 
     async def endpoint_operation(
@@ -178,8 +194,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the EndpointWithHostLabelOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
         """
 
     async def endpoint_with_host_label_operation(
@@ -212,8 +232,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the FractionalSeconds operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
         """
 
     async def fractional_seconds(
@@ -253,8 +277,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         Implementations must be able to successfully take a response and
         properly deserialize successful and error responses.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
         """
 
     async def greeting_with_errors(
@@ -288,8 +316,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the HostWithPathOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
         """
 
     async def host_with_path_operation(
@@ -323,8 +355,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         This example serializes enums as top level properties, in lists, sets,
         and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonEnumsOutput`.
         """
 
     async def json_enums(
@@ -358,8 +394,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         This example serializes intEnums as top level properties, in lists,
         sets, and maps.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonIntEnumsOutput`.
         """
 
     async def json_int_enums(
@@ -392,8 +432,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         This operation uses unions for inputs and outputs.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `JsonUnionsOutput`.
         """
 
     async def json_unions(
@@ -427,8 +471,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the KitchenSinkOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `KitchenSinkOperationOutput`.
         """
 
     async def kitchen_sink_operation(
@@ -461,8 +509,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the NullOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `NullOperationOutput`.
         """
 
     async def null_operation(
@@ -496,8 +548,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the OperationWithOptionalInputOutput operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `OperationWithOptionalInputOutputOutput`.
         """
 
     async def operation_with_optional_input_output(
@@ -533,8 +589,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         This example serializes an inline document as part of the payload.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutAndGetInlineDocumentsOutput`.
         """
 
     async def put_and_get_inline_documents(
@@ -568,8 +628,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the PutWithContentEncoding operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
         """
 
     async def put_with_content_encoding(
@@ -603,8 +667,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the SimpleScalarProperties operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
         """
 
     async def simple_scalar_properties(
@@ -638,8 +706,12 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         """
         Invokes the SparseNullsOperation operation.
 
-        :param plugins: Callables that change the configuration for this call
-        only.
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `SparseNullsOperationOutput`.
         """
 
     async def sparse_nulls_operation(
