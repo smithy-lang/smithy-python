@@ -86,6 +86,10 @@ class ConfigPlan:
     """Whether an operation has an endpoint host prefix, so the config has
     ``disable_host_prefix_injection``."""
 
+    request_compression: bool = False
+    """Whether an operation has the ``requestCompression`` trait, so the config has
+    ``disable_request_compression`` and ``request_min_compression_size_bytes``."""
+
 
 class ClientIntegration:
     """Changes the clients generated for the services it matches.

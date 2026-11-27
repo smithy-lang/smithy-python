@@ -253,6 +253,13 @@ When an operation has the `smithy.api#endpoint` trait, the config gets
 `HostPrefixIntegration`. The runtime prepends each operation's expanded host
 prefix to its endpoint host unless the field is true.
 
+When an operation has the `smithy.api#requestCompression` trait, a non-AWS
+config gets `disable_request_compression: bool`, default `False`, and
+`request_min_compression_size_bytes: int`, default `10240`, as in the Java
+generator's `RequestCompressionIntegration`. AWS configs inherit both from
+`AwsConfig`, which also resolves them from the environment and profile. The
+runtime compresses requests; the generator only declares the fields.
+
 Schemas retain `smithy.rules#contextParam`, `smithy.rules#staticContextParams`,
 and `smithy.rules#operationContextParams`, which the runtime parameter plan
 reads to bind input members and operation values.
