@@ -10,9 +10,19 @@ from smithy_aws_core.aio.config.aws_config import (
 from smithy_aws_core.aio.config.filesystem import AsyncFileSystem
 from smithy_aws_core.config.resolvers import (
     EndpointUriResolver,
+    resolve_request_checksum_calculation_program,
+    resolve_response_checksum_validation_program,
     resolve_use_fips_endpoint_program,
 )
-from smithy_aws_core.config.types import FieldSpec
+from smithy_aws_core.config.types import (
+    FieldSpec,
+    RequestChecksumCalculation,
+    ResponseChecksumValidation,
+)
+from smithy_aws_core.config.validators import (
+    validate_request_checksum_calculation,
+    validate_response_checksum_validation,
+)
 from smithy_aws_core.endpoints import AWS_RULES_EXTENSION
 from smithy_core.aio.interfaces import AsyncEndpointResolver
 from smithy_core.aio.interfaces.auth import AsyncAuthScheme
@@ -72,6 +82,8 @@ class _AsyncFieldNotesConfigOverrides(AsyncAwsConfigOverrides, total=False):
     stage: str | None
     force_path_style: bool | None
     use_fips_endpoint: bool | None
+    request_checksum_calculation: RequestChecksumCalculation | None
+    response_checksum_validation: ResponseChecksumValidation | None
 
 
 @dataclass(kw_only=True, repr=False, init=False)
@@ -120,6 +132,12 @@ class AsyncFieldNotesConfig(AsyncAwsConfig):
     use_fips_endpoint: bool | None = None
     "Whether to use a FIPS endpoint."
 
+    request_checksum_calculation: RequestChecksumCalculation | None = None
+    "When to calculate request checksums: `when_supported` (the default) or `when_required`, only when the operation requires one or the request sets an algorithm."
+
+    response_checksum_validation: ResponseChecksumValidation | None = None
+    "When to validate response checksums: `when_supported` (the default) or `when_required`, only when the request enables validation."
+
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
         **AsyncAwsConfig._FIELDS,
         "endpoint_uri": FieldSpec(
@@ -156,6 +174,16 @@ class AsyncFieldNotesConfig(AsyncAwsConfig):
         "force_path_style": FieldSpec(default=None),
         "use_fips_endpoint": FieldSpec(
             default=None, resolver=resolve_use_fips_endpoint_program
+        ),
+        "request_checksum_calculation": FieldSpec(
+            default="when_supported",
+            resolver=resolve_request_checksum_calculation_program,
+            validator=validate_request_checksum_calculation,
+        ),
+        "response_checksum_validation": FieldSpec(
+            default="when_supported",
+            resolver=resolve_response_checksum_validation_program,
+            validator=validate_response_checksum_validation,
         ),
         "transport": FieldSpec(default_factory=lambda: AIOHTTPClient()),
     }

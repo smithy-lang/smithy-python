@@ -4,6 +4,7 @@ namespace example.features
 
 use aws.api#service
 use aws.auth#sigv4
+use aws.protocols#httpChecksum
 use smithy.protocols#rpcv2Cbor
 use smithy.rules#clientContextParams
 use smithy.rules#contextParam
@@ -285,9 +286,11 @@ operation Echo {}
 
 /// Reads a note, with a bearer token.
 @auth([httpBearerAuth])
+@httpChecksum(requestValidationModeMember: "checksumMode", responseAlgorithms: ["CRC32"])
 operation GetNote {
     input := {
         id: String
+        checksumMode: ChecksumMode
     }
     output := {
         text: String
@@ -330,9 +333,11 @@ list NoteList {
 operation Ping {}
 
 /// Saves a note, signed with SigV4.
+@httpChecksum(requestChecksumRequired: true, requestAlgorithmMember: "checksumAlgorithm")
 operation PutNote {
     input := {
         text: String
+        checksumAlgorithm: ChecksumAlgorithm
     }
     output := {
         id: String
@@ -361,4 +366,13 @@ structure ThingTag {
 
 list PluginNames {
     member: String
+}
+
+enum ChecksumAlgorithm {
+    CRC32
+    SHA256
+}
+
+enum ChecksumMode {
+    ENABLED
 }

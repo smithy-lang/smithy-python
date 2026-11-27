@@ -9,7 +9,7 @@ requires-python = ">=3.12"
 keywords = ["smithy", "features_client"]
 license = {text = "Apache-2.0"}
 dependencies = [
-    "smithy-aws-core~=0.16.0",
+    "smithy-aws-core[checksums]~=0.16.0",
     "smithy-core~=0.13.0",
     "smithy-http[aiohttp,cbor,urllib3]~=0.10.0",
 ]

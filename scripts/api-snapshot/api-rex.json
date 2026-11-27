@@ -1389,6 +1389,7 @@
     "AWS_JSON_10": "rex-ProtocolContribution",
     "AWS_JSON_11": "rex-ProtocolContribution",
     "AWS_QUERY": "rex-ProtocolContribution",
+    "AwsChecksumsIntegration": "rex-class",
     "AwsConfigIntegration": "rex-class",
     "AwsEndpointsIntegration": "rex-class",
     "AwsIdentityIntegration": "rex-class",

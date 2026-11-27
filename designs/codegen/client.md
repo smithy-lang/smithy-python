@@ -413,6 +413,20 @@ generator's `AwsEndpointRulesIntegration`:
 S3's bucket and S3 Control's account ID host prefix customizations come with
 S3 support.
 
+`AwsChecksumsIntegration` follows the Java generator's
+`AwsFlexibleChecksumsIntegration` for AWS services whose operations have the
+`aws.protocols#httpChecksum` trait. Schemas keep the trait, and clients apply
+`flexible_checksums_plugin` from their `checksums` modules, which adds
+`FlexibleChecksumsInterceptor`, or `AsyncFlexibleChecksumsInterceptor` in async
+clients. These need the `checksums` extra of `smithy-aws-core`. Each setting is
+added only where it has an effect, and resolves from the environment and
+profile with a default of `when_supported`:
+
+* `request_checksum_calculation`, when an operation requires a request checksum
+  or names a `requestAlgorithmMember`.
+* `response_checksum_validation`, when an operation has `responseAlgorithms`
+  and a `requestValidationModeMember`.
+
 ## Clients and Configuration
 
 Service classes are thin subclasses of `Client[Config]` and

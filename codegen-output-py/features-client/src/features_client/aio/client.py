@@ -15,6 +15,7 @@ from smithy_http.identity import TokenIdentity
 from smithy_http.plugins import user_agent_plugin
 
 from features_client import models
+from features_client.aio.checksums import flexible_checksums_plugin
 from features_client.aio.config import AsyncFieldNotesConfig, Plugin
 from features_client.aio.user_agent import aws_user_agent_plugin
 
@@ -28,7 +29,11 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
     use SigV4, bearer token auth, API key auth, optional auth, and no auth.
     """
 
-    _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
+    _client_plugins = (
+        aws_user_agent_plugin,
+        flexible_checksums_plugin,
+        user_agent_plugin,
+    )
 
     @overload
     async def describe_note(

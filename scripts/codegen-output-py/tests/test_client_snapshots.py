@@ -305,6 +305,25 @@ def test_aws_client_resolves_its_own_config(
 
 
 @pytest.mark.parametrize("aio", [False, True])
+def test_snapshot_clients_send_modeled_request_checksums(
+    features: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
+) -> None:
+    client, transport = _client(
+        features,
+        aio,
+        endpoint_uri=_ENDPOINT,
+        aws_access_key_id="AKIDEXAMPLE",
+        aws_secret_access_key="secret",
+    )
+    _call(aio, client.put_note(text="hi", checksum_algorithm="SHA256"))
+    (request,) = transport.requests
+    assert request.fields["x-amz-checksum-sha256"].as_string()
+    # Both settings default to when_supported.
+    assert client._config.request_checksum_calculation == "when_supported"
+    assert client._config.response_checksum_validation == "when_supported"
+
+
+@pytest.mark.parametrize("aio", [False, True])
 def test_sigv4_signs_with_configured_credentials(
     features: ModuleType, aio: bool, aws_env: pytest.MonkeyPatch
 ) -> None:

@@ -14,6 +14,8 @@ class ServiceError(ModeledError):
 
 
 _MODEL_INDEX = {
+    "ChecksumAlgorithm": "CHECKSUM_ALGORITHM",
+    "ChecksumMode": "CHECKSUM_MODE",
     "DescribeNoteInput": "DESCRIBE_NOTE_INPUT",
     "DescribeNoteOutput": "DESCRIBE_NOTE_OUTPUT",
     "GetNoteInput": "GET_NOTE_INPUT",
@@ -85,6 +87,8 @@ _registry = ModelRegistry(
     target_names=_TARGET_NAMES,
     shape_names=frozenset(
         {
+            "ChecksumAlgorithm",
+            "ChecksumMode",
             "DescribeNoteInput",
             "DescribeNoteOutput",
             "EchoInput",

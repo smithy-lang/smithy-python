@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from typing import Final
 
+from ._checksums import AwsChecksumsIntegration
 from ._config import AwsConfigIntegration
 from ._dependencies import SMITHY_AWS_CORE
 from ._endpoints import AwsEndpointsIntegration
@@ -41,6 +42,7 @@ __all__ = [
     "REST_JSON",
     "REST_XML",
     "SMITHY_AWS_CORE",
+    "AwsChecksumsIntegration",
     "AwsConfigIntegration",
     "AwsEndpointsIntegration",
     "AwsIdentityIntegration",
@@ -50,5 +52,6 @@ AWS_INTEGRATIONS: Final = (
     AwsConfigIntegration(),
     AwsIdentityIntegration(),
     AwsEndpointsIntegration(),
+    AwsChecksumsIntegration(),
 )
 """The integrations AWS services get, in order."""
