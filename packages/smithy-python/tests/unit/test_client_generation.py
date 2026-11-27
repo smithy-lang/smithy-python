@@ -319,7 +319,8 @@ def _add_rules(shapes: dict[str, Any]) -> None:
 def _add_stream(shapes: dict[str, Any]) -> None:
     shapes["example#GreetOutput"]["members"]["data"] = {"target": "example#Stream"}
     shapes["example#Stream"] = {
-        "type": "blob",
+        "type": "union",
+        "members": {"tick": {"target": "smithy.api#Unit"}},
         "traits": {"smithy.api#streaming": {}},
     }
 
@@ -409,6 +410,24 @@ def test_configs_can_turn_off_modeled_host_prefixes(
         package.Greeter(config).ping()
         hosts.extend(request.destination.host for request in transport.requests)
     assert hosts == ["data.example.com", "example.com"]
+
+
+def test_streaming_blob_inputs_get_a_dictionary_form_per_client(
+    tmp_path: Path,
+) -> None:
+    shapes = _shapes()
+    shapes["example#GreetInput"]["members"]["data"] = {"target": "example#Stream"}
+    shapes["example#Stream"] = {"type": "blob", "traits": {"smithy.api#streaming": {}}}
+    _generate(tmp_path, "greeter_streaming", shapes)
+    source = tmp_path / "src/greeter_streaming"
+    stub = (source / "models.pyi").read_text()
+    assert "class GreetInputDict(TypedDict, total=False):" in stub
+    assert "class AsyncGreetInputDict(TypedDict, total=False):" in stub
+    assert "_smithy_core_interfaces_StreamingBlob | None" in stub
+    assert "models.AsyncGreetInputDict" in (source / "aio/client.py").read_text()
+    sync_client = (source / "client.py").read_text()
+    assert "models.GreetInputDict" in sync_client
+    assert "AsyncGreetInputDict" not in sync_client
 
 
 def test_rpcv2_json_service_sends_json_and_requires_the_json_extra(

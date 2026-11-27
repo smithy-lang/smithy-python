@@ -473,15 +473,22 @@ Operation, paginator, and waiter method docstrings use Google style `Args:`,
 
 ## Supported Features
 
-The generator supports non-streaming RPCv2 CBOR and RPCv2 JSON operations that
-are unsigned or use API key auth, bearer token auth, or SigV4, and whose
+Operations with a streaming blob input or output are supported. A streaming
+blob member is a `StreamingBlob`, which an async client may give as an async
+stream and returns as one. An input with a streaming blob has two dictionary
+forms: `<Input>Dict` takes a stream a sync client can send, and
+`Async<Input>Dict`, which the async client takes, may also take an async stream.
+As in the Java generator, the runtime resolves the `Async` name.
+
+The generator supports operations without event streams, in every protocol
+above, that are unsigned or use API key auth, bearer token auth, or SigV4, and whose
 endpoint rules use the standard library. Models that require other auth
-schemes or event or data streams fail generation with a diagnostic naming the
+schemes or event streams fail generation with a diagnostic naming the
 operation and feature.
 
 Authentication and endpoint extension points are provider-neutral. AWS config
 resolution, the AWS user agent, SigV4, and AWS endpoint functions are AWS
-integrations. AWS protocols are not supported yet.
+integrations.
 
 ## Validation
 

@@ -78,6 +78,9 @@ _SHAPE_SERIALIZER: Final = _core_reference("ShapeSerializer", "serializers")
 _SHAPE_DESERIALIZER: Final = _core_reference("ShapeDeserializer", "deserializers")
 _UNKNOWN_ENUM_MIXIN: Final = _core_reference("UnknownEnumMixin", "types")
 _RESPONSE_METADATA: Final = _core_reference("ResponseMetadata", "response")
+_STREAMING_BLOB: Final = _core_reference("StreamingBlob", "aio.interfaces")
+# The writer aliases it, since the async StreamingBlob has the same name.
+_SYNC_STREAMING_BLOB: Final = _core_reference("StreamingBlob", "interfaces")
 _ERROR_RESPONSE_METADATA: Final = _core_reference("ErrorResponseMetadata", "response")
 _DATACLASS: Final = _symbols.TypeReference("dataclass", "dataclasses")
 _SELF: Final = _symbols.TypeReference("Self", "typing")
@@ -345,19 +348,55 @@ class _StubEmitter:
         name = self.plan.input_dict_names.get(shape.id)
         if name is None:
             return
-        writer = self.writer
         model_name = self.plan.declaration_names.get(shape.id, "Unit")
+        async_name = self.plan.async_input_dict_names.get(shape.id)
+        if async_name is None:
+            self._write_structure_dict_form(
+                shape, name, f"Dictionary form of `{model_name}`.", _STREAMING_BLOB
+            )
+            return
+        # A sync client can't send an async stream, so each client gets a form.
+        self._write_structure_dict_form(
+            shape,
+            name,
+            f"Dictionary form of `{model_name}` that either client accepts. Its "
+            "streaming body is one a sync client can send. Use "
+            f"`{async_name}` for an async stream.",
+            _SYNC_STREAMING_BLOB,
+        )
+        self._write_structure_dict_form(
+            shape,
+            async_name,
+            f"Dictionary form of `{model_name}` for the async client. Its "
+            "streaming body may also be an async stream.",
+            _STREAMING_BLOB,
+        )
+
+    def _write_structure_dict_form(
+        self,
+        shape: _model.Shape,
+        name: str,
+        summary: str,
+        streaming_blob: _symbols.TypeReference,
+    ) -> None:
+        writer = self.writer
         writer.line()
         writer.line("class ", name, "(", _TYPED_DICT, ", total=False):")
         with writer.indent():
-            writer.line(_quote(f"Dictionary form of `{model_name}`."))
+            _write_docstring(writer, summary)
             for member in shape.members.values():
                 if _is_event_stream_member(self.model, member) or (
                     shape.has_trait("error")
                     and member.name.lower() in _ERROR_MESSAGE_NAMES
                 ):
                     continue
-                parts = self._dict_type(member.target)
+                target = self.model.get_shape(member.target)
+                parts: tuple[_SourcePart, ...] = (
+                    (streaming_blob,)
+                    if target.type is _model.ShapeType.BLOB
+                    and target.has_trait("streaming")
+                    else self._dict_type(member.target)
+                )
                 if self._must_be_set(shape, member):
                     parts = (_REQUIRED, "[", *parts, "]")
                 else:
@@ -612,7 +651,10 @@ def _stub_shape_names(plan: ModelPlan, shape: _model.Shape) -> tuple[str, ...]:
     declaration = plan.declaration_names[shape.id]
     dicts = plan.input_dict_names
     if shape.type is not _model.ShapeType.UNION:
-        return (declaration, *((dicts[shape.id],) if shape.id in dicts else ()))
+        forms = (dicts[shape.id],) if shape.id in dicts else ()
+        if shape.id in plan.async_input_dict_names:
+            forms = (*forms, plan.async_input_dict_names[shape.id])
+        return (declaration, *forms)
     return (
         *(plan.union_variant_names[member.id] for member in shape.members.values()),
         plan.union_unknown_names[shape.id],

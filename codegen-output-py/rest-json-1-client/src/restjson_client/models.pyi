@@ -4,9 +4,15 @@ from datetime import datetime
 from enum import IntEnum, StrEnum
 from typing import Required, Self, TypedDict
 
+from smithy_core.aio.interfaces import (
+    StreamingBlob as _smithy_core_aio_interfaces_StreamingBlob,
+)
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.exceptions import ModeledError
+from smithy_core.interfaces import (
+    StreamingBlob as _smithy_core_interfaces_StreamingBlob,
+)
 from smithy_core.response import ErrorResponseMetadata, ResponseMetadata
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import ShapeSerializer
@@ -107,6 +113,9 @@ __all__ = [
     "SIMPLE_SCALAR_PROPERTIES",
     "SPARSE_JSON_LISTS",
     "SPARSE_JSON_MAPS",
+    "STREAMING_TRAITS",
+    "STREAMING_TRAITS_REQUIRE_LENGTH",
+    "STREAMING_TRAITS_WITH_MEDIA_TYPE",
     "TEST_BODY_STRUCTURE",
     "TEST_GET_NO_INPUT_NO_PAYLOAD",
     "TEST_GET_NO_PAYLOAD",
@@ -344,6 +353,12 @@ __all__ = [
     "SparseJsonListsOutput",
     "SparseJsonMapsInput",
     "SparseJsonMapsOutput",
+    "StreamingTraitsInput",
+    "StreamingTraitsOutput",
+    "StreamingTraitsRequireLengthInput",
+    "StreamingTraitsRequireLengthOutput",
+    "StreamingTraitsWithMediaTypeInput",
+    "StreamingTraitsWithMediaTypeOutput",
     "StringEnum",
     "StructureListMember",
     "TestBodyStructureInput",
@@ -1835,6 +1850,32 @@ class SimpleUnionStringDict(TypedDict):
 
 SimpleUnionDict = SimpleUnionIntDict | SimpleUnionStringDict
 "Dictionary form of `SimpleUnion`, setting exactly one variant."
+
+@dataclass(kw_only=True)
+class StreamingTraitsRequireLengthInput(_SerdeShape):
+    "Dataclass for StreamingTraitsRequireLengthInput structure."
+
+    foo: str | None = ...
+    blob: _smithy_core_aio_interfaces_StreamingBlob | None = ...
+
+class StreamingTraitsRequireLengthInputDict(TypedDict, total=False):
+    """
+    Dictionary form of `StreamingTraitsRequireLengthInput` that either
+    client accepts. Its streaming body is one a sync client can send. Use
+    `AsyncStreamingTraitsRequireLengthInputDict` for an async stream.
+    """
+
+    foo: str | None
+    blob: _smithy_core_interfaces_StreamingBlob | None
+
+class AsyncStreamingTraitsRequireLengthInputDict(TypedDict, total=False):
+    """
+    Dictionary form of `StreamingTraitsRequireLengthInput` for the async
+    client. Its streaming body may also be an async stream.
+    """
+
+    foo: str | None
+    blob: _smithy_core_aio_interfaces_StreamingBlob | None
 
 class StringEnum(UnknownEnumMixin, StrEnum):
     V = "enumvalue"
@@ -3601,6 +3642,101 @@ class SparseJsonMapsOutput(_SerdeShape):
     """
 
 @dataclass(kw_only=True)
+class StreamingTraitsInput(_SerdeShape):
+    "Dataclass for StreamingTraitsInput structure."
+
+    foo: str | None = ...
+    blob: _smithy_core_aio_interfaces_StreamingBlob | None = ...
+
+class StreamingTraitsInputDict(TypedDict, total=False):
+    """
+    Dictionary form of `StreamingTraitsInput` that either client accepts.
+    Its streaming body is one a sync client can send. Use
+    `AsyncStreamingTraitsInputDict` for an async stream.
+    """
+
+    foo: str | None
+    blob: _smithy_core_interfaces_StreamingBlob | None
+
+class AsyncStreamingTraitsInputDict(TypedDict, total=False):
+    """
+    Dictionary form of `StreamingTraitsInput` for the async client. Its
+    streaming body may also be an async stream.
+    """
+
+    foo: str | None
+    blob: _smithy_core_aio_interfaces_StreamingBlob | None
+
+@dataclass(kw_only=True)
+class StreamingTraitsOutput(_SerdeShape):
+    "Dataclass for StreamingTraitsOutput structure."
+
+    foo: str | None = ...
+    blob: _smithy_core_aio_interfaces_StreamingBlob | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class StreamingTraitsRequireLengthOutput(_SerdeShape):
+    "Dataclass for StreamingTraitsRequireLengthOutput structure."
+
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
+class StreamingTraitsWithMediaTypeInput(_SerdeShape):
+    "Dataclass for StreamingTraitsWithMediaTypeInput structure."
+
+    foo: str | None = ...
+    blob: _smithy_core_aio_interfaces_StreamingBlob | None = ...
+
+class StreamingTraitsWithMediaTypeInputDict(TypedDict, total=False):
+    """
+    Dictionary form of `StreamingTraitsWithMediaTypeInput` that either
+    client accepts. Its streaming body is one a sync client can send. Use
+    `AsyncStreamingTraitsWithMediaTypeInputDict` for an async stream.
+    """
+
+    foo: str | None
+    blob: _smithy_core_interfaces_StreamingBlob | None
+
+class AsyncStreamingTraitsWithMediaTypeInputDict(TypedDict, total=False):
+    """
+    Dictionary form of `StreamingTraitsWithMediaTypeInput` for the async
+    client. Its streaming body may also be an async stream.
+    """
+
+    foo: str | None
+    blob: _smithy_core_aio_interfaces_StreamingBlob | None
+
+@dataclass(kw_only=True)
+class StreamingTraitsWithMediaTypeOutput(_SerdeShape):
+    "Dataclass for StreamingTraitsWithMediaTypeOutput structure."
+
+    foo: str | None = ...
+    blob: _smithy_core_aio_interfaces_StreamingBlob | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
 class TestBodyStructureInput(_SerdeShape):
     "Dataclass for TestBodyStructureInput structure."
 
@@ -4055,6 +4191,13 @@ SIMPLE_SCALAR_PROPERTIES: APIOperation[
 ]
 SPARSE_JSON_LISTS: APIOperation[SparseJsonListsInput, SparseJsonListsOutput]
 SPARSE_JSON_MAPS: APIOperation[SparseJsonMapsInput, SparseJsonMapsOutput]
+STREAMING_TRAITS: APIOperation[StreamingTraitsInput, StreamingTraitsOutput]
+STREAMING_TRAITS_REQUIRE_LENGTH: APIOperation[
+    StreamingTraitsRequireLengthInput, StreamingTraitsRequireLengthOutput
+]
+STREAMING_TRAITS_WITH_MEDIA_TYPE: APIOperation[
+    StreamingTraitsWithMediaTypeInput, StreamingTraitsWithMediaTypeOutput
+]
 TEST_BODY_STRUCTURE: APIOperation[TestBodyStructureInput, TestBodyStructureOutput]
 TEST_GET_NO_INPUT_NO_PAYLOAD: APIOperation[
     TestGetNoInputNoPayloadInput, TestGetNoInputNoPayloadOutput

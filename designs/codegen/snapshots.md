@@ -67,7 +67,7 @@ projections, generated with the public `client` command.
 | `aws-query-client` | `awsquery_client` | 33 | 77 |
 | `ec2-query-client` | `ec2query_client` | 25 | 59 |
 | `query-compatible-aws-json-1-0-client` | `querycompatible_awsjson10_client` | 1 | 3 |
-| `rest-json-1-client` | `restjson_client` | 103 | 236 |
+| `rest-json-1-client` | `restjson_client` | 106 | 244 |
 | `rest-xml-client` | `restxml_client` | 65 | 178 |
 | `rest-xml-with-namespace-client` | `restxml_xmlns_client` | 1 | 2 |
 | `rpcv2-cbor-client` | `rpcv2cbor_client` | 14 | 72 |
@@ -79,7 +79,7 @@ project. Each client snapshot adds `client.py`, `config.py`, and their `aio`
 counterparts to the types files, plus service and operation schemas and lazy
 operation exports. A projection's `omitOperations` removes service operations
 that need features client generation doesn't support yet. `rest-json-1-client`
-omits its 10 streaming operations and their 8 vectors. Tests compare the RPCv2 CBOR client's operation methods with
+omits its 7 event stream operations, which have no vectors. Tests compare the RPCv2 CBOR client's operation methods with
 the Java client and send one call through fake sync and async transports.
 
 ## Inputs and maintenance

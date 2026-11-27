@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Generated clients support operations with streaming blob inputs and outputs. The async client takes an Async-prefixed dictionary form for inputs with a streaming body."
+}

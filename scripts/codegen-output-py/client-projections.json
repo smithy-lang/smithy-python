@@ -51,10 +51,7 @@
       "aws.protocoltests.restjson#InputStream",
       "aws.protocoltests.restjson#InputStreamWithInitialRequest",
       "aws.protocoltests.restjson#OutputStream",
-      "aws.protocoltests.restjson#OutputStreamWithInitialResponse",
-      "aws.protocoltests.restjson#StreamingTraits",
-      "aws.protocoltests.restjson#StreamingTraitsRequireLength",
-      "aws.protocoltests.restjson#StreamingTraitsWithMediaType"
+      "aws.protocoltests.restjson#OutputStreamWithInitialResponse"
     ],
     "package": "restjson_client",
     "service": "aws.protocoltests.restjson#RestJson",

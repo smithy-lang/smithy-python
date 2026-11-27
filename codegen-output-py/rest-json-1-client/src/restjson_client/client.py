@@ -3724,6 +3724,133 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         )
 
     @overload
+    def streaming_traits(
+        self,
+        request: models.StreamingTraitsInput | models.StreamingTraitsInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.StreamingTraitsOutput: ...
+
+    @overload
+    def streaming_traits(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.StreamingTraitsInputDict],
+    ) -> models.StreamingTraitsOutput:
+        """
+        This examples serializes a streaming blob shape in the request body.
+
+        In this example, no JSON document is synthesized because the payload is
+        not a structure or a union type.
+
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `StreamingTraitsOutput`.
+        """
+
+    def streaming_traits(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.StreamingTraitsOutput:
+        return self._invoke(
+            self._select_input(models.STREAMING_TRAITS, args, kwargs),
+            models.STREAMING_TRAITS,
+            [],
+            plugins,
+        )
+
+    @overload
+    def streaming_traits_require_length(
+        self,
+        request: models.StreamingTraitsRequireLengthInput
+        | models.StreamingTraitsRequireLengthInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.StreamingTraitsRequireLengthOutput: ...
+
+    @overload
+    def streaming_traits_require_length(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.StreamingTraitsRequireLengthInputDict],
+    ) -> models.StreamingTraitsRequireLengthOutput:
+        """
+        This examples serializes a streaming blob shape with a required content
+        length in the request body.
+
+        In this example, no JSON document is synthesized because the payload is
+        not a structure or a union type.
+
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `StreamingTraitsRequireLengthOutput`.
+        """
+
+    def streaming_traits_require_length(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.StreamingTraitsRequireLengthOutput:
+        return self._invoke(
+            self._select_input(models.STREAMING_TRAITS_REQUIRE_LENGTH, args, kwargs),
+            models.STREAMING_TRAITS_REQUIRE_LENGTH,
+            [],
+            plugins,
+        )
+
+    @overload
+    def streaming_traits_with_media_type(
+        self,
+        request: models.StreamingTraitsWithMediaTypeInput
+        | models.StreamingTraitsWithMediaTypeInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.StreamingTraitsWithMediaTypeOutput: ...
+
+    @overload
+    def streaming_traits_with_media_type(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.StreamingTraitsWithMediaTypeInputDict],
+    ) -> models.StreamingTraitsWithMediaTypeOutput:
+        """
+        This examples serializes a streaming media-typed blob shape in the
+        request body.
+
+        This examples uses a `@mediaType` trait on the payload to force a custom
+        content-type to be serialized.
+
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `StreamingTraitsWithMediaTypeOutput`.
+        """
+
+    def streaming_traits_with_media_type(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.StreamingTraitsWithMediaTypeOutput:
+        return self._invoke(
+            self._select_input(models.STREAMING_TRAITS_WITH_MEDIA_TYPE, args, kwargs),
+            models.STREAMING_TRAITS_WITH_MEDIA_TYPE,
+            [],
+            plugins,
+        )
+
+    @overload
     def test_body_structure(
         self,
         request: models.TestBodyStructureInput | models.TestBodyStructureInputDict,
