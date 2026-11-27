@@ -507,15 +507,31 @@ public class MarkdownConverterTest {
     }
 
     @Test
-    public void testWorkerThatExitsFailsInsteadOfFallingBack() {
+    public void testWorkerThatAlwaysExitsFailsInsteadOfFallingBack() {
         assumeTrue(WORKER_SUPPORTED, "Windows or this pandoc cannot run a worker");
         try (PandocWorker worker = new PandocWorker(
                 List.of("pandoc", "lua", "-e", "io.write('READY test\\n') io.flush()"),
                 Duration.ofSeconds(10))) {
             GenerationContext context = createContext(true);
+            // Every restarted worker exits too, so the restarts run out.
             assertThrows(CodegenException.class, () -> MarkdownConverter.convert("<b>a</b>", context, worker));
             // The failure is not forgotten: later conversions fail too.
             assertThrows(CodegenException.class, () -> MarkdownConverter.convert("<b>a</b>", context, worker));
+        }
+    }
+
+    @Test
+    public void testWorkerThatStallsOnceIsRestarted() throws Exception {
+        assumeTrue(WORKER_SUPPORTED, "Windows or this pandoc cannot run a worker");
+        Path marker = Files.createTempDirectory("pandoc-worker").resolve("stalled");
+        // The first worker hangs after the handshake. The next one is the real worker.
+        String script = "local m = '" + marker.toString().replace("\\", "\\\\") + "'\n"
+                + "if not io.open(m) then io.open(m, 'w'):close() "
+                + "io.write('READY test\\n') io.flush() while true do end end\n"
+                + PandocWorker.loadScript();
+        try (PandocWorker worker = new PandocWorker(List.of("pandoc", "lua", "-e", script), Duration.ofSeconds(1))) {
+            assertEquals("**a**", MarkdownConverter.convert("<b>a</b>", createContext(true), worker));
+            assertTrue(worker.isRunning());
         }
     }
 
