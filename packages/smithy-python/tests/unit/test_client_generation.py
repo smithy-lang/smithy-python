@@ -411,6 +411,33 @@ def test_configs_can_turn_off_modeled_host_prefixes(
     assert hosts == ["data.example.com", "example.com"]
 
 
+def test_configs_get_request_compression_fields_when_an_operation_compresses(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _generate(tmp_path / "plain", "greeter_uncompressed")
+    config = (tmp_path / "plain/src/greeter_uncompressed/config.py").read_text()
+    assert "request_compression" not in config
+
+    shapes = _shapes()
+    shapes["example#Ping"].setdefault("traits", {})["smithy.api#requestCompression"] = {
+        "encodings": ["gzip"]
+    }
+    _generate(tmp_path / "gzip", "greeter_compressed", shapes)
+    monkeypatch.syspath_prepend(  # pyright: ignore[reportUnknownMemberType]
+        str(tmp_path / "gzip/src")
+    )
+    package = importlib.import_module("greeter_compressed")
+    for aio in (False, True):
+        config = _config(package, _Transport(), aio=aio)
+        assert config.disable_request_compression is False
+        assert config.request_min_compression_size_bytes == 10240
+    config = package.Config(
+        disable_request_compression=True, request_min_compression_size_bytes=0
+    )
+    assert config.disable_request_compression is True
+    assert config.request_min_compression_size_bytes == 0
+
+
 def test_rpcv2_json_service_sends_json_and_requires_the_json_extra(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

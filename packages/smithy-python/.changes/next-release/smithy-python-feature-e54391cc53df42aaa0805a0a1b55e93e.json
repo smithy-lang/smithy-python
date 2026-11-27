@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Generated non-AWS clients whose operations have the smithy.api#requestCompression trait get the disable_request_compression and request_min_compression_size_bytes config fields."
+}

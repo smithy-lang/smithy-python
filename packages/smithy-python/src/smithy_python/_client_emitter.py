@@ -136,6 +136,10 @@ def write_client(
                     operation.operation.has_trait(_ENDPOINT)
                     for operation in plan.operations
                 ),
+                request_compression=any(
+                    operation.operation.has_trait(_REQUEST_COMPRESSION)
+                    for operation in plan.operations
+                ),
             ),
             integrations,
         )
@@ -311,11 +315,30 @@ HOST_PREFIX_FIELD: Final = (
     "endpoint host.",
 )
 """The name and documentation of the config field that turns off host prefixes."""
+_REQUEST_COMPRESSION: Final = _model.ShapeId("smithy.api", "requestCompression")
+# The name, type, default and documentation of each request compression field. AWS
+# configs inherit them from AwsConfig, which also resolves them from the
+# environment and profile.
+REQUEST_COMPRESSION_FIELDS: Final = (
+    (
+        "disable_request_compression",
+        "bool",
+        "False",
+        "Whether to skip compressing requests of operations that support it.",
+    ),
+    (
+        "request_min_compression_size_bytes",
+        "int",
+        "10240",
+        "The smallest request body, in bytes, that is compressed.",
+    ),
+)
 _CONFIG_FIELDS: Final = frozenset(
     {
         "auth_scheme_resolver",
         "auth_schemes",
         HOST_PREFIX_FIELD[0],
+        *(name for name, *_ in REQUEST_COMPRESSION_FIELDS),
         "endpoint_resolver",
         "endpoint_uri",
         "interceptors",
@@ -465,6 +488,11 @@ def _write_core_config(writer: PythonWriter, config: ConfigPlan) -> None:
             if config.host_prefix
             else ()
         ),
+        *(
+            (name, (kind,), docs)
+            for name, kind, _, docs in REQUEST_COMPRESSION_FIELDS
+            if config.request_compression
+        ),
     )
     writer.line("@", _DATACLASS, "(init=False)")
     writer.line("class ", mode.config, ":")
@@ -504,6 +532,9 @@ def _write_core_config(writer: PythonWriter, config: ConfigPlan) -> None:
                 writer.line(field.attribute, ": ", field.type, " | None = None,")
             if config.host_prefix:
                 writer.line(HOST_PREFIX_FIELD[0], ": bool | None = None,")
+            if config.request_compression:
+                for name, kind, _, _ in REQUEST_COMPRESSION_FIELDS:
+                    writer.line(name, ": ", kind, " | None = None,")
         writer.line(") -> None:")
         with writer.indent():
             for field in auth_fields:
@@ -563,6 +594,18 @@ def _write_core_config(writer: PythonWriter, config: ConfigPlan) -> None:
                 writer.line("self.", field.attribute, " = ", field.attribute)
             if config.host_prefix:
                 writer.line("self.", HOST_PREFIX_FIELD[0], " = ", HOST_PREFIX_FIELD[0])
+            if config.request_compression:
+                for name, _, default, _ in REQUEST_COMPRESSION_FIELDS:
+                    writer.line(
+                        "self.",
+                        name,
+                        " = ",
+                        default,
+                        " if ",
+                        name,
+                        " is None else ",
+                        name,
+                    )
         if schemes:
             writer.line()
             writer.line(
