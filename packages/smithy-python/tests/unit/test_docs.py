@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from typing import Any
+
 import pytest
 from smithy_python._docs import documentation_is_html, html_to_markdown
 from smithy_python.model import ServiceShape, ShapeId, load_model
@@ -63,11 +65,9 @@ def test_wrapping_never_starts_a_line_with_a_list_marker() -> None:
 
 def test_only_aws_services_have_html_documentation() -> None:
     def service(*traits: str) -> ServiceShape:
-        shapes = {
-            "example#Service": {
-                "type": "service",
-                "traits": {trait: {} for trait in traits},
-            }
+        trait_values: dict[str, Any] = {trait: {} for trait in traits}
+        shapes: dict[str, Any] = {
+            "example#Service": {"type": "service", "traits": trait_values}
         }
         model = load_model({"smithy": "2.0", "shapes": shapes})
         return model.expect_shape(ShapeId("example", "Service"), ServiceShape)
