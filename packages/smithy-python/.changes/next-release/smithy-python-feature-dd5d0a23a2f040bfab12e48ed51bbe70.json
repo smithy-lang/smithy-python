@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Generated AWS clients add and validate flexible checksums for operations with the aws.protocols#httpChecksum trait, with the request_checksum_calculation and response_checksum_validation config fields."
+}

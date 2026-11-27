@@ -19,6 +19,8 @@ __all__ = [
     "PING",
     "PUT_NOTE",
     "PUT_THING",
+    "ChecksumAlgorithm",
+    "ChecksumMode",
     "DescribeNoteInput",
     "DescribeNoteOutput",
     "EchoInput",
@@ -55,6 +57,13 @@ class ServiceError(ModeledError):
     implicit, and shared exception types.
     """
 
+class ChecksumAlgorithm(UnknownEnumMixin, StrEnum):
+    CRC32 = "CRC32"
+    SHA256 = "SHA256"
+
+class ChecksumMode(UnknownEnumMixin, StrEnum):
+    ENABLED = "ENABLED"
+
 @dataclass(kw_only=True)
 class DescribeNoteInput(_SerdeShape):
     "Dataclass for DescribeNoteInput structure."
@@ -87,11 +96,13 @@ class GetNoteInput(_SerdeShape):
     "Dataclass for GetNoteInput structure."
 
     id: str | None = ...
+    checksum_mode: str | None = ...
 
 class GetNoteInputDict(TypedDict, total=False):
     "Dictionary form of `GetNoteInput`."
 
     id: str | None
+    checksum_mode: str | None
 
 @dataclass(kw_only=True)
 class GetNoteOutput(_SerdeShape):
@@ -183,11 +194,13 @@ class PutNoteInput(_SerdeShape):
     "Dataclass for PutNoteInput structure."
 
     text: str | None = ...
+    checksum_algorithm: str | None = ...
 
 class PutNoteInputDict(TypedDict, total=False):
     "Dictionary form of `PutNoteInput`."
 
     text: str | None
+    checksum_algorithm: str | None
 
 @dataclass(kw_only=True)
 class PutNoteOutput(_SerdeShape):

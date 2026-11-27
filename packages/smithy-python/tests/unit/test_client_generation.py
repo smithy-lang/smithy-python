@@ -1495,6 +1495,35 @@ def test_rest_xml_services_use_the_aws_core_protocol(tmp_path: Path) -> None:
     )
 
 
+def test_aws_clients_get_checksums_only_for_checksum_operations(
+    tmp_path: Path,
+) -> None:
+    shapes = _shapes()
+    shapes["example#Greeter"]["traits"]["aws.api#service"] = {"sdkId": "Greeter"}
+    _aws_generate(tmp_path / "plain", "greeter_no_checksums", shapes)
+    source = tmp_path / "plain/src/greeter_no_checksums"
+    assert not (source / "checksums.py").exists()
+    assert "checksum_calculation" not in (source / "config.py").read_text()
+
+    shapes["example#Greet"]["traits"] = {
+        "aws.protocols#httpChecksum": {"requestChecksumRequired": True}
+    }
+    _aws_generate(tmp_path / "checked", "greeter_checksums", shapes)
+    source = tmp_path / "checked/src/greeter_checksums"
+    assert "FlexibleChecksumsInterceptor()" in (source / "checksums.py").read_text()
+    assert (
+        "AsyncFlexibleChecksumsInterceptor()"
+        in (source / "aio/checksums.py").read_text()
+    )
+    config = (source / "config.py").read_text()
+    assert "request_checksum_calculation" in config
+    assert "response_checksum_validation" not in config
+    assert (
+        '"smithy-aws-core[checksums]~='
+        in (tmp_path / "checked/pyproject.toml").read_text()
+    )
+
+
 def test_integrations_apply_only_to_services_they_match(tmp_path: Path) -> None:
     _aws_generate(tmp_path, "greeter_plain", _shapes())
     assert "class Config:" in (tmp_path / "src/greeter_plain/config.py").read_text()

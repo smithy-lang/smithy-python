@@ -15,6 +15,7 @@ from smithy_http.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
 
 from features_client import models
+from features_client.checksums import flexible_checksums_plugin
 from features_client.config import FieldNotesConfig, Plugin
 from features_client.user_agent import aws_user_agent_plugin
 
@@ -28,7 +29,11 @@ class FieldNotesClient(Client[FieldNotesConfig]):
     use SigV4, bearer token auth, API key auth, optional auth, and no auth.
     """
 
-    _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
+    _client_plugins = (
+        aws_user_agent_plugin,
+        flexible_checksums_plugin,
+        user_agent_plugin,
+    )
 
     @overload
     def describe_note(

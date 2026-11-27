@@ -352,6 +352,8 @@ _INCLUDED_TRAITS: Final = frozenset(
             # awsJson1_0 and rpcv2 read these at runtime for query compatibility.
             "aws.protocols#awsQueryCompatible",
             "aws.protocols#awsQueryError",
+            # The flexible checksums interceptor reads this from operations.
+            "aws.protocols#httpChecksum",
             # restXml reads this to take an output from its root element's text.
             "aws.customizations#s3UnwrappedXmlOutput",
             # The waiter runtime reads an operation's waiters from its schema.

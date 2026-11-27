@@ -14,6 +14,7 @@ from .. import models as _models
 from .._client_emitter import HOST_PREFIX_FIELD
 from ..integrations import ClientIntegration, ClientMode, ClientNames, ConfigPlan
 from ..symbols import TypeReference
+from ._checksums import checksum_fields
 from ._dependencies import SMITHY_AWS_CORE
 from ._endpoints import BuiltinField, builtin_fields, static_credentials
 
@@ -256,6 +257,10 @@ def _write_config(writer: PythonWriter, config: ConfigPlan) -> None:
         *(
             _builtin_field(definition, field)
             for definition, field in builtin_fields(service)
+        ),
+        *(
+            (field.name, (field.type, " | None"), field.documentation, field.spec)
+            for field in checksum_fields(config.plan)
         ),
     ]
     overrides = f"_{mode.config}Overrides"

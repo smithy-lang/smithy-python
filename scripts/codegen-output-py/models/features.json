@@ -1,6 +1,34 @@
 {
     "smithy": "2.0",
     "shapes": {
+        "example.features#ChecksumAlgorithm": {
+            "type": "enum",
+            "members": {
+                "CRC32": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": "CRC32"
+                    }
+                },
+                "SHA256": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": "SHA256"
+                    }
+                }
+            }
+        },
+        "example.features#ChecksumMode": {
+            "type": "enum",
+            "members": {
+                "ENABLED": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": "ENABLED"
+                    }
+                }
+            }
+        },
         "example.features#DescribeNote": {
             "type": "operation",
             "input": {
@@ -813,7 +841,13 @@
                 "smithy.api#auth": [
                     "smithy.api#httpBearerAuth"
                 ],
-                "smithy.api#documentation": "Reads a note, with a bearer token."
+                "smithy.api#documentation": "Reads a note, with a bearer token.",
+                "aws.protocols#httpChecksum": {
+                    "requestValidationModeMember": "checksumMode",
+                    "responseAlgorithms": [
+                        "CRC32"
+                    ]
+                }
             }
         },
         "example.features#GetNoteInput": {
@@ -821,6 +855,9 @@
             "members": {
                 "id": {
                     "target": "smithy.api#String"
+                },
+                "checksumMode": {
+                    "target": "example.features#ChecksumMode"
                 }
             },
             "traits": {
@@ -1000,7 +1037,11 @@
                 "target": "example.features#PutNoteOutput"
             },
             "traits": {
-                "smithy.api#documentation": "Saves a note, signed with SigV4."
+                "smithy.api#documentation": "Saves a note, signed with SigV4.",
+                "aws.protocols#httpChecksum": {
+                    "requestChecksumRequired": true,
+                    "requestAlgorithmMember": "checksumAlgorithm"
+                }
             }
         },
         "example.features#PutNoteInput": {
@@ -1008,6 +1049,9 @@
             "members": {
                 "text": {
                     "target": "smithy.api#String"
+                },
+                "checksumAlgorithm": {
+                    "target": "example.features#ChecksumAlgorithm"
                 }
             },
             "traits": {
