@@ -24,8 +24,8 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
     An AWS service that uses every client feature the generator supports.
 
     Its endpoint rules read config, input, and operation values. Its
-    operations
-    use SigV4, bearer token auth, API key auth, optional auth, and no auth.
+    operations use [SigV4](https://smithy.io/2.0/aws/aws-auth.html), bearer
+    token auth, API key auth, optional auth, and no auth.
     """
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
@@ -488,7 +488,13 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         **kwargs: Unpack[models.PutNoteInputDict],
     ) -> models.PutNoteOutput:
         """
-        Saves a note, signed with SigV4.
+        Saves a note, signed with **SigV4**.
+
+        - A new `NoteId` creates a note.
+        - An existing one replaces it.
+
+        Note:
+            Notes are stored in `arn:aws:notes:<Region>:<AccountId>`.
 
         Args:
             plugins:

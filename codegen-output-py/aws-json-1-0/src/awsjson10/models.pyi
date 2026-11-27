@@ -195,8 +195,7 @@ class Farewell(_SerdeShape):
 class FooError(ServiceError, _SerdeShape):
     """
     This error has test cases that test some of the dark corners of Amazon
-    service
-    framework history. It should only be implemented by clients.
+    service framework history. It should only be implemented by clients.
     """
 
     response_metadata: ErrorResponseMetadata = ...

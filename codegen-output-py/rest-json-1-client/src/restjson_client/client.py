@@ -78,9 +78,8 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     ) -> models.ConstantAndVariableQueryStringOutput:
         """
         This example uses fixed query string params and variable query string
-        params.
-        The fixed query string parameters and variable parameters must both be
-        serialized (implementations may need to merge them together).
+        params. The fixed query string parameters and variable parameters must
+        both be serialized (implementations may need to merge them together).
 
         Args:
             plugins:
@@ -118,10 +117,10 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         **kwargs: Unpack[models.ConstantQueryStringInputDict],
     ) -> models.ConstantQueryStringOutput:
         """
-        This example uses a constant query string parameters and a label.
-        This simply tests that labels and query string parameters are
-        compatible. The fixed query string parameter named "hello" should
-        in no way conflict with the label, `{hello}`.
+        This example uses a constant query string parameters and a label. This
+        simply tests that labels and query string parameters are compatible. The
+        fixed query string parameter named "hello" should in no way conflict
+        with the label, `{hello}`.
 
         Args:
             plugins:
@@ -160,8 +159,8 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         **kwargs: Unpack[models.ContentTypeParametersInputDict],
     ) -> models.ContentTypeParametersOutput:
         """
-        The example tests how servers must support requests
-        containing a `Content-Type` header with parameters.
+        The example tests how servers must support requests containing a
+        `Content-Type` header with parameters.
 
         Args:
             plugins:
@@ -510,16 +509,11 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         **kwargs: Unpack[models.GreetingWithErrorsInputDict],
     ) -> models.GreetingWithErrorsOutput:
         """
-        This operation has four possible return values:
-
-        1. A successful response in the form of GreetingWithErrorsOutput
-        2. An InvalidGreeting error.
-        3. A BadRequest error.
-        4. A FooError.
-
-        Implementations must be able to successfully take a response and
-        properly (de)serialize successful and error responses based on the
-        the presence of the
+        This operation has four possible return values: 1. A successful response
+        in the form of GreetingWithErrorsOutput 2. An InvalidGreeting error. 3.
+        A BadRequest error. 4. A FooError. Implementations must be able to
+        successfully take a response and properly (de)serialize successful and
+        error responses based on the the presence of the
 
         Args:
             plugins:
@@ -712,10 +706,9 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         **kwargs: Unpack[models.HttpPayloadTraitsInputDict],
     ) -> models.HttpPayloadTraitsOutput:
         """
-        This example serializes a blob shape in the payload.
-
-        In this example, no JSON document is synthesized because the payload is
-        not a structure or a union type.
+        This example serializes a blob shape in the payload. In this example, no
+        JSON document is synthesized because the payload is not a structure or a
+        union type.
 
         Args:
             plugins:
@@ -796,10 +789,9 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         **kwargs: Unpack[models.HttpPayloadWithStructureInputDict],
     ) -> models.HttpPayloadWithStructureOutput:
         """
-        This example serializes a structure in the payload.
-
-        Note that serializing a structure changes the wrapper element name
-        to match the targeted structure.
+        This example serializes a structure in the payload. Note that
+        serializing a structure changes the wrapper element name to match the
+        targeted structure.
 
         Args:
             plugins:
@@ -1115,8 +1107,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     ) -> models.HttpRequestWithLabelsAndTimestampFormatOutput:
         """
         The example tests how requests serialize different timestamp formats in
-        the
-        URI path.
+        the URI path.
 
         Args:
             plugins:
@@ -1273,8 +1264,8 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     ) -> models.IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
-        serialized in the body of responses if the structure is used in both
-        the request and response.
+        serialized in the body of responses if the structure is used in both the
+        request and response.
 
         Args:
             plugins:
@@ -1314,8 +1305,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     ) -> models.InputAndOutputWithHeadersOutput:
         """
         The example tests how requests and responses are serialized when there
-        is
-        no input or output payload but there are HTTP header bindings.
+        is no input or output payload but there are HTTP header bindings.
 
         Args:
             plugins:
@@ -1470,12 +1460,8 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     ) -> models.JsonListsOutput:
         """
         This test case serializes JSON lists for the following cases for both
-        input and output:
-
-        1. Normal JSON lists.
-        2. Normal JSON sets.
-        3. JSON lists of lists.
-        4. Lists of structures.
+        input and output: 1. Normal JSON lists. 2. Normal JSON sets. 3. JSON
+        lists of lists. 4. Lists of structures.
 
         Args:
             plugins:
@@ -1551,9 +1537,8 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         **kwargs: Unpack[models.JsonTimestampsInputDict],
     ) -> models.JsonTimestampsOutput:
         """
-        This tests how timestamps are serialized, including using the
-        default format of date-time and various @timestampFormat trait
-        values.
+        This tests how timestamps are serialized, including using the default
+        format of date-time and various @timestampFormat trait values.
 
         Args:
             plugins:
@@ -2959,8 +2944,7 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         The example tests how requests and responses are serialized when there's
         no request or response payload because the operation has no input or
-        output.
-        While this should be rare, code generators must support this.
+        output. While this should be rare, code generators must support this.
 
         Args:
             plugins:
@@ -3000,9 +2984,8 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         """
         The example tests how requests and responses are serialized when there's
         no request or response payload because the operation has no input and
-        the
-        output is empty. While this should be rare, code generators must support
-        this.
+        the output is empty. While this should be rare, code generators must
+        support this.
 
         Args:
             plugins:
@@ -3161,8 +3144,8 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     ) -> models.OmitsSerializingEmptyListsOutput:
         """
         Omits serializing empty lists. Because empty strings are serilized as
-        `Foo=`, empty lists cannot also be serialized as `Foo=` and instead
-        must be omitted.
+        `Foo=`, empty lists cannot also be serialized as `Foo=` and instead must
+        be omitted.
 
         Args:
             plugins:
@@ -3741,12 +3724,9 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         **kwargs: Unpack[models.TestBodyStructureInputDict],
     ) -> models.TestBodyStructureOutput:
         """
-        This example operation serializes a structure in the HTTP body.
-
-        It should ensure Content-Type: application/json is
-        used in all requests and that an "empty" body is
-        an empty JSON document ({}).
-
+        This example operation serializes a structure in the HTTP body. It
+        should ensure Content-Type: application/json is used in all requests and
+        that an "empty" body is an empty JSON document ({}).
 
         Args:
             plugins:
@@ -3786,12 +3766,9 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     ) -> models.TestGetNoInputNoPayloadOutput:
         """
         This example GET operation has no input and serializes a request without
-        a HTTP body.
-
-        These tests are to ensure we do not attach a body or related headers
-        (Content-Length, Content-Type) to operations that semantically
-        cannot produce an HTTP body.
-
+        a HTTP body. These tests are to ensure we do not attach a body or
+        related headers (Content-Length, Content-Type) to operations that
+        semantically cannot produce an HTTP body.
 
         Args:
             plugins:
@@ -3830,12 +3807,9 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     ) -> models.TestGetNoPayloadOutput:
         """
         This example GET operation serializes a request without a modeled HTTP
-        body.
-
-        These tests are to ensure we do not attach a body or related headers
-        (Content-Length, Content-Type) to operations that semantically
+        body. These tests are to ensure we do not attach a body or related
+        headers (Content-Length, Content-Type) to operations that semantically
         cannot produce an HTTP body.
-
 
         Args:
             plugins:
@@ -3873,14 +3847,11 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         **kwargs: Unpack[models.TestPayloadBlobInputDict],
     ) -> models.TestPayloadBlobOutput:
         """
-        This example operation serializes a payload targeting a blob.
-
-        The Blob shape is not structured content and we cannot
-        make assumptions about what data will be sent. This test ensures
-        only a generic "Content-Type: application/octet-stream" header
-        is used, and that we are not treating an empty body as an
-        empty JSON document.
-
+        This example operation serializes a payload targeting a blob. The Blob
+        shape is not structured content and we cannot make assumptions about
+        what data will be sent. This test ensures only a generic "Content-Type:
+        application/octet-stream" header is used, and that we are not treating
+        an empty body as an empty JSON document.
 
         Args:
             plugins:
@@ -3919,11 +3890,9 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         **kwargs: Unpack[models.TestPayloadStructureInputDict],
     ) -> models.TestPayloadStructureOutput:
         """
-        This example operation serializes a payload targeting a structure.
-
-        This enforces the same requirements as TestBodyStructure
-        but with the body specified by the @httpPayload trait.
-
+        This example operation serializes a payload targeting a structure. This
+        enforces the same requirements as TestBodyStructure but with the body
+        specified by the @httpPayload trait.
 
         Args:
             plugins:
@@ -3963,11 +3932,9 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     ) -> models.TestPostNoInputNoPayloadOutput:
         """
         This example POST operation has no input and serializes a request
-        without a HTTP body.
-
-        These tests are to ensure we do not attach a body or related headers
-        (Content-Type) to a POST operation with no modeled input.
-
+        without a HTTP body. These tests are to ensure we do not attach a body
+        or related headers (Content-Type) to a POST operation with no modeled
+        input.
 
         Args:
             plugins:
@@ -4006,11 +3973,8 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
     ) -> models.TestPostNoPayloadOutput:
         """
         This example POST operation serializes a request without a modeled HTTP
-        body.
-
-        These tests are to ensure we do not attach a body or related headers
-        (Content-Type) to a POST operation with no modeled payload.
-
+        body. These tests are to ensure we do not attach a body or related
+        headers (Content-Type) to a POST operation with no modeled payload.
 
         Args:
             plugins:

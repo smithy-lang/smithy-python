@@ -12,10 +12,7 @@ use smithy.rules#endpointTests
 use smithy.rules#staticContextParams
 use smithy.waiters#waitable
 
-/// An AWS service that uses every client feature the generator supports.
-///
-/// Its endpoint rules read config, input, and operation values. Its operations
-/// use SigV4, bearer token auth, API key auth, optional auth, and no auth.
+@documentation("<p>An AWS service that uses every client feature the generator supports.</p> <p>Its endpoint rules read config, input, and operation values. Its operations use <a href=\"https://smithy.io/2.0/aws/aws-auth.html\">SigV4</a>, bearer token auth, API key auth, optional auth, and no auth.</p>")
 @service(sdkId: "Field Notes")
 @sigv4(name: "fieldnotes")
 @rpcv2Cbor
@@ -329,7 +326,7 @@ list NoteList {
 @staticContextParams(Kind: { value: "ping" })
 operation Ping {}
 
-/// Saves a note, signed with SigV4.
+@documentation("<p>Saves a note, signed with <b>SigV4</b>.</p> <ul> <li> <p>A new <code>NoteId</code> creates a note.</p> </li> <li> <p>An existing one replaces it.</p> </li> </ul> <note> <p>Notes are stored in <code>arn:aws:notes:<Region>:<AccountId></code>.</p> </note>")
 operation PutNote {
     input := {
         text: String

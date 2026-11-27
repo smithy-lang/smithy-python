@@ -19,13 +19,10 @@ class AsyncRestXmlProtocolNamespaceClient(
     AsyncClient[AsyncRestXmlProtocolNamespaceConfig]
 ):
     """
-    A REST XML service that sends XML requests and responses.
-
-    This service and test case is complementary to the test cases
-    in the `restXml` directory, but the service under test here has
-    the `xmlNamespace` trait applied to it.
-
-    See https://github.com/smithy-lang/smithy/issues/616
+    A REST XML service that sends XML requests and responses. This service
+    and test case is complementary to the test cases in the `restXml`
+    directory, but the service under test here has the `xmlNamespace` trait
+    applied to it. See https://github.com/smithy-lang/smithy/issues/616
     """
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
