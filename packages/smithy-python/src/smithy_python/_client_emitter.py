@@ -8,7 +8,7 @@ from collections.abc import Mapping, Sequence
 from textwrap import fill
 from typing import TYPE_CHECKING, Final
 
-from . import _auth, _endpoint_tests, _endpoints, _package, _pagination, _waiters
+from . import _auth, _docs, _endpoint_tests, _endpoints, _package, _pagination, _waiters
 from . import dependencies as _dependencies
 from . import exceptions as _exceptions
 from . import model as _model
@@ -615,7 +615,9 @@ def _write_client(
     with writer.indent():
         _models._write_docstring(  # pyright: ignore[reportPrivateUsage]
             writer,
-            _models._documentation(service)  # pyright: ignore[reportPrivateUsage]
+            _models._documentation(  # pyright: ignore[reportPrivateUsage]
+                service, _docs.documentation_is_html(service)
+            )
             or f"Client for {service.id.name}.",
         )
         writer.line()
@@ -675,7 +677,10 @@ def _write_operation(
         "] | None = None",
     )
     define = "async def " if mode.is_async else "def "
-    docs = _models._documentation(operation.operation)  # pyright: ignore[reportPrivateUsage]
+    docs = _models._documentation(  # pyright: ignore[reportPrivateUsage]
+        operation.operation,
+        _docs.documentation_is_html(plan.selection.service),
+    )
     writer.line()
     writer.line("@", _OVERLOAD)
     writer.line(define, name, "(")

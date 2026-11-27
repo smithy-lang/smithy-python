@@ -10,6 +10,7 @@ from json import dumps
 from textwrap import wrap
 from typing import TYPE_CHECKING, Final
 
+from . import _docs
 from . import dependencies as _dependencies
 from . import exceptions as _exceptions
 from . import model as _model
@@ -239,6 +240,7 @@ class _StubEmitter:
         self.symbols = context.symbols
         self.module = f"{context.settings.import_name}.models"
         self.external_bases = external_bases
+        self.html = _docs.documentation_is_html(context.selection.service)
         self.serde_shape = "_SerdeShape"
         self.service_error: str | _symbols.TypeReference = (
             _symbols.TypeReference("ServiceError", "..models")
@@ -363,7 +365,9 @@ class _StubEmitter:
                 else:
                     parts = (*parts, " | None")
                 writer.line(self.symbols.member_name(member.id), ": ", *parts)
-                if docs := _member_documentation(member, shape.id in self.inputs):
+                if docs := _member_documentation(
+                    member, shape.id in self.inputs, self.html
+                ):
                     _write_docstring(writer, docs)
 
     # A union's dictionary form sets exactly one variant, so a type checker
@@ -385,7 +389,7 @@ class _StubEmitter:
                     ": ",
                     *self._dict_type(member.target),
                 )
-                if docs := _documentation(member):
+                if docs := _documentation(member, self.html):
                     _write_docstring(writer, docs)
         writer.line()
         writer.line(name, " = ", *_join_types(variants))
@@ -486,7 +490,8 @@ class _StubEmitter:
             carries_metadata = error or shape.id in self.outputs
             _write_docstring(
                 writer,
-                _documentation(shape) or f"Dataclass for {shape.id.name} structure.",
+                _documentation(shape, self.html)
+                or f"Dataclass for {shape.id.name} structure.",
             )
             if members or carries_metadata:
                 writer.line()
@@ -509,7 +514,9 @@ class _StubEmitter:
                     reference,
                     "" if mandatory else " = ...",
                 )
-                if docs := _member_documentation(member, shape.id in self.inputs):
+                if docs := _member_documentation(
+                    member, shape.id in self.inputs, self.html
+                ):
                     _write_docstring(writer, docs)
             if error:
                 writer.line("response_metadata: ", _ERROR_RESPONSE_METADATA, " = ...")
@@ -527,7 +534,7 @@ class _StubEmitter:
             writer.line("@", _DATACLASS)
             writer.line("class ", name, "(", self.serde_shape, "):")
             with writer.indent():
-                if docs := _documentation(member):
+                if docs := _documentation(member, self.html):
                     _write_docstring(writer, docs)
                     writer.line()
                 writer.line("value: ", self._type_reference(member.target))
@@ -545,7 +552,7 @@ class _StubEmitter:
 
         name = self.plan.declaration_names[shape.id]
         writer.line(name, " = ", *_join_types(variants))
-        if docs := _documentation(shape):
+        if docs := _documentation(shape, self.html):
             _write_docstring(writer, docs)
         writer.line()
         writer.line("class _", name, "Deserializer:")
@@ -564,7 +571,7 @@ class _StubEmitter:
         base = _INT_ENUM if shape.type is _model.ShapeType.INT_ENUM else _STR_ENUM
         writer.line("class ", name, "(", _UNKNOWN_ENUM_MIXIN, ", ", base, "):")
         with writer.indent():
-            docs = _documentation(shape)
+            docs = _documentation(shape, self.html)
             if docs:
                 _write_docstring(writer, docs)
                 if shape.members:
@@ -576,7 +583,7 @@ class _StubEmitter:
                     " = ",
                     _literal(member.name if value is None else value),
                 )
-                if docs := _documentation(member):
+                if docs := _documentation(member, self.html):
                     _write_docstring(writer, docs)
             if not docs and not shape.members:
                 writer.line("pass")
@@ -698,18 +705,26 @@ def _join_types(
     return tuple(parts)
 
 
-def _documentation(shape: _model.Shape) -> str | None:
+def _documentation(shape: _model.Shape, html: bool = False) -> str | None:
+    """A shape's documentation as Markdown.
+
+    :param html: Whether the documentation is HTML, as AWS services' is.
+    """
     value = shape.get_trait("documentation")
-    return value if isinstance(value, str) else None
+    if not isinstance(value, str):
+        return None
+    return (_docs.html_to_markdown(value) or None) if html else value
 
 
 # Matches CodegenUtils.IDEMPOTENCY_TOKEN_DOCS in the Java generator, and botocore.
 _AUTOPOPULATED_NOTE = "This field is autopopulated if not provided."
 
 
-def _member_documentation(member: _model.MemberShape, in_input: bool) -> str | None:
+def _member_documentation(
+    member: _model.MemberShape, in_input: bool, html: bool = False
+) -> str | None:
     """A member's docs, noting that the client fills an unset idempotency token."""
-    docs = _documentation(member)
+    docs = _documentation(member, html)
     if not (in_input and member.has_trait("idempotencyToken")):
         return docs
     return f"{docs}\n\n{_AUTOPOPULATED_NOTE}" if docs else _AUTOPOPULATED_NOTE

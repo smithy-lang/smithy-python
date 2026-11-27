@@ -3747,7 +3747,6 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         used in all requests and that an "empty" body is
         an empty JSON document ({}).
 
-
         Args:
             plugins:
                 Callables that change the configuration for this call only.
@@ -3792,7 +3791,6 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         (Content-Length, Content-Type) to operations that semantically
         cannot produce an HTTP body.
 
-
         Args:
             plugins:
                 Callables that change the configuration for this call only.
@@ -3835,7 +3833,6 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         These tests are to ensure we do not attach a body or related headers
         (Content-Length, Content-Type) to operations that semantically
         cannot produce an HTTP body.
-
 
         Args:
             plugins:
@@ -3881,7 +3878,6 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         is used, and that we are not treating an empty body as an
         empty JSON document.
 
-
         Args:
             plugins:
                 Callables that change the configuration for this call only.
@@ -3923,7 +3919,6 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
 
         This enforces the same requirements as TestBodyStructure
         but with the body specified by the @httpPayload trait.
-
 
         Args:
             plugins:
@@ -3968,7 +3963,6 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
         These tests are to ensure we do not attach a body or related headers
         (Content-Type) to a POST operation with no modeled input.
 
-
         Args:
             plugins:
                 Callables that change the configuration for this call only.
@@ -4010,7 +4004,6 @@ class RestJsonProtocolClient(Client[RestJsonProtocolConfig]):
 
         These tests are to ensure we do not attach a body or related headers
         (Content-Type) to a POST operation with no modeled payload.
-
 
         Args:
             plugins:
