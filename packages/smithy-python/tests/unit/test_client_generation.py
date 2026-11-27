@@ -1695,3 +1695,149 @@ def test_aws_rule_functions_need_the_aws_integrations(tmp_path: Path) -> None:
     _add_aws_rules(shapes)
     with pytest.raises(CodegenError, match=r"rules call aws\.partition"):
         _generate(tmp_path, "greeter_no_aws_rules", shapes)
+
+
+def _waiter_shapes() -> dict[str, Any]:
+    shapes = _shapes()
+    greeted = {
+        "documentation": "Waits until someone is greeted.",
+        "minDelay": 1,
+        "maxDelay": 3,
+        "acceptors": [
+            {
+                "state": "success",
+                "matcher": {
+                    "output": {
+                        "path": "greeting",
+                        "expected": "hi",
+                        "comparator": "stringEquals",
+                    }
+                },
+            },
+            {"state": "retry", "matcher": {"errorType": "InvalidGreeting"}},
+        ],
+    }
+    shapes["example#Greet"]["traits"]["smithy.waiters#waitable"] = {
+        "Greeted": greeted,
+        "Refused": {
+            "deprecated": True,
+            "acceptors": [
+                {"state": "success", "matcher": {"errorType": "InvalidGreeting"}}
+            ],
+        },
+    }
+    shapes["example#Greeter"]["operations"].append(
+        {"target": "example#WaitUntilGreeted"}
+    )
+    shapes["example#WaitUntilGreeted"] = {"type": "operation"}
+    shapes["example#GreetInput"]["members"]["maxWaitTime"] = {
+        "target": "smithy.api#Integer"
+    }
+    return shapes
+
+
+def test_waiters_are_named_documented_and_type_check(tmp_path: Path) -> None:
+    _generate(tmp_path, "greeter_waiters", _waiter_shapes())
+    client = (tmp_path / "src/greeter_waiters/client.py").read_text()
+    assert "def wait_until_greeted(\n" in client
+    assert "def wait_until_greeted_(\n" in client
+    assert "def wait_until_refused(\n" in client
+    docs = " ".join(client.split())
+    assert "Waits until someone is greeted." in docs
+    assert "Defaults to 1." in docs
+    assert "This waiter is deprecated." in docs
+    assert '"Greeted",\n' in client and "self.greet,\n" in client
+    schemas = (tmp_path / "src/greeter_waiters/_private/schemas.py").read_text()
+    assert "'smithy.waiters#waitable'" in schemas and "'minDelay': 1" in schemas
+    (tmp_path / "pyrightconfig.json").write_text(
+        json.dumps({"typeCheckingMode": "strict", "enableExperimentalFeatures": True})
+    )
+    (tmp_path / "src" / "consumer.py").write_text(
+        "# pyright: reportUnnecessaryTypeIgnoreComment=true\n"
+        "from typing import assert_type\n\n"
+        "from greeter_waiters import AsyncGreeter, Config, Greeter, models\n\n"
+        "client = Greeter(Config(endpoint_uri='https://example.com'))\n"
+        "assert_type(client.wait_until_greeted(), models.WaitUntilGreetedOutput)\n"
+        "assert_type(\n"
+        "    client.wait_until_greeted_(name='n', max_wait_time=10),\n"
+        "    models.GreetOutput | None,\n"
+        ")\n"
+        "assert_type(\n"
+        "    client.wait_until_greeted_(\n"
+        "        {'name': 'n', 'max_wait_time_': 1},\n"
+        "        max_wait_time=10.5,\n"
+        "        min_delay=0.5,\n"
+        "        max_delay=2,\n"
+        "    ),\n"
+        "    models.GreetOutput | None,\n"
+        ")\n"
+        "client.wait_until_greeted_(name='n')  # pyright: ignore\n"
+        "client.wait_until_greeted_(name='n', max_wait_time='1')  # pyright: ignore\n"
+        "client.greet(name='n', max_wait_time=1)  # pyright: ignore\n\n\n"
+        "async def run(client: AsyncGreeter) -> None:\n"
+        "    refused = await client.wait_until_refused(name='n', max_wait_time=1)\n"
+        "    assert_type(refused, models.GreetOutput | None)\n"
+    )
+    checked = subprocess.run(
+        [sys.executable, "-m", "pyright", "src"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert checked.returncode == 0, checked.stdout + checked.stderr
+
+
+def _set_waiter(**settings: Any) -> Callable[[dict[str, Any]], None]:
+    def change(shapes: dict[str, Any]) -> None:
+        waiters = shapes["example#Greet"]["traits"]["smithy.waiters#waitable"]
+        waiters["Greeted"].update(settings)
+
+    return change
+
+
+def _set_waitable(value: Any) -> Callable[[dict[str, Any]], None]:
+    def change(shapes: dict[str, Any]) -> None:
+        shapes["example#Greet"]["traits"]["smithy.waiters#waitable"] = value
+
+    return change
+
+
+def _add_ping_waiter(name: str) -> Callable[[dict[str, Any]], None]:
+    def change(shapes: dict[str, Any]) -> None:
+        acceptor = {"state": "success", "matcher": {"success": True}}
+        shapes["example#Ping"]["traits"] = {
+            "smithy.waiters#waitable": {name: {"acceptors": [acceptor]}}
+        }
+
+    return change
+
+
+@pytest.mark.parametrize(
+    "change, message",
+    [
+        (
+            _set_waitable({"greeted": {"acceptors": []}}),
+            "example#Greet has waiter 'greeted', but waiter names must be",
+        ),
+        (
+            _add_ping_waiter("GREETED"),
+            "operations example#Greet and example#Ping have waiters named 'Greeted' "
+            "and 'GREETED'",
+        ),
+        (_set_waiter(minDelay=1.5), "waiter 'Greeted' with a minDelay that is not"),
+        (_set_waiter(maxDelay="2"), "waiter 'Greeted' with a maxDelay that is not"),
+        (
+            _set_waiter(minDelay=5, maxDelay=4),
+            "waiter 'Greeted' with a minDelay of 5, above its maxDelay of 4",
+        ),
+    ],
+)
+def test_invalid_waiters_fail_naming_the_waiter(
+    change: Callable[[dict[str, Any]], None], message: str
+) -> None:
+    shapes = _waiter_shapes()
+    change(shapes)
+    generator = ClientGenerator(_plan(shapes))
+    with pytest.raises(CodegenError, match=message):
+        generator.generate(generator.context())

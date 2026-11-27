@@ -10,10 +10,10 @@ import json
 import os
 import subprocess
 import sys
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, NamedTuple
 
 import pytest
 from smithy_aws_core.aio.identity.chain import AsyncIdentityChain
@@ -21,8 +21,10 @@ from smithy_aws_core.config.exceptions import ConfigError
 from smithy_aws_core.identity.chain.exceptions import IdentityChainError
 from smithy_aws_core.identity.chain.resolver import IdentityChain
 from smithy_cbor import loads
+from smithy_core import waiters as sync_waiters
+from smithy_core.aio import waiters as async_waiters
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_core.exceptions import SmithyIdentityError
+from smithy_core.exceptions import SmithyIdentityError, WaiterFailureError
 from smithy_core.retries import SimpleRetryStrategy
 from smithy_http import HTTPResponse, tuples_to_fields
 from smithy_http.interfaces import HTTPRequest, HTTPRequestConfiguration
@@ -79,7 +81,7 @@ def test_clients_have_a_method_per_operation_like_java() -> None:
 class _Transport:
     TIMEOUT_EXCEPTIONS = ()
 
-    def __init__(self, *bodies: bytes) -> None:
+    def __init__(self, *bodies: bytes | tuple[int, bytes]) -> None:
         self.bodies = bodies
         self.requests: list[HTTPRequest] = []
 
@@ -87,17 +89,18 @@ class _Transport:
         # Clients copy their config, transport included. Keep one recorder.
         return self
 
-    def _record(self, request: HTTPRequest) -> bytes:
+    def _record(self, request: HTTPRequest) -> tuple[int, bytes]:
         # Each request gets the next body, and the last body repeats.
         self.requests.append(request)
-        return self.bodies[min(len(self.requests), len(self.bodies)) - 1]
+        body = self.bodies[min(len(self.requests), len(self.bodies)) - 1]
+        return body if isinstance(body, tuple) else (200, body)
 
-    def _respond(self, body: Any) -> HTTPResponse:
+    def _respond(self, status: int, body: Any) -> HTTPResponse:
         headers = [
             ("Content-Type", "application/cbor"),
             ("smithy-protocol", "rpc-v2-cbor"),
         ]
-        return HTTPResponse(status=200, fields=tuples_to_fields(headers), body=body)
+        return HTTPResponse(status=status, fields=tuples_to_fields(headers), body=body)
 
     def send(
         self,
@@ -105,7 +108,7 @@ class _Transport:
         *,
         request_config: HTTPRequestConfiguration | None = None,
     ) -> HTTPResponse:
-        return self._respond(self._record(request))
+        return self._respond(*self._record(request))
 
 
 class _AsyncTransport(_Transport):
@@ -115,7 +118,8 @@ class _AsyncTransport(_Transport):
         *,
         request_config: HTTPRequestConfiguration | None = None,
     ) -> HTTPResponse:
-        return self._respond(AsyncBytesReader(self._record(request)))
+        status, body = self._record(request)
+        return self._respond(status, AsyncBytesReader(body))
 
 
 def _body(request: HTTPRequest) -> Any:
@@ -204,7 +208,9 @@ def features() -> Iterator[ModuleType]:
                 del sys.modules[module]
 
 
-def _client(package: ModuleType, aio: bool, *bodies: bytes, **overrides: Any) -> Any:
+def _client(
+    package: ModuleType, aio: bool, *bodies: bytes | tuple[int, bytes], **overrides: Any
+) -> Any:
     # CBOR {"id": "n1"} by default.
     transport = (_AsyncTransport if aio else _Transport)(
         *(bodies or (b"\xa1\x62id\x62n1",))
@@ -431,3 +437,162 @@ def test_snapshot_paginators_follow_tokens_through_the_runtime(
         {"pageSize": 2},
         {"pageSize": 2, "nextToken": "t1"},
     ]
+
+
+def _cbor(value: dict[str, str]) -> bytes:
+    """A CBOR map of short strings."""
+
+    def text(item: str) -> bytes:
+        data = item.encode()
+        return (
+            bytes([0x60 | len(data)]) if len(data) < 24 else bytes([0x78, len(data)])
+        ) + data
+
+    return bytes([0xA0 | len(value)]) + b"".join(
+        text(key) + text(item) for key, item in value.items()
+    )
+
+
+class _Waiters(NamedTuple):
+    """A client's waiters, and the names its fixture's model uses."""
+
+    client: Any
+    transport: _Transport
+    ready: Any
+    deleted: Any
+    member: str
+    error: str
+
+
+@pytest.fixture
+def sleeps(monkeypatch: pytest.MonkeyPatch) -> list[float]:
+    """Records the waiters' sleeps instead of sleeping."""
+    recorded: list[float] = []
+
+    async def sleep_async(seconds: float) -> None:
+        recorded.append(seconds)
+
+    monkeypatch.setattr(sync_waiters, "sleep", recorded.append)
+    monkeypatch.setattr(async_waiters, "sleep", sleep_async)
+    return recorded
+
+
+def _waiters(
+    request: pytest.FixtureRequest,
+    generator: str,
+    aio: bool,
+    *bodies: Callable[[str, str], bytes | tuple[int, bytes]],
+) -> _Waiters:
+    if generator == "java":
+        package = request.getfixturevalue("handwritten")
+        member, error = "status", "smithy.python.tests.handwritten#ItemNotFound"
+        transport = (_AsyncTransport if aio else _Transport)(
+            *(body(member, error) for body in bodies)
+        )
+        config = (package.AsyncConfig if aio else package.Config)(
+            endpoint_uri=_ENDPOINT,
+            transport=transport,
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+        )
+        client_class = (
+            package.AsyncMyHandwrittenModel if aio else package.MyHandwrittenModel
+        )
+        client = client_class(config)
+        return _Waiters(
+            client,
+            transport,
+            client.wait_until_item_ready,
+            client.wait_until_item_deleted,
+            member,
+            error,
+        )
+    features = request.getfixturevalue("features")
+    member, error = "state", "example.features#NoteNotFound"
+    client, transport = _client(
+        features,
+        aio,
+        *(body(member, error) for body in bodies),
+        endpoint_uri=_ENDPOINT,
+    )
+    return _Waiters(
+        client,
+        transport,
+        client.wait_until_note_saved,
+        client.wait_until_note_deleted,
+        member,
+        error,
+    )
+
+
+def _not_found(member: str, error: str) -> tuple[int, bytes]:
+    return 400, _cbor({"__type": error, "message": "gone"})
+
+
+def _pending(member: str, error: str) -> bytes:
+    return _cbor({member: "PENDING" if member == "status" else "DRAFT"})
+
+
+def _ready(member: str, error: str) -> bytes:
+    return _cbor({"id": "i1", member: "READY" if member == "status" else "SAVED"})
+
+
+def _failed(member: str, error: str) -> bytes:
+    return _cbor(
+        {member: "FAILED" if member == "status" else "REJECTED", "reason": "disk"}
+    )
+
+
+@pytest.mark.parametrize("aio", [False, True])
+@pytest.mark.parametrize("generator", ["java", "native"])
+def test_snapshot_waiters_poll_through_the_runtime(
+    request: pytest.FixtureRequest,
+    generator: str,
+    aio: bool,
+    sleeps: list[float],
+    aws_env: pytest.MonkeyPatch,
+) -> None:
+    waiters = _waiters(request, generator, aio, _not_found, _pending, _ready)
+
+    output = _call(aio, waiters.ready(id="i1", max_wait_time=60))
+
+    assert output.id == "i1"
+    assert getattr(output, waiters.member) in ("READY", "SAVED")
+    assert [_body(sent) for sent in waiters.transport.requests] == [{"id": "i1"}] * 3
+    # Jittered between minDelay and twice it.
+    assert sleeps[0] == 1 and 1 <= sleeps[1] <= 2
+
+
+@pytest.mark.parametrize("aio", [False, True])
+@pytest.mark.parametrize("generator", ["java", "native"])
+def test_snapshot_waiters_succeed_on_an_error(
+    request: pytest.FixtureRequest,
+    generator: str,
+    aio: bool,
+    sleeps: list[float],
+    aws_env: pytest.MonkeyPatch,
+) -> None:
+    waiters = _waiters(request, generator, aio, _ready, _not_found)
+
+    assert _call(aio, waiters.deleted(id="i1", max_wait_time=60)) is None
+    assert len(waiters.transport.requests) == 2
+    assert sleeps == [2]
+
+
+@pytest.mark.parametrize("aio", [False, True])
+@pytest.mark.parametrize("generator", ["java", "native"])
+def test_snapshot_waiters_fail_and_validate(
+    request: pytest.FixtureRequest,
+    generator: str,
+    aio: bool,
+    sleeps: list[float],
+    aws_env: pytest.MonkeyPatch,
+) -> None:
+    waiters = _waiters(request, generator, aio, _failed)
+
+    with pytest.raises(ValueError, match="must not be above max_delay"):
+        _call(aio, waiters.ready(id="i1", max_wait_time=60, min_delay=10))
+    assert waiters.transport.requests == []
+
+    with pytest.raises(WaiterFailureError, match="failed after 1 attempt: disk"):
+        _call(aio, waiters.ready({"id": "i1"}, max_wait_time=60))
+    assert sleeps == []

@@ -408,6 +408,9 @@
     "read_streaming_blob_async": "function[async]",
     "seek_async": "function[async]"
   },
+  "smithy_core.aio.waiters": {
+    "wait_async": "function[async]"
+  },
   "smithy_core.auth": {
     "AuthOption": "class",
     "AuthParams": "class",
@@ -451,7 +454,10 @@
     "SmithyIdentityError": "exception",
     "UnsupportedAuthSchemeError": "exception",
     "UnsupportedStreamError": "exception",
-    "UnsupportedTransportError": "exception"
+    "UnsupportedTransportError": "exception",
+    "WaiterError": "exception",
+    "WaiterFailureError": "exception",
+    "WaiterTimeoutError": "exception"
   },
   "smithy_core.identity": {
     "CachingIdentityResolver": "class",
@@ -651,6 +657,7 @@
     "TimestampFormatTrait": "class",
     "Trait": "class",
     "UnitTypeTrait": "class",
+    "WaitableTrait": "class",
     "XMLAttributeTrait": "class",
     "XMLFlattenedTrait": "class",
     "XMLNameTrait": "class",
@@ -682,6 +689,9 @@
     "split_every": "function",
     "strict_parse_bool": "function",
     "strict_parse_float": "function"
+  },
+  "smithy_core.waiters": {
+    "wait": "function"
   },
   "smithy_http": {
     "Field": "class",

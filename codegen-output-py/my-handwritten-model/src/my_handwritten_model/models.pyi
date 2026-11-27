@@ -1,18 +1,24 @@
 from dataclasses import dataclass
 from datetime import datetime
+from enum import StrEnum
 from typing import Self
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
 from smithy_core.response import ErrorResponseMetadata, ResponseMetadata
 from smithy_core.serializers import ShapeSerializer
+from smithy_core.types import UnknownEnumMixin
 
 __all__ = [
     "Alpha",
     "DifferentShapeName",
     "Gamma",
     "GammaPayload",
+    "GetItemInput",
+    "GetItemOutput",
     "HeartbeatEvent",
+    "ItemNotFound",
+    "ItemStatus",
     "ListItemsInput",
     "ListItemsOutput",
     "LogEvent",
@@ -88,10 +94,50 @@ class GammaPayload(_SerdeShape):
     values: list[int] | None = ...
 
 @dataclass(kw_only=True)
+class GetItemInput(_SerdeShape):
+    "Dataclass for GetItemInput structure."
+
+    id: str | None = ...
+
+@dataclass(kw_only=True)
+class GetItemOutput(_SerdeShape):
+    "Dataclass for GetItemOutput structure."
+
+    id: str | None = ...
+    status: str | None = ...
+    reason: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
 class HeartbeatEvent(_SerdeShape):
     "Dataclass for HeartbeatEvent structure."
 
     timestamp: datetime | None = ...
+
+@dataclass(kw_only=True)
+class ItemNotFound(ServiceError, _SerdeShape):
+    "Dataclass for ItemNotFound structure."
+
+    response_metadata: ErrorResponseMetadata = ...
+    """
+    Metadata about the response that produced this error.
+
+    Use this to read the error code or to recover the request identifiers a
+    service's support team needs in order to investigate a call. Members of
+    the metadata are individually optional.
+    """
+
+class ItemStatus(UnknownEnumMixin, StrEnum):
+    PENDING = "PENDING"
+    READY = "READY"
+    FAILED = "FAILED"
 
 @dataclass(kw_only=True)
 class ListItemsInput(_SerdeShape):

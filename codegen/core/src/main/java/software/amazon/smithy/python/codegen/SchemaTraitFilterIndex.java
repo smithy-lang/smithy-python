@@ -65,6 +65,7 @@ import software.amazon.smithy.rulesengine.traits.OperationContextParamsTrait;
 import software.amazon.smithy.rulesengine.traits.StaticContextParamsTrait;
 import software.amazon.smithy.utils.SetUtils;
 import software.amazon.smithy.utils.SmithyInternalApi;
+import software.amazon.smithy.waiters.WaitableTrait;
 
 /**
  * Decides which traits are emitted into generated schemas, per the schema serialization specification.
@@ -137,7 +138,9 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
                     AwsQueryCompatibleTrait.ID,
                     AwsQueryErrorTrait.ID,
                     // restXml reads this at runtime to take an output from its root element's text.
-                    S3UnwrappedXmlOutputTrait.ID));
+                    S3UnwrappedXmlOutputTrait.ID,
+                    // The waiter runtime reads an operation's waiters from its schema.
+                    WaitableTrait.ID));
 
     private final Map<Shape, Boolean> cache = new HashMap<>();
     private final Model model;

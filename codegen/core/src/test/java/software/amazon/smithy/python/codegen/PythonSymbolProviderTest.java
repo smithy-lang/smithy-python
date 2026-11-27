@@ -147,6 +147,10 @@ public class PythonSymbolProviderTest {
         assertEquals("_models_", memberName(provider, model, "CreateThingInput$_models"));
         // Paginators' SDK option, reserved even on an operation that doesn't paginate.
         assertEquals("stop_on_same_token_", memberName(provider, model, "CreateThingInput$stopOnSameToken"));
+        // Waiters' SDK options, reserved even on an operation without waiters.
+        assertEquals("max_wait_time_", memberName(provider, model, "CreateThingInput$maxWaitTime"));
+        assertEquals("min_delay_", memberName(provider, model, "CreateThingInput$minDelay"));
+        assertEquals("max_delay_", memberName(provider, model, "CreateThingInput$maxDelay"));
         assertEquals("name", memberName(provider, model, "CreateThingInput$name"));
     }
 
@@ -163,6 +167,8 @@ public class PythonSymbolProviderTest {
         assertEquals("_models", memberName(provider, model, "CreateThingOutput$_models"));
         assertEquals("stop_on_same_token", memberName(provider, model, "Thing$stopOnSameToken"));
         assertEquals("stop_on_same_token", memberName(provider, model, "CreateThingOutput$stopOnSameToken"));
+        assertEquals("max_wait_time", memberName(provider, model, "Thing$maxWaitTime"));
+        assertEquals("max_wait_time", memberName(provider, model, "CreateThingOutput$maxWaitTime"));
     }
 
     @Test
@@ -223,6 +229,9 @@ public class PythonSymbolProviderTest {
                 self: String
                 _models: String
                 stopOnSameToken: String
+                maxWaitTime: Integer
+                minDelay: Integer
+                maxDelay: Integer
                 name: String
                 thing: Thing
             }
@@ -231,6 +240,7 @@ public class PythonSymbolProviderTest {
                 plugins: String
                 _models: String
                 stopOnSameToken: String
+                maxWaitTime: Integer
             }
 
             structure Thing {
@@ -238,6 +248,7 @@ public class PythonSymbolProviderTest {
                 self: String
                 _models: String
                 stopOnSameToken: String
+                maxWaitTime: Integer
             }
             """;
 

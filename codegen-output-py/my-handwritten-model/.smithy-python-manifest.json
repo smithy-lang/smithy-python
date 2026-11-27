@@ -4,9 +4,9 @@
     "pyproject.toml": "7f629f025f463d2e7dc967cab569cc3c0e61c16738eeb1ac5ec0c97561487c10",
     "src/my_handwritten_model/__init__.py": "619a033058229139a02f912a44a6b8997fb35c5af6736d09edd49927876a49dd",
     "src/my_handwritten_model/_private/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "src/my_handwritten_model/_private/schemas.py": "f146ba11103b98b70213619c2e581755d336f4c8133ee4900830b2fab428ffc5",
-    "src/my_handwritten_model/models.py": "269ec10c3bf4da91ac9c4a3f479f40bdad48f0113f9772d9a4c259229abd043c",
-    "src/my_handwritten_model/models.pyi": "eea41779046bf217dab1a4739f27854742b63aacaad48cfebee3c99792459950",
+    "src/my_handwritten_model/_private/schemas.py": "b4fd71429d235bd395494837d26c1ea7c2edcf94233f0cca97a3555ac129048c",
+    "src/my_handwritten_model/models.py": "c82b6da7be4e3132ff73b275469d6abddcc8e8b84f24bfddb3e476e0297ac584",
+    "src/my_handwritten_model/models.pyi": "93035916b46212d823cbf385bc013ac7bcb09626783cd8c69a2dad67384cf43b",
     "src/my_handwritten_model/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

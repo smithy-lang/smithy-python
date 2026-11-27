@@ -29,6 +29,8 @@ from .._private.schemas import MY_HANDWRITTEN_MODEL
 if TYPE_CHECKING:
     from smithy_core.interceptors import Interceptor
     from ..models import (
+        GetItemInput,
+        GetItemOutput,
         ListItemsInput,
         ListItemsOutput,
         PublishEventsInput,
@@ -40,6 +42,7 @@ if TYPE_CHECKING:
     )
 
     _ServiceInterceptor = Union[
+        Interceptor[GetItemInput, GetItemOutput, Any, Any],
         Interceptor[ListItemsInput, ListItemsOutput, Any, Any],
         Interceptor[PublishEventsInput, PublishEventsOutput, Any, Any],
         Interceptor[SubscribeToEventsInput, SubscribeToEventsOutput, Any, Any],

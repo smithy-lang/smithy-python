@@ -8,6 +8,7 @@ from smithy_aws_core.config.types import ConfigSource
 from smithy_aws_core.identity.components import AWSCredentialsIdentity
 from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.pagination import AsyncItemPaginator
+from smithy_core.aio.waiters import wait_async
 from smithy_http.aio.identity.token import AsyncStaticTokenResolver
 from smithy_http.aio.interfaces import AsyncHTTPClient
 from smithy_http.identity import TokenIdentity
@@ -28,6 +29,192 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
     """
 
     _client_plugins = (aws_user_agent_plugin, user_agent_plugin)
+
+    @overload
+    async def describe_note(
+        self,
+        request: models.DescribeNoteInput | models.DescribeNoteInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+    ) -> models.DescribeNoteOutput: ...
+
+    @overload
+    async def describe_note(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        **kwargs: Unpack[models.DescribeNoteInputDict],
+    ) -> models.DescribeNoteOutput:
+        """
+        Describes a note and its state. Needs no auth.
+
+        Args:
+            plugins:
+                Callables that change the configuration for this call only.
+
+        Returns:
+            An instance of `DescribeNoteOutput`.
+        """
+
+    async def describe_note(
+        self, /, *args: object, plugins: list[Plugin] | None = None, **kwargs: object
+    ) -> models.DescribeNoteOutput:
+        return await self._invoke(
+            self._select_input(models.DESCRIBE_NOTE, args, kwargs),
+            models.DESCRIBE_NOTE,
+            [],
+            plugins,
+        )
+
+    @overload
+    async def wait_until_note_deleted(
+        self,
+        request: models.DescribeNoteInput | models.DescribeNoteInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+    ) -> models.DescribeNoteOutput | None: ...
+
+    @overload
+    async def wait_until_note_deleted(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: Unpack[models.DescribeNoteInputDict],
+    ) -> models.DescribeNoteOutput | None:
+        """
+        Polls `describe_note` until the NoteDeleted waiter succeeds or fails.
+
+        Args:
+            plugins:
+                Callables that change the configuration for each attempt.
+            max_wait_time:
+                Maximum seconds to wait, including requests.
+            min_delay:
+                Minimum seconds between attempts. Defaults to 2.
+            max_delay:
+                Maximum seconds between attempts. Defaults to 120.
+
+        Returns:
+            The matching `DescribeNoteOutput`, or None if the waiter succeeded
+            on an error.
+
+        Raises:
+            ValueError: If a time is invalid.
+            WaiterFailureError: If the resource reached a failed state or an
+                attempt raised an error the waiter doesn't expect, such as a
+                connection error. See `last_error`.
+            WaiterTimeoutError: If the waiter didn't finish within
+                `max_wait_time`.
+        """
+
+    async def wait_until_note_deleted(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: object,
+    ) -> models.DescribeNoteOutput | None:
+        return await wait_async(
+            self._build_input(
+                self._select_input(models.DESCRIBE_NOTE, args, kwargs),
+                models.DESCRIBE_NOTE,
+            ),
+            models.DESCRIBE_NOTE,
+            self.describe_note,
+            "NoteDeleted",
+            plugins,
+            max_wait_time=max_wait_time,
+            min_delay=min_delay,
+            max_delay=max_delay,
+        )
+
+    @overload
+    async def wait_until_note_saved(
+        self,
+        request: models.DescribeNoteInput | models.DescribeNoteInputDict,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+    ) -> models.DescribeNoteOutput | None: ...
+
+    @overload
+    async def wait_until_note_saved(
+        self,
+        /,
+        *,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: Unpack[models.DescribeNoteInputDict],
+    ) -> models.DescribeNoteOutput | None:
+        """
+        Waits until the note is saved.
+
+        Polls `describe_note` until the NoteSaved waiter succeeds or fails.
+
+        Args:
+            plugins:
+                Callables that change the configuration for each attempt.
+            max_wait_time:
+                Maximum seconds to wait, including requests.
+            min_delay:
+                Minimum seconds between attempts. Defaults to 1.
+            max_delay:
+                Maximum seconds between attempts. Defaults to 4.
+
+        Returns:
+            The matching `DescribeNoteOutput`, or None if the waiter succeeded
+            on an error.
+
+        Raises:
+            ValueError: If a time is invalid.
+            WaiterFailureError: If the resource reached a failed state or an
+                attempt raised an error the waiter doesn't expect, such as a
+                connection error. See `last_error`.
+            WaiterTimeoutError: If the waiter didn't finish within
+                `max_wait_time`.
+        """
+
+    async def wait_until_note_saved(
+        self,
+        /,
+        *args: object,
+        plugins: list[Plugin] | None = None,
+        max_wait_time: float,
+        min_delay: float | None = None,
+        max_delay: float | None = None,
+        **kwargs: object,
+    ) -> models.DescribeNoteOutput | None:
+        return await wait_async(
+            self._build_input(
+                self._select_input(models.DESCRIBE_NOTE, args, kwargs),
+                models.DESCRIBE_NOTE,
+            ),
+            models.DESCRIBE_NOTE,
+            self.describe_note,
+            "NoteSaved",
+            plugins,
+            max_wait_time=max_wait_time,
+            min_delay=min_delay,
+            max_delay=max_delay,
+        )
 
     @overload
     async def echo(
@@ -207,15 +394,21 @@ class AsyncFieldNotesClient(AsyncClient[AsyncFieldNotesConfig]):
         request's token starts the first page. Pagination ends at a page with no
         token or an empty one. By default, it also ends, normally, at a page
         whose token equals the one its request sent, including the starting
-        token. ``items()`` iterates the items of each page instead.
+        token. `items()` iterates the items of each page instead.
 
-        :param plugins: Callables that change the configuration for each call of
-        this traversal only.
-        :param stop_on_same_token: Whether to end pagination at a page whose
-        token equals, by value, the one its request sent. Set to False to keep
-        requesting pages when tokens repeat, such as when polling for new
-        results. A page with no token, or an empty one, still ends pagination.
-        This option is not sent to the service.
+        Args:
+            plugins:
+                Callables that change the configuration for each call of this
+                traversal only.
+            stop_on_same_token:
+                Whether to end pagination at a page whose token equals, by
+                value, the one its request sent. Set to False to keep requesting
+                pages when tokens repeat, such as when polling for new results.
+                A page with no token, or an empty one, still ends pagination.
+                This option is not sent to the service.
+
+        Returns:
+            An iterator of `ListNotesOutput` pages.
         """
 
     def paginate_list_notes(

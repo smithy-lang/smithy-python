@@ -2,13 +2,15 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Self, TypedDict, Union
+from enum import StrEnum
+from typing import Required, Self, TypedDict, Union
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import ModeledError
 from smithy_core.response import ErrorResponseMetadata, ResponseMetadata
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import ShapeSerializer
+from smithy_core.types import UnknownEnumMixin
 
 class _SerdeShape:
     def serialize(self, serializer: ShapeSerializer) -> None: ...
@@ -57,10 +59,55 @@ class GammaPayload(_SerdeShape):
     values: list[int] | None = ...
 
 @dataclass(kw_only=True)
+class GetItemInput(_SerdeShape):
+    """Dataclass for GetItemInput structure."""
+
+    id: str | None = ...
+
+class GetItemInputDict(TypedDict, total=False):
+    """Dictionary form of `GetItemInput`."""
+
+    id: Required[str]
+
+@dataclass(kw_only=True)
+class GetItemOutput(_SerdeShape):
+    """Dataclass for GetItemOutput structure."""
+
+    id: str | None = ...
+    status: str | None = ...
+    reason: str | None = ...
+    response_metadata: ResponseMetadata = ...
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
+@dataclass(kw_only=True)
 class HeartbeatEvent(_SerdeShape):
     """Dataclass for HeartbeatEvent structure."""
 
     timestamp: datetime | None = ...
+
+@dataclass(kw_only=True)
+class ItemNotFound(ServiceError, _SerdeShape):
+    """Dataclass for ItemNotFound structure."""
+
+    response_metadata: ErrorResponseMetadata = ...
+    """
+    Metadata about the response that produced this error.
+
+    Use this to read the error code or to recover the request identifiers a
+    service's support team needs in order to investigate a call. Members of
+    the metadata are individually optional.
+    """
+
+class ItemStatus(UnknownEnumMixin, StrEnum):
+    PENDING = "PENDING"
+    READY = "READY"
+    FAILED = "FAILED"
 
 @dataclass(kw_only=True)
 class ListItemsInput(_SerdeShape):
@@ -318,6 +365,7 @@ class TradeEventStreamOutput(_SerdeShape):
     individually optional.
     """
 
+GET_ITEM: APIOperation[GetItemInput, GetItemOutput]
 LIST_ITEMS: APIOperation[ListItemsInput, ListItemsOutput]
 PUBLISH_EVENTS: APIOperation[PublishEventsInput, PublishEventsOutput]
 SUBSCRIBE_TO_EVENTS: APIOperation[SubscribeToEventsInput, SubscribeToEventsOutput]

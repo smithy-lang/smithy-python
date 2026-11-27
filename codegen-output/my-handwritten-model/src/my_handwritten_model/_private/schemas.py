@@ -22,14 +22,29 @@ _sN = "sequenceNumber"
 _sH = "smithy.api#eventHeader"
 _p = "payload"
 _sP = "smithy.api#eventPayload"
+_GII = "GetItemInput"
+_s = "smithy.api#input"
+_sm = "smithy.api#required"
+_IS = "ItemStatus"
+_PENDING = "PENDING"
+_sV = "smithy.api#enumValue"
+_READY = "READY"
+_FAILED = "FAILED"
+_GIO = "GetItemOutput"
+_smi = "smithy.api#output"
+_st = "status"
+_r = "reason"
+_INF = "ItemNotFound"
+_smit = "smithy.api#error"
+_c = "client"
+_GI = "GetItem"
+_smith = "smithy.waiters#waitable"
 _HE = "HeartbeatEvent"
 _ILt = "ItemList"
 _LII = "ListItemsInput"
-_s = "smithy.api#input"
 _nT = "nextToken"
 _pS = "pageSize"
 _LIO = "ListItemsOutput"
-_sm = "smithy.api#output"
 _it = "items"
 _LI = "ListItems"
 _LE = "LogEvent"
@@ -37,11 +52,11 @@ _l = "level"
 _ME = "MetricEvent"
 _va = "value"
 _PES = "PublishEventStream"
-_smi = "smithy.api#streaming"
+_smithy = "smithy.api#streaming"
 _lo = "log"
 _met = "metric"
 _PEI = "PublishEventsInput"
-_c = "channel"
+_ch = "channel"
 _e = "events"
 _PEO = "PublishEventsOutput"
 _eC = "eventCount"
@@ -57,11 +72,9 @@ _STEO = "SubscribeToEventsOutput"
 _sI = "subscriptionId"
 _STE = "SubscribeToEvents"
 _SSE = "StreamServiceError"
-_smit = "smithy.api#error"
 _se = "server"
 _TE = "ThrottlingEvent"
-_cl = "client"
-_smith = "smithy.api#retryable"
+_smithya = "smithy.api#retryable"
 _TEr = "TradeEvents"
 _a = "alpha"
 _b = "beta"
@@ -93,6 +106,107 @@ GAMMA: StaticSchema = (
     ((7, {_sH: None}), (GAMMA_PAYLOAD, {_sP: None})),
 )
 
+GET_ITEM_INPUT: StaticSchema = (18, n0, _GII, {_s: None}, (_i,), ((3, 1),))
+
+ITEM_STATUS: StaticSchema = (
+    14,
+    n0,
+    _IS,
+    0,
+    (_PENDING, _READY, _FAILED),
+    ((-1, {_sV: _PENDING}), (-1, {_sV: _READY}), (-1, {_sV: _FAILED})),
+)
+
+GET_ITEM_OUTPUT: StaticSchema = (
+    18,
+    n0,
+    _GIO,
+    {_smi: None},
+    (_i, _st, _r),
+    ((3, 0), (ITEM_STATUS, 0), (3, 0)),
+)
+
+ITEM_NOT_FOUND: StaticSchema = (18, n0, _INF, {_smit: _c}, (_me,), ((3, 0),))
+
+GET_ITEM: StaticOperationSchema = (
+    23,
+    n0,
+    _GI,
+    {
+        _smith: MappingProxyType(
+            {
+                "ItemReady": MappingProxyType(
+                    {
+                        "documentation": "Waits until the item is ready.",
+                        "minDelay": 1,
+                        "maxDelay": 5,
+                        "acceptors": (
+                            MappingProxyType(
+                                {
+                                    "state": "success",
+                                    "matcher": MappingProxyType(
+                                        {
+                                            "output": MappingProxyType(
+                                                {
+                                                    "path": "status",
+                                                    "expected": "READY",
+                                                    "comparator": "stringEquals",
+                                                }
+                                            )
+                                        }
+                                    ),
+                                }
+                            ),
+                            MappingProxyType(
+                                {
+                                    "state": "failure",
+                                    "matcher": MappingProxyType(
+                                        {
+                                            "output": MappingProxyType(
+                                                {
+                                                    "path": "status",
+                                                    "expected": "FAILED",
+                                                    "comparator": "stringEquals",
+                                                }
+                                            )
+                                        }
+                                    ),
+                                    "message": "reason",
+                                }
+                            ),
+                            MappingProxyType(
+                                {
+                                    "state": "retry",
+                                    "matcher": MappingProxyType(
+                                        {"errorType": "ItemNotFound"}
+                                    ),
+                                }
+                            ),
+                        ),
+                    }
+                ),
+                "ItemDeleted": MappingProxyType(
+                    {
+                        "acceptors": (
+                            MappingProxyType(
+                                {
+                                    "state": "success",
+                                    "matcher": MappingProxyType(
+                                        {"errorType": "ItemNotFound"}
+                                    ),
+                                }
+                            ),
+                        )
+                    }
+                ),
+            }
+        )
+    },
+    GET_ITEM_INPUT,
+    GET_ITEM_OUTPUT,
+    (ITEM_NOT_FOUND,),
+)
+
 HEARTBEAT_EVENT: StaticSchema = (18, n0, _HE, 0, (_t,), ((4, 0),))
 
 ITEM_LIST: StaticSchema = (16, n0, _ILt, 0, (_m,), ((3, 0),))
@@ -110,7 +224,7 @@ LIST_ITEMS_OUTPUT: StaticSchema = (
     18,
     n0,
     _LIO,
-    {_sm: None},
+    {_smi: None},
     (_it, _nT),
     ((ITEM_LIST, 0), (3, 0)),
 )
@@ -133,7 +247,7 @@ PUBLISH_EVENT_STREAM: StaticSchema = (
     19,
     n0,
     _PES,
-    {_smi: None},
+    {_smithy: None},
     (_lo, _met),
     ((LOG_EVENT, 0), (METRIC_EVENT, 0)),
 )
@@ -143,7 +257,7 @@ PUBLISH_EVENTS_INPUT: StaticSchema = (
     n0,
     _PEI,
     {_s: None},
-    (_c, _e),
+    (_ch, _e),
     ((3, 0), (PUBLISH_EVENT_STREAM, 0)),
 )
 
@@ -151,7 +265,7 @@ PUBLISH_EVENTS_OUTPUT: StaticSchema = (
     18,
     n0,
     _PEO,
-    {_sm: None},
+    {_smi: None},
     (_eC, _me),
     ((7, 0), (3, 0)),
 )
@@ -171,7 +285,7 @@ SUBSCRIBE_TO_EVENTS_INPUT: StaticSchema = (
     n0,
     _STEI,
     {_s: None},
-    (_c, _mE),
+    (_ch, _mE),
     ((3, 0), (7, 0)),
 )
 
@@ -181,7 +295,7 @@ SUBSCRIBE_EVENT_STREAM: StaticSchema = (
     19,
     n0,
     _SES,
-    {_smi: None},
+    {_smithy: None},
     (_no, _h),
     ((NOTIFICATION_EVENT, 0), (HEARTBEAT_EVENT, 0)),
 )
@@ -190,7 +304,7 @@ SUBSCRIBE_TO_EVENTS_OUTPUT: StaticSchema = (
     18,
     n0,
     _STEO,
-    {_sm: None},
+    {_smi: None},
     (_sI, _e),
     ((3, 0), (SUBSCRIBE_EVENT_STREAM, 0)),
 )
@@ -211,7 +325,7 @@ THROTTLING_EVENT: StaticSchema = (
     18,
     n0,
     _TE,
-    {_smit: _cl, _smith: MappingProxyType({"throttling": True})},
+    {_smit: _c, _smithya: MappingProxyType({"throttling": True})},
     (_me,),
     ((3, 0),),
 )
@@ -220,7 +334,7 @@ TRADE_EVENTS: StaticSchema = (
     19,
     n0,
     _TEr,
-    {_smi: None},
+    {_smithy: None},
     (_a, _b, _g, _d, _th),
     ((ALPHA, 0), (-1, 0), (GAMMA, 0), (DIFFERENT_SHAPE_NAME, 0), (THROTTLING_EVENT, 0)),
 )
@@ -238,7 +352,7 @@ TRADE_EVENT_STREAM_OUTPUT: StaticSchema = (
     18,
     n0,
     _TESO,
-    {_sm: None},
+    {_smi: None},
     (_gr, _e),
     ((3, 0), (TRADE_EVENTS, 0)),
 )

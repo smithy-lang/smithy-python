@@ -789,6 +789,12 @@
     "StreamingBlob": "rex-type_alias",
     "read_streaming_blob": "rex-function"
   },
+  "smithy_core.aio.waiters": {
+    "APIOperation": "rex-class",
+    "DeserializeableShape": "rex-protocol",
+    "SerializeableShape": "rex-protocol",
+    "WaiterState": "rex-class"
+  },
   "smithy_core.auth": {
     "APIOperation": "rex-class",
     "DeserializeableShape": "rex-protocol",
@@ -964,6 +970,12 @@
     "ExpectationNotMetError": "rex-exception",
     "StreamingBlob": "rex-type_alias",
     "is_bytes_reader": "rex-function"
+  },
+  "smithy_core.waiters": {
+    "APIOperation": "rex-class",
+    "DeserializeableShape": "rex-protocol",
+    "SerializeableShape": "rex-protocol",
+    "WaiterState": "rex-class"
   },
   "smithy_http": {
     "AnyStreamingBlob": "rex-type_alias",

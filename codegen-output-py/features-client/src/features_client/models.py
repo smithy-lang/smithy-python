@@ -14,12 +14,16 @@ class ServiceError(ModeledError):
 
 
 _MODEL_INDEX = {
+    "DescribeNoteInput": "DESCRIBE_NOTE_INPUT",
+    "DescribeNoteOutput": "DESCRIBE_NOTE_OUTPUT",
     "GetNoteInput": "GET_NOTE_INPUT",
     "GetNoteOutput": "GET_NOTE_OUTPUT",
     "GetThingInput": "GET_THING_INPUT",
     "GetThingOutput": "GET_THING_OUTPUT",
     "ListNotesInput": "LIST_NOTES_INPUT",
     "ListNotesOutput": "LIST_NOTES_OUTPUT",
+    "NoteNotFound": "NOTE_NOT_FOUND",
+    "NoteState": "NOTE_STATE",
     "PutNoteInput": "PUT_NOTE_INPUT",
     "PutNoteOutput": "PUT_NOTE_OUTPUT",
     "PutThingInput": "PUT_THING_INPUT",
@@ -36,6 +40,10 @@ _RENAMES: dict[str, str] = {}
 _TARGET_NAMES: dict[str, str] = {}
 
 _OPERATIONS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
+    "DESCRIBE_NOTE": (
+        ("example.features#NoteNotFound",),
+        ("smithy.api#noAuth",),
+    ),
     "ECHO": (
         (),
         ("smithy.api#httpApiKeyAuth", "smithy.api#noAuth"),
@@ -77,6 +85,8 @@ _registry = ModelRegistry(
     target_names=_TARGET_NAMES,
     shape_names=frozenset(
         {
+            "DescribeNoteInput",
+            "DescribeNoteOutput",
             "EchoInput",
             "EchoOutput",
             "GetNoteInput",
@@ -85,6 +95,8 @@ _registry = ModelRegistry(
             "GetThingOutput",
             "ListNotesInput",
             "ListNotesOutput",
+            "NoteNotFound",
+            "NoteState",
             "PingInput",
             "PingOutput",
             "PutNoteInput",

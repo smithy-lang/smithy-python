@@ -24,7 +24,11 @@ _registry = ModelRegistry(
         "DifferentShapeName": "DIFFERENT_SHAPE_NAME",
         "Gamma": "GAMMA",
         "GammaPayload": "GAMMA_PAYLOAD",
+        "GetItemInput": "GET_ITEM_INPUT",
+        "GetItemOutput": "GET_ITEM_OUTPUT",
         "HeartbeatEvent": "HEARTBEAT_EVENT",
+        "ItemNotFound": "ITEM_NOT_FOUND",
+        "ItemStatus": "ITEM_STATUS",
         "ListItemsInput": "LIST_ITEMS_INPUT",
         "ListItemsOutput": "LIST_ITEMS_OUTPUT",
         "LogEvent": "LOG_EVENT",
@@ -60,7 +64,11 @@ _registry = ModelRegistry(
             "DifferentShapeName",
             "Gamma",
             "GammaPayload",
+            "GetItemInput",
+            "GetItemOutput",
             "HeartbeatEvent",
+            "ItemNotFound",
+            "ItemStatus",
             "ListItemsInput",
             "ListItemsOutput",
             "LogEvent",
@@ -84,6 +92,7 @@ _registry = ModelRegistry(
 
 _operation_data = {}
 _operation_names = (
+    "GET_ITEM",
     "LIST_ITEMS",
     "PUBLISH_EVENTS",
     "SUBSCRIBE_TO_EVENTS",
@@ -112,6 +121,12 @@ def __getattr__(name: str):
 def __dir__():
     return sorted({*globals(), *_operation_names})
 
+
+_operation_data["GET_ITEM"] = (
+    "GET_ITEM",
+    ("smithy.python.tests.handwritten#ItemNotFound",),
+    ("smithy.api#noAuth",),
+)
 
 _operation_data["LIST_ITEMS"] = ("LIST_ITEMS", (), ("smithy.api#noAuth",))
 

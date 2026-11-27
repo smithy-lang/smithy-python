@@ -29,12 +29,20 @@ _ERROR_MESSAGE_MEMBER_NAMES = frozenset({"errormessage", "error_message", "messa
 _RESPONSE_METADATA_MEMBER = "response_metadata"
 # The names generated client methods use besides their input members: the
 # parameters they declare, and the models module alias their bodies reference.
-# ``stop_on_same_token`` is declared only by paginator methods, but is reserved on
-# every operation input so that an input's names don't depend on its pagination.
+# Paginator and waiter options are reserved on every operation input, so an
+# input's names don't depend on its pagination or waiters.
 # CAUTION: mirrors PythonSymbolProvider.OPERATION_PARAMETER_NAMES and
 # smithy_python.symbols._OPERATION_PARAMETER_NAMES.
 _RESERVED_INPUT_MEMBERS = frozenset(
-    {"self", "plugins", "_models", "stop_on_same_token"}
+    {
+        "self",
+        "plugins",
+        "_models",
+        "stop_on_same_token",
+        "max_wait_time",
+        "min_delay",
+        "max_delay",
+    }
 )
 
 
