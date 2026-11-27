@@ -78,8 +78,9 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
     ) -> models.EmptyInputAndEmptyOutputOutput:
         """
         The example tests how requests and responses are serialized when there's
-        no request or response members. While this should be rare, code
-        generators must support this.
+        no request or response members.
+
+        While this should be rare, code generators must support this.
 
         Args:
             plugins:
@@ -350,9 +351,11 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         **kwargs: Unpack[models.GreetingWithErrorsInputDict],
     ) -> models.GreetingWithErrorsOutput:
         """
-        This operation has three possible return values: 1. A successful
-        response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting
-        error. 3. A BadRequest error.
+        This operation has three possible return values:
+
+        1. A successful response in the form of GreetingWithErrorsOutput
+        2. An InvalidGreeting error.
+        3. A BadRequest error.
 
         Args:
             plugins:
@@ -430,9 +433,11 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         **kwargs: Unpack[models.IgnoresWrappingXmlNameInputDict],
     ) -> models.IgnoresWrappingXmlNameOutput:
         """
-        The xmlName trait on the output structure is ignored in AWS Query. The
-        wrapping element is always operation name + "Response", and inside of
-        that wrapper is another wrapper named operation name + "Result".
+        The xmlName trait on the output structure is ignored in AWS Query.
+
+        The wrapping element is always operation name + "Response", and
+        inside of that wrapper is another wrapper named operation name +
+        "Result".
 
         Args:
             plugins:
@@ -510,7 +515,9 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         """
         The example tests how requests and responses are serialized when there's
         no request or response payload because the operation has no input or
-        output. While this should be rare, code generators must support this.
+        output.
+
+        While this should be rare, code generators must support this.
 
         Args:
             plugins:
@@ -549,8 +556,9 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
     ) -> models.NoInputAndOutputOutput:
         """
         The example tests how requests and responses are serialized when there's
-        no request payload or response members. While this should be rare, code
-        generators must support this.
+        no request payload or response members.
+
+        While this should be rare, code generators must support this.
 
         Args:
             plugins:
@@ -742,10 +750,12 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         **kwargs: Unpack[models.QueryTimestampsInputDict],
     ) -> models.QueryTimestampsOutput:
         """
-        This test serializes timestamps. 1. Timestamps are serialized as RFC
-        3339 date-time values by default. 2. A timestampFormat trait on a member
-        changes the format. 3. A timestampFormat trait on the shape targeted by
-        the member changes the format.
+        This test serializes timestamps.
+
+        1. Timestamps are serialized as RFC 3339 date-time values by default.
+        2. A timestampFormat trait on a member changes the format.
+        3. A timestampFormat trait on the shape targeted by the member changes
+        the format.
 
         Args:
             plugins:
@@ -1129,9 +1139,15 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
     ) -> models.XmlListsOutput2:
         """
         This test case serializes XML lists for the following cases for both
-        input and output: 1. Normal XML lists. 2. Normal XML sets. 3. XML lists
-        of lists. 4. XML lists with @xmlName on its members 5. Flattened XML
-        lists. 6. Flattened XML lists with @xmlName. 7. Lists of structures.
+        input and output:
+
+        1. Normal XML lists.
+        2. Normal XML sets.
+        3. XML lists of lists.
+        4. XML lists with @xmlName on its members
+        5. Flattened XML lists.
+        6. Flattened XML lists with @xmlName.
+        7. Lists of structures.
 
         Args:
             plugins:
@@ -1283,8 +1299,9 @@ class AsyncQueryProtocolClient(AsyncClient[AsyncQueryProtocolConfig]):
         **kwargs: Unpack[models.XmlTimestampsInputDict],
     ) -> models.XmlTimestampsOutput:
         """
-        This tests how timestamps are serialized, including using the default
-        format of date-time and various @timestampFormat trait values.
+        This tests how timestamps are serialized, including using the
+        default format of date-time and various @timestampFormat trait
+        values.
 
         Args:
             plugins:

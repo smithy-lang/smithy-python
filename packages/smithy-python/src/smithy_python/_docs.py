@@ -87,6 +87,8 @@ _ADMONITIONS: Final = {"note": "Note", "important": "Warning"}
 _CODE: Final = frozenset({"code", "tt", "samp", "kbd"})
 # A wrapped line that starts with one of these would read as a list, a heading or
 # a quote, so it's joined to the line before.
+_TAG: Final = re.compile(r"</?[A-Za-z][^>]*>")
+_BLANK_LINE: Final = re.compile(r"\n[ \t]*\n")
 # Stands in for a space of a code span while text is wrapped. Unicode reserves it,
 # so documentation never has it.
 _CODE_SPACE: Final = "\U000ffffe"
@@ -102,7 +104,14 @@ def documentation_is_html(service: _model.ServiceShape | None) -> bool:
 
 
 def html_to_markdown(html: str) -> str:
-    """Convert HTML documentation to Markdown wrapped at 72 columns."""
+    """Convert HTML documentation to Markdown wrapped at 72 columns.
+
+    Documentation with no tags is already plain text or Markdown, such as that of
+    models written in the Smithy IDL, so it's kept as it is. In text between tags,
+    a blank line starts a new paragraph.
+    """
+    if not _TAG.search(html):
+        return html.strip()
     parser = _TreeBuilder()
     parser.feed(html)
     parser.close()
@@ -173,10 +182,12 @@ def _blocks(children: list[_Element | str], width: int) -> list[str]:
     inline: list[str] = []
 
     def flush() -> None:
-        text = re.sub(r"\s+", " ", "".join(inline)).strip()
+        # A blank line in the text is a paragraph break the author wrote.
+        for paragraph in _BLANK_LINE.split("".join(inline)):
+            text = re.sub(r"\s+", " ", paragraph).strip()
+            if text:
+                blocks.append(_wrap(text, width))
         inline.clear()
-        if text:
-            blocks.append(_wrap(text, width))
 
     for child in children:
         if isinstance(child, str) or child.tag not in _BLOCKS:

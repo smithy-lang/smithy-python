@@ -76,8 +76,8 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         **kwargs: Unpack[models.BodyWithXmlNameInputDict],
     ) -> models.BodyWithXmlNameOutput:
         """
-        The following example serializes a body that uses an XML name, changing
-        the wrapper name.
+        The following example serializes a body that uses an XML name,
+        changing the wrapper name.
 
         Args:
             plugins:
@@ -117,8 +117,9 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     ) -> models.ConstantAndVariableQueryStringOutput:
         """
         This example uses fixed query string params and variable query string
-        params. The fixed query string parameters and variable parameters must
-        both be serialized (implementations may need to merge them together).
+        params.
+        The fixed query string parameters and variable parameters must both be
+        serialized (implementations may need to merge them together).
 
         Args:
             plugins:
@@ -156,10 +157,10 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         **kwargs: Unpack[models.ConstantQueryStringInputDict],
     ) -> models.ConstantQueryStringOutput:
         """
-        This example uses a constant query string parameters and a label. This
-        simply tests that labels and query string parameters are compatible. The
-        fixed query string parameter named "hello" should in no way conflict
-        with the label, `{hello}`.
+        This example uses a constant query string parameters and a label.
+        This simply tests that labels and query string parameters are
+        compatible. The fixed query string parameter named "hello" should
+        in no way conflict with the label, `{hello}`.
 
         Args:
             plugins:
@@ -198,8 +199,8 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         **kwargs: Unpack[models.ContentTypeParametersInputDict],
     ) -> models.ContentTypeParametersOutput:
         """
-        The example tests how servers must support requests containing a
-        `Content-Type` header with parameters.
+        The example tests how servers must support requests
+        containing a `Content-Type` header with parameters.
 
         Args:
             plugins:
@@ -591,11 +592,15 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         **kwargs: Unpack[models.GreetingWithErrorsInputDict],
     ) -> models.GreetingWithErrorsOutput:
         """
-        This operation has three possible return values: 1. A successful
-        response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting
-        error. 3. A BadRequest error. Implementations must be able to
-        successfully take a response and properly (de)serialize successful and
-        error responses based on the the presence of the
+        This operation has three possible return values:
+
+        1. A successful response in the form of GreetingWithErrorsOutput
+        2. An InvalidGreeting error.
+        3. A BadRequest error.
+
+        Implementations must be able to successfully take a response and
+        properly (de)serialize successful and error responses based on the
+        the presence of the
 
         Args:
             plugins:
@@ -710,9 +715,10 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         **kwargs: Unpack[models.HttpPayloadTraitsInputDict],
     ) -> models.HttpPayloadTraitsOutput:
         """
-        This example serializes a blob shape in the payload. In this example, no
-        XML document is synthesized because the payload is not a structure or a
-        union type.
+        This example serializes a blob shape in the payload.
+
+        In this example, no XML document is synthesized because the payload is
+        not a structure or a union type.
 
         Args:
             plugins:
@@ -793,8 +799,8 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         **kwargs: Unpack[models.HttpPayloadWithMemberXmlNameInputDict],
     ) -> models.HttpPayloadWithMemberXmlNameOutput:
         """
-        The following example serializes a payload that uses an XML name on the
-        member, changing the wrapper name.
+        The following example serializes a payload that uses an XML name
+        on the member, changing the wrapper name.
 
         Args:
             plugins:
@@ -833,9 +839,10 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         **kwargs: Unpack[models.HttpPayloadWithStructureInputDict],
     ) -> models.HttpPayloadWithStructureOutput:
         """
-        This example serializes a structure in the payload. Note that
-        serializing a structure changes the wrapper element name to match the
-        targeted structure.
+        This example serializes a structure in the payload.
+
+        Note that serializing a structure changes the wrapper element name
+        to match the targeted structure.
 
         Args:
             plugins:
@@ -1193,7 +1200,8 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     ) -> models.HttpRequestWithLabelsAndTimestampFormatOutput:
         """
         The example tests how requests serialize different timestamp formats in
-        the URI path.
+        the
+        URI path.
 
         Args:
             plugins:
@@ -1311,8 +1319,8 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     ) -> models.IgnoreQueryParamsInResponseOutput:
         """
         This example ensures that query string bound request parameters are
-        serialized in the body of responses if the structure is used in both the
-        request and response.
+        serialized in the body of responses if the structure is used in both
+        the request and response.
 
         Args:
             plugins:
@@ -1352,7 +1360,8 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     ) -> models.InputAndOutputWithHeadersOutput:
         """
         The example tests how requests and responses are serialized when there
-        is no input or output payload but there are HTTP header bindings.
+        is
+        no input or output payload but there are HTTP header bindings.
 
         Args:
             plugins:
@@ -1469,7 +1478,8 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         The example tests how requests and responses are serialized when there's
         no request or response payload because the operation has no input or
-        output. While this should be rare, code generators must support this.
+        output.
+        While this should be rare, code generators must support this.
 
         Args:
             plugins:
@@ -1509,8 +1519,9 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         """
         The example tests how requests and responses are serialized when there's
         no request or response payload because the operation has no input and
-        the output is empty. While this should be rare, code generators must
-        support this.
+        the
+        output is empty. While this should be rare, code generators must support
+        this.
 
         Args:
             plugins:
@@ -1979,8 +1990,9 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     ) -> models.XmlAttributesInMiddleOutput:
         """
         This example serializes an XML attribute on a payload when it's defined
-        in the middle of the member list. This tests that implementations
-        correctly write attributes immediately after the element start tag,
+        in the middle of the member list.
+        This tests that implementations correctly write attributes immediately
+        after the element start tag,
         which is critical for languages like C# where attribute writing must
         happen before child elements.
 
@@ -2329,11 +2341,17 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
     ) -> models.XmlListsOutput:
         """
         This test case serializes XML lists for the following cases for both
-        input and output: 1. Normal XML lists. 2. Normal XML sets. 3. XML lists
-        of lists. 4. XML lists with @xmlName on its members 5. Flattened XML
-        lists. 6. Flattened XML lists with @xmlName. 7. Flattened XML lists with
-        @xmlNamespace. 8. Lists of structures. 9. Flattened XML list of
-        structures
+        input and output:
+
+        1. Normal XML lists.
+        2. Normal XML sets.
+        3. XML lists of lists.
+        4. XML lists with @xmlName on its members
+        5. Flattened XML lists.
+        6. Flattened XML lists with @xmlName.
+        7. Flattened XML lists with @xmlNamespace.
+        8. Lists of structures.
+        9. Flattened XML list of structures
 
         Args:
             plugins:
@@ -2524,8 +2542,9 @@ class AsyncRestXmlProtocolClient(AsyncClient[AsyncRestXmlProtocolConfig]):
         **kwargs: Unpack[models.XmlTimestampsInputDict],
     ) -> models.XmlTimestampsOutput:
         """
-        This tests how timestamps are serialized, including using the default
-        format of date-time and various @timestampFormat trait values.
+        This tests how timestamps are serialized, including using the
+        default format of date-time and various @timestampFormat trait
+        values.
 
         Args:
             plugins:

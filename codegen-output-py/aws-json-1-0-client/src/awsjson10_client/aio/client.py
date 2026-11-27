@@ -39,8 +39,8 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         **kwargs: Unpack[models.ContentTypeParametersInputDict],
     ) -> models.ContentTypeParametersOutput:
         """
-        The example tests how servers must support requests containing a
-        `Content-Type` header with parameters.
+        The example tests how servers must support requests
+        containing a `Content-Type` header with parameters.
 
         Args:
             plugins:
@@ -197,11 +197,14 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         **kwargs: Unpack[models.GreetingWithErrorsInputDict],
     ) -> models.GreetingWithErrorsOutput:
         """
-        This operation has three possible return values: 1. A successful
-        response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting
-        error. 3. A ComplexError error. Implementations must be able to
-        successfully take a response and properly deserialize successful and
-        error responses.
+        This operation has three possible return values:
+
+        1. A successful response in the form of GreetingWithErrorsOutput
+        2. An InvalidGreeting error.
+        3. A ComplexError error.
+
+        Implementations must be able to successfully take a response and
+        properly deserialize successful and error responses.
 
         Args:
             plugins:
@@ -318,7 +321,8 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         The example tests how requests and responses are serialized when there's
         no request or response payload because the operation has no input or
-        output. While this should be rare, code generators must support this.
+        output.
+        While this should be rare, code generators must support this.
 
         Args:
             plugins:
@@ -358,8 +362,9 @@ class AsyncJSONRPC10Client(AsyncClient[AsyncJSONRPC10Config]):
         """
         The example tests how requests and responses are serialized when there's
         no request or response payload because the operation has no input and
-        the output is empty. While this should be rare, code generators must
-        support this.
+        the
+        output is empty. While this should be rare, code generators must support
+        this.
 
         Args:
             plugins:

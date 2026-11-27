@@ -39,8 +39,8 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         **kwargs: Unpack[models.ContentTypeParametersInputDict],
     ) -> models.ContentTypeParametersOutput:
         """
-        The example tests how servers must support requests containing a
-        `Content-Type` header with parameters.
+        The example tests how servers must support requests
+        containing a `Content-Type` header with parameters.
 
         Args:
             plugins:
@@ -269,11 +269,14 @@ class AsyncJsonProtocolClient(AsyncClient[AsyncJsonProtocolConfig]):
         **kwargs: Unpack[models.GreetingWithErrorsInputDict],
     ) -> models.GreetingWithErrorsOutput:
         """
-        This operation has three possible return values: 1. A successful
-        response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting
-        error. 3. A ComplexError error. Implementations must be able to
-        successfully take a response and properly deserialize successful and
-        error responses.
+        This operation has three possible return values:
+
+        1. A successful response in the form of GreetingWithErrorsOutput
+        2. An InvalidGreeting error.
+        3. A ComplexError error.
+
+        Implementations must be able to successfully take a response and
+        properly deserialize successful and error responses.
 
         Args:
             plugins:

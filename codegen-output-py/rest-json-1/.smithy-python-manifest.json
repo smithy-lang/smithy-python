@@ -9,7 +9,7 @@
     "src/restjson/_private/schemas_1.py": "972117999fba88081f6f6339cdb8e4e53da67d94f5f2d792e4a68f3a131a2f1b",
     "src/restjson/_private/schemas_2.py": "c65fa66e59e441a324a396e6d14c2dd0abb1d7e89f761d282cceb1b8eaa678c2",
     "src/restjson/models.py": "06afe8074a8c93594e0d9a6899057c3afaf39ede3d7e709f452e3a984b2056f7",
-    "src/restjson/models.pyi": "7d47cc76ca471284a9fbdf58254d36e31bcd1d34b052f703fa378f64e66f7359",
+    "src/restjson/models.pyi": "36b559df7c7e645fd080f297e0ec89869e636ead46c1ad0aa58028e1a90fd6a1",
     "src/restjson/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "version": 1

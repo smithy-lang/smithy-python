@@ -38,7 +38,14 @@ from smithy_python.model import ServiceShape, ShapeId, load_model
         ("<p>A &amp; B &lt; C</p>", "A & B < C"),
         ("<pre>x = 1\n  y</pre>", "```\nx = 1\n  y\n```"),
         ("<p>Unclosed <b>bold</p><p>next</p>", "Unclosed **bold**\n\nnext"),
-        ("Plain text\nwith a break.", "Plain text with a break."),
+        # Docs with no tags are kept, so their lines and lists stay as written.
+        (
+            "Values:\n\n1. One\n2. Two\n\nMore text\non two lines.",
+            "Values:\n\n1. One\n2. Two\n\nMore text\non two lines.",
+        ),
+        # In HTML, a blank line in text starts a paragraph.
+        ("<p>One\n\nTwo <b>b</b></p>", "One\n\nTwo **b**"),
+        ("<b>Lead</b> text\n\nnext\nline", "**Lead** text\n\nnext line"),
         ("<code>a`b</code>", "``a`b``"),
     ],
 )
