@@ -162,114 +162,123 @@ _s153 = "EmptyInputAndEmptyOutputInput"
 _s154 = "aws.protocoltests.restjson#EmptyInputAndEmptyOutputInput"
 _s155 = "EmptyInputAndEmptyOutputOutput"
 _s156 = "aws.protocoltests.restjson#EmptyInputAndEmptyOutputOutput"
-_s157 = "FooError"
-_s158 = "server"
-_s159 = "FractionalSecondsOutput"
-_s160 = "aws.protocoltests.restjson#FractionalSecondsOutput"
-_s161 = "GreetingWithErrorsOutput"
-_s162 = "aws.protocoltests.restjson#GreetingWithErrorsOutput"
-_s163 = "X-Greeting"
-_s164 = "StringMap"
-_s165 = "HttpEmptyPrefixHeadersInput"
-_s166 = "aws.protocoltests.restjson#HttpEmptyPrefixHeadersInput"
-_s167 = "prefixHeaders"
-_s168 = "smithy.api#httpPrefixHeaders"
-_s169 = "specificHeader"
-_s170 = "HttpEmptyPrefixHeadersOutput"
-_s171 = "aws.protocoltests.restjson#HttpEmptyPrefixHeadersOutput"
-_s172 = "HttpPrefixHeadersInResponseInput"
-_s173 = "aws.protocoltests.restjson#HttpPrefixHeadersInResponseInput"
-_s174 = "HttpPrefixHeadersInResponseOutput"
-_s175 = "aws.protocoltests.restjson#HttpPrefixHeadersInResponseOutput"
-_s176 = "HttpPrefixHeadersInput"
-_s177 = "aws.protocoltests.restjson#HttpPrefixHeadersInput"
-_s178 = "foo"
-_s179 = "x-foo"
-_s180 = "fooMap"
-_s181 = "x-foo-"
-_s182 = "HttpPrefixHeadersOutput"
-_s183 = "aws.protocoltests.restjson#HttpPrefixHeadersOutput"
-_s184 = "HttpRequestWithFloatLabelsInput"
-_s185 = "aws.protocoltests.restjson#HttpRequestWithFloatLabelsInput"
-_s186 = "float"
-_s187 = "double"
-_s188 = "HttpRequestWithGreedyLabelInPathInput"
-_s189 = "aws.protocoltests.restjson#HttpRequestWithGreedyLabelInPathInput"
-_s190 = "EpochSeconds"
-_s191 = "epoch-seconds"
-_s192 = "HttpDate"
-_s193 = "http-date"
-_s194 = "HttpRequestWithLabelsAndTimestampFormatInput"
-_s195 = "aws.protocoltests.restjson#HttpRequestWithLabelsAndTimestampFormatInput"
-_s196 = "memberEpochSeconds"
-_s197 = "smithy.api#httpLabel"
-_s198 = "smithy.api#required"
-_s199 = "memberHttpDate"
-_s200 = "memberDateTime"
-_s201 = "defaultFormat"
-_s202 = "targetEpochSeconds"
-_s203 = "targetHttpDate"
-_s204 = "targetDateTime"
-_s205 = "HttpRequestWithLabelsInput"
-_s206 = "aws.protocoltests.restjson#HttpRequestWithLabelsInput"
-_s207 = "string"
-_s208 = "short"
-_s209 = "integer"
-_s210 = "long"
-_s211 = "boolean"
-_s212 = "timestamp"
-_s213 = "HttpRequestWithRegexLiteralInput"
-_s214 = "aws.protocoltests.restjson#HttpRequestWithRegexLiteralInput"
-_s215 = "str"
-_s216 = "HttpResponseCodeOutput"
-_s217 = "aws.protocoltests.restjson#HttpResponseCodeOutput"
-_s218 = "Status"
-_s219 = "IgnoreQueryParamsInResponseOutput"
-_s220 = "aws.protocoltests.restjson#IgnoreQueryParamsInResponseOutput"
-_s221 = "InvalidGreeting"
-_s222 = "Message"
-_s223 = "JsonHeaderString"
-_s224 = "smithy.api#mediaType"
-_s225 = "application/json"
-_s226 = "JsonValue"
-_s227 = "MalformedAcceptWithGenericStringOutput"
-_s228 = "aws.protocoltests.restjson#MalformedAcceptWithGenericStringOutput"
-_s229 = "payload"
-_s434 = "AllQueryStringTypesOutput"
-_s435 = "smithy.api#Unit"
-_s436 = "ConstantAndVariableQueryStringOutput"
-_s437 = "ConstantQueryStringOutput"
-_s438 = "DatetimeOffsetsInput"
-_s456 = "FractionalSecondsInput"
-_s457 = "GreetingWithErrorsInput"
-_s484 = "HttpRequestWithFloatLabelsOutput"
-_s485 = "HttpRequestWithGreedyLabelInPathOutput"
-_s486 = "HttpRequestWithLabelsOutput"
-_s487 = "HttpRequestWithLabelsAndTimestampFormatOutput"
-_s488 = "HttpRequestWithRegexLiteralOutput"
-_s489 = "HttpResponseCodeInput"
-_s493 = "IgnoreQueryParamsInResponseInput"
-_s592 = "MalformedAcceptWithGenericStringInput"
-_s713 = "AllQueryStringTypes"
-_s714 = "smithy.api#http"
-_s715 = "ConstantAndVariableQueryString"
-_s716 = "ConstantQueryString"
-_s717 = "ContentTypeParameters"
-_s718 = "DatetimeOffsets"
-_s722 = "EmptyInputAndEmptyOutput"
-_s726 = "FractionalSeconds"
-_s727 = "GreetingWithErrors"
-_s731 = "HttpEmptyPrefixHeaders"
-_s737 = "HttpPrefixHeaders"
-_s738 = "HttpPrefixHeadersInResponse"
-_s740 = "HttpRequestWithFloatLabels"
-_s741 = "HttpRequestWithGreedyLabelInPath"
-_s742 = "HttpRequestWithLabels"
-_s743 = "HttpRequestWithLabelsAndTimestampFormat"
-_s744 = "HttpRequestWithRegexLiteral"
-_s745 = "HttpResponseCode"
-_s747 = "IgnoreQueryParamsInResponse"
-_s757 = "MalformedAcceptWithGenericString"
+_s157 = "FiniteStreamingBlob"
+_s158 = "smithy.api#streaming"
+_s159 = "smithy.api#requiresLength"
+_s160 = "FooError"
+_s161 = "server"
+_s162 = "FractionalSecondsOutput"
+_s163 = "aws.protocoltests.restjson#FractionalSecondsOutput"
+_s164 = "GreetingWithErrorsOutput"
+_s165 = "aws.protocoltests.restjson#GreetingWithErrorsOutput"
+_s166 = "X-Greeting"
+_s167 = "StringMap"
+_s168 = "HttpEmptyPrefixHeadersInput"
+_s169 = "aws.protocoltests.restjson#HttpEmptyPrefixHeadersInput"
+_s170 = "prefixHeaders"
+_s171 = "smithy.api#httpPrefixHeaders"
+_s172 = "specificHeader"
+_s173 = "HttpEmptyPrefixHeadersOutput"
+_s174 = "aws.protocoltests.restjson#HttpEmptyPrefixHeadersOutput"
+_s175 = "HttpPrefixHeadersInResponseInput"
+_s176 = "aws.protocoltests.restjson#HttpPrefixHeadersInResponseInput"
+_s177 = "HttpPrefixHeadersInResponseOutput"
+_s178 = "aws.protocoltests.restjson#HttpPrefixHeadersInResponseOutput"
+_s179 = "HttpPrefixHeadersInput"
+_s180 = "aws.protocoltests.restjson#HttpPrefixHeadersInput"
+_s181 = "foo"
+_s182 = "x-foo"
+_s183 = "fooMap"
+_s184 = "x-foo-"
+_s185 = "HttpPrefixHeadersOutput"
+_s186 = "aws.protocoltests.restjson#HttpPrefixHeadersOutput"
+_s187 = "HttpRequestWithFloatLabelsInput"
+_s188 = "aws.protocoltests.restjson#HttpRequestWithFloatLabelsInput"
+_s189 = "float"
+_s190 = "double"
+_s191 = "HttpRequestWithGreedyLabelInPathInput"
+_s192 = "aws.protocoltests.restjson#HttpRequestWithGreedyLabelInPathInput"
+_s193 = "EpochSeconds"
+_s194 = "epoch-seconds"
+_s195 = "HttpDate"
+_s196 = "http-date"
+_s197 = "HttpRequestWithLabelsAndTimestampFormatInput"
+_s198 = "aws.protocoltests.restjson#HttpRequestWithLabelsAndTimestampFormatInput"
+_s199 = "memberEpochSeconds"
+_s200 = "smithy.api#httpLabel"
+_s201 = "smithy.api#required"
+_s202 = "memberHttpDate"
+_s203 = "memberDateTime"
+_s204 = "defaultFormat"
+_s205 = "targetEpochSeconds"
+_s206 = "targetHttpDate"
+_s207 = "targetDateTime"
+_s208 = "HttpRequestWithLabelsInput"
+_s209 = "aws.protocoltests.restjson#HttpRequestWithLabelsInput"
+_s210 = "string"
+_s211 = "short"
+_s212 = "integer"
+_s213 = "long"
+_s214 = "boolean"
+_s215 = "timestamp"
+_s216 = "HttpRequestWithRegexLiteralInput"
+_s217 = "aws.protocoltests.restjson#HttpRequestWithRegexLiteralInput"
+_s218 = "str"
+_s219 = "HttpResponseCodeOutput"
+_s220 = "aws.protocoltests.restjson#HttpResponseCodeOutput"
+_s221 = "Status"
+_s222 = "IgnoreQueryParamsInResponseOutput"
+_s223 = "aws.protocoltests.restjson#IgnoreQueryParamsInResponseOutput"
+_s224 = "InvalidGreeting"
+_s225 = "Message"
+_s226 = "JsonHeaderString"
+_s227 = "smithy.api#mediaType"
+_s228 = "application/json"
+_s229 = "JsonValue"
+_s230 = "MalformedAcceptWithGenericStringOutput"
+_s231 = "aws.protocoltests.restjson#MalformedAcceptWithGenericStringOutput"
+_s232 = "payload"
+_s233 = "JpegBlob"
+_s234 = "image/jpeg"
+_s235 = "MalformedAcceptWithPayloadOutput"
+_s236 = "aws.protocoltests.restjson#MalformedAcceptWithPayloadOutput"
+_s443 = "AllQueryStringTypesOutput"
+_s444 = "smithy.api#Unit"
+_s445 = "ConstantAndVariableQueryStringOutput"
+_s446 = "ConstantQueryStringOutput"
+_s447 = "DatetimeOffsetsInput"
+_s465 = "FractionalSecondsInput"
+_s466 = "GreetingWithErrorsInput"
+_s492 = "HttpRequestWithFloatLabelsOutput"
+_s493 = "HttpRequestWithGreedyLabelInPathOutput"
+_s494 = "HttpRequestWithLabelsOutput"
+_s495 = "HttpRequestWithLabelsAndTimestampFormatOutput"
+_s496 = "HttpRequestWithRegexLiteralOutput"
+_s497 = "HttpResponseCodeInput"
+_s501 = "IgnoreQueryParamsInResponseInput"
+_s600 = "MalformedAcceptWithGenericStringInput"
+_s601 = "MalformedAcceptWithPayloadInput"
+_s728 = "AllQueryStringTypes"
+_s729 = "smithy.api#http"
+_s730 = "ConstantAndVariableQueryString"
+_s731 = "ConstantQueryString"
+_s732 = "ContentTypeParameters"
+_s733 = "DatetimeOffsets"
+_s737 = "EmptyInputAndEmptyOutput"
+_s741 = "FractionalSeconds"
+_s742 = "GreetingWithErrors"
+_s746 = "HttpEmptyPrefixHeaders"
+_s752 = "HttpPrefixHeaders"
+_s753 = "HttpPrefixHeadersInResponse"
+_s755 = "HttpRequestWithFloatLabels"
+_s756 = "HttpRequestWithGreedyLabelInPath"
+_s757 = "HttpRequestWithLabels"
+_s758 = "HttpRequestWithLabelsAndTimestampFormat"
+_s759 = "HttpRequestWithRegexLiteral"
+_s760 = "HttpResponseCode"
+_s762 = "IgnoreQueryParamsInResponse"
+_s772 = "MalformedAcceptWithGenericString"
+_s773 = "MalformedAcceptWithPayload"
 
 STRING_LIST: StaticSchema = (
     16,
@@ -441,15 +450,15 @@ ALL_QUERY_STRING_TYPES_INPUT: StaticSchema = (
 ALL_QUERY_STRING_TYPES_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s434,
-    {_s30: _s435, _s92: None},
+    _s443,
+    {_s30: _s444, _s92: None},
 )
 
 ALL_QUERY_STRING_TYPES: StaticOperationSchema = (
     23,
     n1,
-    _s713,
-    {_s714: MappingProxyType({"uri": "/AllQueryStringTypesInput", "method": "GET"})},
+    _s728,
+    {_s729: MappingProxyType({"uri": "/AllQueryStringTypesInput", "method": "GET"})},
     ALL_QUERY_STRING_TYPES_INPUT,
     ALL_QUERY_STRING_TYPES_OUTPUT,
     (),
@@ -494,16 +503,16 @@ CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT: StaticSchema = (
 CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s436,
-    {_s30: _s435, _s92: None},
+    _s445,
+    {_s30: _s444, _s92: None},
 )
 
 CONSTANT_AND_VARIABLE_QUERY_STRING: StaticOperationSchema = (
     23,
     n1,
-    _s715,
+    _s730,
     {
-        _s714: MappingProxyType(
+        _s729: MappingProxyType(
             {"uri": "/ConstantAndVariableQueryString?foo=bar", "method": "GET"}
         )
     },
@@ -524,16 +533,16 @@ CONSTANT_QUERY_STRING_INPUT: StaticSchema = (
 CONSTANT_QUERY_STRING_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s437,
-    {_s30: _s435, _s92: None},
+    _s446,
+    {_s30: _s444, _s92: None},
 )
 
 CONSTANT_QUERY_STRING: StaticOperationSchema = (
     23,
     n1,
-    _s716,
+    _s731,
     {
-        _s714: MappingProxyType(
+        _s729: MappingProxyType(
             {"uri": "/ConstantQueryString/{hello}?foo=bar&hello", "method": "GET"}
         )
     },
@@ -561,8 +570,8 @@ CONTENT_TYPE_PARAMETERS_OUTPUT: StaticSchema = (
 CONTENT_TYPE_PARAMETERS: StaticOperationSchema = (
     23,
     n1,
-    _s717,
-    {_s714: MappingProxyType({"uri": "/ContentTypeParameters", "method": "POST"})},
+    _s732,
+    {_s729: MappingProxyType({"uri": "/ContentTypeParameters", "method": "POST"})},
     CONTENT_TYPE_PARAMETERS_INPUT,
     CONTENT_TYPE_PARAMETERS_OUTPUT,
     (),
@@ -587,15 +596,15 @@ DATETIME_OFFSETS_OUTPUT: StaticSchema = (
 DATETIME_OFFSETS_INPUT: StaticSchema = (
     18,
     n1,
-    _s438,
-    {_s30: _s435, _s32: None},
+    _s447,
+    {_s30: _s444, _s32: None},
 )
 
 DATETIME_OFFSETS: StaticOperationSchema = (
     23,
     n1,
-    _s718,
-    {_s714: MappingProxyType({"uri": "/DatetimeOffsets", "method": "POST"})},
+    _s733,
+    {_s729: MappingProxyType({"uri": "/DatetimeOffsets", "method": "POST"})},
     DATETIME_OFFSETS_INPUT,
     DATETIME_OFFSETS_OUTPUT,
     (),
@@ -820,25 +829,32 @@ EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT: StaticSchema = (
 EMPTY_INPUT_AND_EMPTY_OUTPUT: StaticOperationSchema = (
     23,
     n1,
-    _s722,
-    {_s714: MappingProxyType({"uri": "/EmptyInputAndEmptyOutput", "method": "POST"})},
+    _s737,
+    {_s729: MappingProxyType({"uri": "/EmptyInputAndEmptyOutput", "method": "POST"})},
     EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT,
     EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT,
     (),
 )
 
+FINITE_STREAMING_BLOB: StaticSchema = (
+    1,
+    n1,
+    _s157,
+    {_s158: None, _s159: None},
+)
+
 FOO_ERROR: StaticSchema = (
     18,
     n1,
-    _s157,
-    {_s73: _s158, _s75: 500},
+    _s160,
+    {_s73: _s161, _s75: 500},
 )
 
 FRACTIONAL_SECONDS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s159,
-    {_s30: _s160, _s92: None},
+    _s162,
+    {_s30: _s163, _s92: None},
     (_s98,),
     ((DATE_TIME, 0),),
 )
@@ -846,15 +862,15 @@ FRACTIONAL_SECONDS_OUTPUT: StaticSchema = (
 FRACTIONAL_SECONDS_INPUT: StaticSchema = (
     18,
     n1,
-    _s456,
-    {_s30: _s435, _s32: None},
+    _s465,
+    {_s30: _s444, _s32: None},
 )
 
 FRACTIONAL_SECONDS: StaticOperationSchema = (
     23,
     n1,
-    _s726,
-    {_s714: MappingProxyType({"uri": "/FractionalSeconds", "method": "POST"})},
+    _s741,
+    {_s729: MappingProxyType({"uri": "/FractionalSeconds", "method": "POST"})},
     FRACTIONAL_SECONDS_INPUT,
     FRACTIONAL_SECONDS_OUTPUT,
     (),
@@ -863,24 +879,24 @@ FRACTIONAL_SECONDS: StaticOperationSchema = (
 GREETING_WITH_ERRORS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s161,
-    {_s30: _s162, _s92: None},
+    _s164,
+    {_s30: _s165, _s92: None},
     (_s148,),
-    ((3, {_s77: _s163}),),
+    ((3, {_s77: _s166}),),
 )
 
 GREETING_WITH_ERRORS_INPUT: StaticSchema = (
     18,
     n1,
-    _s457,
-    {_s30: _s435, _s32: None},
+    _s466,
+    {_s30: _s444, _s32: None},
 )
 
 GREETING_WITH_ERRORS: StaticOperationSchema = (
     23,
     n1,
-    _s727,
-    {_s714: MappingProxyType({"uri": "/GreetingWithErrors", "method": "PUT"})},
+    _s742,
+    {_s729: MappingProxyType({"uri": "/GreetingWithErrors", "method": "PUT"})},
     GREETING_WITH_ERRORS_INPUT,
     GREETING_WITH_ERRORS_OUTPUT,
     (COMPLEX_ERROR, FOO_ERROR, lambda: INVALID_GREETING),
@@ -889,7 +905,7 @@ GREETING_WITH_ERRORS: StaticOperationSchema = (
 STRING_MAP: StaticSchema = (
     17,
     n0,
-    _s164,
+    _s167,
     0,
     (_s27, _s28),
     ((3, 0), (3, 0)),
@@ -898,26 +914,26 @@ STRING_MAP: StaticSchema = (
 HTTP_EMPTY_PREFIX_HEADERS_INPUT: StaticSchema = (
     18,
     n1,
-    _s165,
-    {_s30: _s166, _s32: None},
-    (_s167, _s169),
-    ((STRING_MAP, {_s168: _s128}), (3, {_s77: _s87})),
+    _s168,
+    {_s30: _s169, _s32: None},
+    (_s170, _s172),
+    ((STRING_MAP, {_s171: _s128}), (3, {_s77: _s87})),
 )
 
 HTTP_EMPTY_PREFIX_HEADERS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s170,
-    {_s30: _s171, _s92: None},
-    (_s167, _s169),
-    ((STRING_MAP, {_s168: _s128}), (3, {_s77: _s87})),
+    _s173,
+    {_s30: _s174, _s92: None},
+    (_s170, _s172),
+    ((STRING_MAP, {_s171: _s128}), (3, {_s77: _s87})),
 )
 
 HTTP_EMPTY_PREFIX_HEADERS: StaticOperationSchema = (
     23,
     n1,
-    _s731,
-    {_s714: MappingProxyType({"uri": "/HttpEmptyPrefixHeaders", "method": "GET"})},
+    _s746,
+    {_s729: MappingProxyType({"uri": "/HttpEmptyPrefixHeaders", "method": "GET"})},
     HTTP_EMPTY_PREFIX_HEADERS_INPUT,
     HTTP_EMPTY_PREFIX_HEADERS_OUTPUT,
     (),
@@ -926,24 +942,24 @@ HTTP_EMPTY_PREFIX_HEADERS: StaticOperationSchema = (
 HTTP_PREFIX_HEADERS_IN_RESPONSE_INPUT: StaticSchema = (
     18,
     n1,
-    _s172,
-    {_s30: _s173, _s32: None},
+    _s175,
+    {_s30: _s176, _s32: None},
 )
 
 HTTP_PREFIX_HEADERS_IN_RESPONSE_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s174,
-    {_s30: _s175, _s92: None},
-    (_s167,),
-    ((STRING_MAP, {_s168: _s128}),),
+    _s177,
+    {_s30: _s178, _s92: None},
+    (_s170,),
+    ((STRING_MAP, {_s171: _s128}),),
 )
 
 HTTP_PREFIX_HEADERS_IN_RESPONSE: StaticOperationSchema = (
     23,
     n1,
-    _s738,
-    {_s714: MappingProxyType({"uri": "/HttpPrefixHeadersResponse", "method": "GET"})},
+    _s753,
+    {_s729: MappingProxyType({"uri": "/HttpPrefixHeadersResponse", "method": "GET"})},
     HTTP_PREFIX_HEADERS_IN_RESPONSE_INPUT,
     HTTP_PREFIX_HEADERS_IN_RESPONSE_OUTPUT,
     (),
@@ -952,26 +968,26 @@ HTTP_PREFIX_HEADERS_IN_RESPONSE: StaticOperationSchema = (
 HTTP_PREFIX_HEADERS_INPUT: StaticSchema = (
     18,
     n1,
-    _s176,
-    {_s30: _s177, _s32: None},
-    (_s178, _s180),
-    ((3, {_s77: _s179}), (STRING_MAP, {_s168: _s181})),
+    _s179,
+    {_s30: _s180, _s32: None},
+    (_s181, _s183),
+    ((3, {_s77: _s182}), (STRING_MAP, {_s171: _s184})),
 )
 
 HTTP_PREFIX_HEADERS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s182,
-    {_s30: _s183, _s92: None},
-    (_s178, _s180),
-    ((3, {_s77: _s179}), (STRING_MAP, {_s168: _s181})),
+    _s185,
+    {_s30: _s186, _s92: None},
+    (_s181, _s183),
+    ((3, {_s77: _s182}), (STRING_MAP, {_s171: _s184})),
 )
 
 HTTP_PREFIX_HEADERS: StaticOperationSchema = (
     23,
     n1,
-    _s737,
-    {_s714: MappingProxyType({"uri": "/HttpPrefixHeaders", "method": "GET"})},
+    _s752,
+    {_s729: MappingProxyType({"uri": "/HttpPrefixHeaders", "method": "GET"})},
     HTTP_PREFIX_HEADERS_INPUT,
     HTTP_PREFIX_HEADERS_OUTPUT,
     (),
@@ -980,25 +996,25 @@ HTTP_PREFIX_HEADERS: StaticOperationSchema = (
 HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT: StaticSchema = (
     18,
     n1,
-    _s184,
-    {_s30: _s185, _s32: None},
-    (_s186, _s187),
+    _s187,
+    {_s30: _s188, _s32: None},
+    (_s189, _s190),
     ((9, 9), (10, 9)),
 )
 
 HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s484,
-    {_s30: _s435, _s92: None},
+    _s492,
+    {_s30: _s444, _s92: None},
 )
 
 HTTP_REQUEST_WITH_FLOAT_LABELS: StaticOperationSchema = (
     23,
     n1,
-    _s740,
+    _s755,
     {
-        _s714: MappingProxyType(
+        _s729: MappingProxyType(
             {"method": "GET", "uri": "/FloatHttpLabels/{float}/{double}"}
         )
     },
@@ -1010,25 +1026,25 @@ HTTP_REQUEST_WITH_FLOAT_LABELS: StaticOperationSchema = (
 HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT: StaticSchema = (
     18,
     n1,
-    _s188,
-    {_s30: _s189, _s32: None},
-    (_s178, _s83),
+    _s191,
+    {_s30: _s192, _s32: None},
+    (_s181, _s83),
     ((3, 9), (3, 9)),
 )
 
 HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s485,
-    {_s30: _s435, _s92: None},
+    _s493,
+    {_s30: _s444, _s92: None},
 )
 
 HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH: StaticOperationSchema = (
     23,
     n1,
-    _s741,
+    _s756,
     {
-        _s714: MappingProxyType(
+        _s729: MappingProxyType(
             {
                 "method": "GET",
                 "uri": "/HttpRequestWithGreedyLabelInPath/foo/{foo}/baz/{baz+}",
@@ -1043,27 +1059,27 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH: StaticOperationSchema = (
 EPOCH_SECONDS: StaticSchema = (
     4,
     n0,
-    _s190,
-    {_s94: _s191},
+    _s193,
+    {_s94: _s194},
 )
 
 HTTP_DATE: StaticSchema = (
     4,
     n0,
-    _s192,
-    {_s94: _s193},
+    _s195,
+    {_s94: _s196},
 )
 
 HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT: StaticSchema = (
     18,
     n1,
-    _s194,
-    {_s30: _s195, _s32: None},
-    (_s196, _s199, _s200, _s201, _s202, _s203, _s204),
+    _s197,
+    {_s30: _s198, _s32: None},
+    (_s199, _s202, _s203, _s204, _s205, _s206, _s207),
     (
-        (4, {_s94: _s191, _s197: None, _s198: None}),
-        (4, {_s94: _s193, _s197: None, _s198: None}),
-        (4, {_s94: _s95, _s197: None, _s198: None}),
+        (4, {_s94: _s194, _s200: None, _s201: None}),
+        (4, {_s94: _s196, _s200: None, _s201: None}),
+        (4, {_s94: _s95, _s200: None, _s201: None}),
         (4, 9),
         (EPOCH_SECONDS, 9),
         (HTTP_DATE, 9),
@@ -1074,16 +1090,16 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT: StaticSchema = (
 HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s487,
-    {_s30: _s435, _s92: None},
+    _s495,
+    {_s30: _s444, _s92: None},
 )
 
 HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT: StaticOperationSchema = (
     23,
     n1,
-    _s743,
+    _s758,
     {
-        _s714: MappingProxyType(
+        _s729: MappingProxyType(
             {
                 "method": "GET",
                 "uri": "/HttpRequestWithLabelsAndTimestampFormat/{memberEpochSeconds}/{memberHttpDate}/{memberDateTime}/{defaultFormat}/{targetEpochSeconds}/{targetHttpDate}/{targetDateTime}",
@@ -1098,25 +1114,25 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT: StaticOperationSchema = (
 HTTP_REQUEST_WITH_LABELS_INPUT: StaticSchema = (
     18,
     n1,
-    _s205,
-    {_s30: _s206, _s32: None},
-    (_s207, _s208, _s209, _s210, _s186, _s187, _s211, _s212),
+    _s208,
+    {_s30: _s209, _s32: None},
+    (_s210, _s211, _s212, _s213, _s189, _s190, _s214, _s215),
     ((3, 9), (6, 9), (7, 9), (8, 9), (9, 9), (10, 9), (2, 9), (4, 9)),
 )
 
 HTTP_REQUEST_WITH_LABELS_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s486,
-    {_s30: _s435, _s92: None},
+    _s494,
+    {_s30: _s444, _s92: None},
 )
 
 HTTP_REQUEST_WITH_LABELS: StaticOperationSchema = (
     23,
     n1,
-    _s742,
+    _s757,
     {
-        _s714: MappingProxyType(
+        _s729: MappingProxyType(
             {
                 "method": "GET",
                 "uri": "/HttpRequestWithLabels/{string}/{short}/{integer}/{long}/{float}/{double}/{boolean}/{timestamp}",
@@ -1131,24 +1147,24 @@ HTTP_REQUEST_WITH_LABELS: StaticOperationSchema = (
 HTTP_REQUEST_WITH_REGEX_LITERAL_INPUT: StaticSchema = (
     18,
     n1,
-    _s213,
-    {_s30: _s214, _s32: None},
-    (_s215,),
+    _s216,
+    {_s30: _s217, _s32: None},
+    (_s218,),
     ((3, 9),),
 )
 
 HTTP_REQUEST_WITH_REGEX_LITERAL_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s488,
-    {_s30: _s435, _s92: None},
+    _s496,
+    {_s30: _s444, _s92: None},
 )
 
 HTTP_REQUEST_WITH_REGEX_LITERAL: StaticOperationSchema = (
     23,
     n1,
-    _s744,
-    {_s714: MappingProxyType({"method": "GET", "uri": "/ReDosLiteral/{str}/(a+)+"})},
+    _s759,
+    {_s729: MappingProxyType({"method": "GET", "uri": "/ReDosLiteral/{str}/(a+)+"})},
     HTTP_REQUEST_WITH_REGEX_LITERAL_INPUT,
     HTTP_REQUEST_WITH_REGEX_LITERAL_OUTPUT,
     (),
@@ -1157,24 +1173,24 @@ HTTP_REQUEST_WITH_REGEX_LITERAL: StaticOperationSchema = (
 HTTP_RESPONSE_CODE_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s216,
-    {_s30: _s217, _s92: None},
-    (_s218,),
+    _s219,
+    {_s30: _s220, _s92: None},
+    (_s221,),
     ((7, 128),),
 )
 
 HTTP_RESPONSE_CODE_INPUT: StaticSchema = (
     18,
     n1,
-    _s489,
-    {_s30: _s435, _s32: None},
+    _s497,
+    {_s30: _s444, _s32: None},
 )
 
 HTTP_RESPONSE_CODE: StaticOperationSchema = (
     23,
     n1,
-    _s745,
-    {_s714: MappingProxyType({"uri": "/HttpResponseCode", "method": "PUT"})},
+    _s760,
+    {_s729: MappingProxyType({"uri": "/HttpResponseCode", "method": "PUT"})},
     HTTP_RESPONSE_CODE_INPUT,
     HTTP_RESPONSE_CODE_OUTPUT,
     (),
@@ -1183,8 +1199,8 @@ HTTP_RESPONSE_CODE: StaticOperationSchema = (
 IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s219,
-    {_s30: _s220, _s92: None},
+    _s222,
+    {_s30: _s223, _s92: None},
     (_s83,),
     ((3, {_s34: _s83}),),
 )
@@ -1192,15 +1208,15 @@ IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT: StaticSchema = (
 IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT: StaticSchema = (
     18,
     n1,
-    _s493,
-    {_s30: _s435, _s32: None},
+    _s501,
+    {_s30: _s444, _s32: None},
 )
 
 IGNORE_QUERY_PARAMS_IN_RESPONSE: StaticOperationSchema = (
     23,
     n1,
-    _s747,
-    {_s714: MappingProxyType({"uri": "/IgnoreQueryParamsInResponse", "method": "GET"})},
+    _s762,
+    {_s729: MappingProxyType({"uri": "/IgnoreQueryParamsInResponse", "method": "GET"})},
     IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT,
     IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT,
     (),
@@ -1209,52 +1225,85 @@ IGNORE_QUERY_PARAMS_IN_RESPONSE: StaticOperationSchema = (
 INVALID_GREETING: StaticSchema = (
     18,
     n1,
-    _s221,
+    _s224,
     {_s73: _s74, _s75: 400},
-    (_s222,),
+    (_s225,),
     ((3, 0),),
 )
 
 JSON_HEADER_STRING: StaticSchema = (
     3,
     n1,
-    _s223,
-    {_s224: _s225},
+    _s226,
+    {_s227: _s228},
 )
 
 JSON_VALUE: StaticSchema = (
     3,
     n1,
-    _s226,
-    {_s224: _s225},
+    _s229,
+    {_s227: _s228},
 )
 
 MALFORMED_ACCEPT_WITH_GENERIC_STRING_OUTPUT: StaticSchema = (
     18,
     n1,
-    _s227,
-    {_s30: _s228, _s92: None},
-    (_s229,),
+    _s230,
+    {_s30: _s231, _s92: None},
+    (_s232,),
     ((3, 16),),
 )
 
 MALFORMED_ACCEPT_WITH_GENERIC_STRING_INPUT: StaticSchema = (
     18,
     n1,
-    _s592,
-    {_s30: _s435, _s32: None},
+    _s600,
+    {_s30: _s444, _s32: None},
 )
 
 MALFORMED_ACCEPT_WITH_GENERIC_STRING: StaticOperationSchema = (
     23,
     n1,
-    _s757,
+    _s772,
     {
-        _s714: MappingProxyType(
+        _s729: MappingProxyType(
             {"method": "POST", "uri": "/MalformedAcceptWithGenericString"}
         )
     },
     MALFORMED_ACCEPT_WITH_GENERIC_STRING_INPUT,
     MALFORMED_ACCEPT_WITH_GENERIC_STRING_OUTPUT,
+    (),
+)
+
+JPEG_BLOB: StaticSchema = (
+    1,
+    n0,
+    _s233,
+    {_s227: _s234},
+)
+
+MALFORMED_ACCEPT_WITH_PAYLOAD_OUTPUT: StaticSchema = (
+    18,
+    n1,
+    _s235,
+    {_s30: _s236, _s92: None},
+    (_s232,),
+    ((JPEG_BLOB, 16),),
+)
+
+MALFORMED_ACCEPT_WITH_PAYLOAD_INPUT: StaticSchema = (
+    18,
+    n1,
+    _s601,
+    {_s30: _s444, _s32: None},
+)
+
+MALFORMED_ACCEPT_WITH_PAYLOAD: StaticOperationSchema = (
+    23,
+    n1,
+    _s773,
+    {_s729: MappingProxyType({"method": "POST", "uri": "/MalformedAcceptWithPayload"})},
+    MALFORMED_ACCEPT_WITH_PAYLOAD_INPUT,
+    MALFORMED_ACCEPT_WITH_PAYLOAD_OUTPUT,
     (),
 )

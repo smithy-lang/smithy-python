@@ -123,6 +123,13 @@ class ModelPlan:
     """``TypedDict`` names for structures, unions, and union members that callers
     may pass as dictionaries. Only client plans have them."""
 
+    async_input_dict_names: Mapping[_model.ShapeId, str] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
+    """The async client's ``TypedDict`` names for operation inputs with a streaming
+    blob, which may also be an async stream there. The plain form takes only a
+    stream a sync client can send."""
+
     @classmethod
     def from_shapes(
         cls,
@@ -131,6 +138,7 @@ class ModelPlan:
         schema_names: Mapping[_model.ShapeId, str],
         operations: tuple[OperationModel, ...] = (),
         input_dict_names: Mapping[_model.ShapeId, str] | None = None,
+        async_input_dict_names: Mapping[_model.ShapeId, str] | None = None,
     ) -> ModelPlan:
         """Plan declaration and union names in stable shape order."""
         model_shapes: list[_model.Shape] = []
@@ -182,6 +190,7 @@ class ModelPlan:
             includes_unit=includes_unit,
             operations=operations,
             input_dict_names=MappingProxyType(dict(input_dict_names or {})),
+            async_input_dict_names=MappingProxyType(dict(async_input_dict_names or {})),
         )
 
 

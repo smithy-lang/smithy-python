@@ -46,9 +46,11 @@ def check_supported(
                 f"Operation {shape.id} requires auth ({schemes}), which client "
                 "generation does not support yet"
             )
+        # Streaming blobs are supported. Event streams aren't yet.
         for io in (shape.input, shape.output):
             for member in plan.model.get_shape(io).members.values():
-                if plan.model.get_target(member).has_trait("streaming"):
+                target = plan.model.get_target(member)
+                if target.has_trait("streaming") and target.type is not _BLOB:
                     raise _exceptions.CodegenError(
                         f"Operation {shape.id} streams {member.id}, which client "
                         "generation does not support yet"
@@ -303,6 +305,7 @@ def _modes(
 
 
 _NO_AUTH: Final = _model.ShapeId("smithy.api", "noAuth")
+_BLOB: Final = _model.ShapeType.BLOB
 _XML_NAMESPACE: Final = _model.ShapeId("smithy.api", "xmlNamespace")
 _ENDPOINT: Final = _model.ShapeId("smithy.api", "endpoint")
 HOST_PREFIX_FIELD: Final = (
@@ -667,7 +670,11 @@ def _write_operation(
 ) -> None:
     name = operation.method_name
     input_name = operation.input_name
-    dict_name = plan.models.input_dict_names[operation.operation.input]
+    dict_name = (
+        plan.models.async_input_dict_names.get(operation.operation.input)
+        if mode.is_async
+        else None
+    ) or plan.models.input_dict_names[operation.operation.input]
     output: tuple[str | TypeReference, ...] = (models, ".", operation.output_name)
     plugins: tuple[str | TypeReference, ...] = (
         "plugins: list[",
@@ -741,7 +748,11 @@ def _write_paginator(
 ) -> None:
     # A plain def in both modes: the async paginator is iterated, not awaited.
     name = paginator.method_name
-    dict_name = plan.models.input_dict_names[operation.operation.input]
+    dict_name = (
+        plan.models.async_input_dict_names.get(operation.operation.input)
+        if mode.is_async
+        else None
+    ) or plan.models.input_dict_names[operation.operation.input]
     page: tuple[str | TypeReference, ...] = (models, ".", operation.output_name)
     if paginator.item_type is None:
         runtime = _core(
@@ -870,7 +881,11 @@ def _write_waiter(
     waiter: _waiters.WaiterPlan,
 ) -> None:
     name = waiter.method_name
-    dict_name = plan.models.input_dict_names[operation.operation.input]
+    dict_name = (
+        plan.models.async_input_dict_names.get(operation.operation.input)
+        if mode.is_async
+        else None
+    ) or plan.models.input_dict_names[operation.operation.input]
     define = "async def " if mode.is_async else "def "
     runtime = (
         _core("wait_async", "aio.waiters")

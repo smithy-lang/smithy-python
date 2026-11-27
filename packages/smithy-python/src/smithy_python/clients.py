@@ -184,7 +184,8 @@ class ClientPlan:
                 symbols,
                 schemas.names,
                 operation_models,
-                _input_dict_names(model, operations, symbols),
+                dict_names := _input_dict_names(model, operations, symbols),
+                _async_input_dict_names(model, operations, dict_names),
             ),
             operations=tuple(
                 OperationPlan(
@@ -414,6 +415,35 @@ def _input_dict_names(
 
 
 _DICT_TYPES = frozenset({_model.ShapeType.STRUCTURE, _model.ShapeType.UNION})
+_ASYNC_PREFIX = "Async"
+
+
+def _async_input_dict_names(
+    model: _model.Model,
+    operations: tuple[_model.OperationShape, ...],
+    names: Mapping[_model.ShapeId, str],
+) -> Mapping[_model.ShapeId, str]:
+    """Name the async forms of operation inputs that have a streaming blob.
+
+    CAUTION: smithy_core._dynamic_models.ModelRegistry._is_dict_name resolves
+    these names at runtime by taking the ``Async`` prefix back off.
+    """
+    return MappingProxyType(
+        {
+            operation.input: _ASYNC_PREFIX + names[operation.input]
+            for operation in operations
+            if _has_streaming_blob(model, model.get_shape(operation.input))
+        }
+    )
+
+
+def _has_streaming_blob(model: _model.Model, shape: _model.Shape) -> bool:
+    """Whether a structure has a streaming blob member."""
+    return any(
+        (target := model.get_target(member)).type is _model.ShapeType.BLOB
+        and target.has_trait("streaming")
+        for member in shape.members.values()
+    )
 
 
 def _declaration_name(

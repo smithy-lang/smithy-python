@@ -15,10 +15,12 @@ import asyncio
 import base64
 import hashlib
 import importlib
+import inspect
 import json
 import sys
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, is_dataclass
+from dataclasses import fields as dataclass_fields
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -305,7 +307,15 @@ def _call(
         config = new_config(**fields)
         if client.aws:
             config = await config
-        return await getattr(service(config), client.methods[operation])(request)
+        output = await getattr(service(config), client.methods[operation])(request)
+        # An async client returns a streaming member as a stream, which is read
+        # inside the event loop so it compares with the vector's bytes.
+        if is_dataclass(output):
+            for member in dataclass_fields(output):
+                value = getattr(output, member.name)
+                if inspect.iscoroutinefunction(getattr(value, "read", None)):
+                    object.__setattr__(output, member.name, await value.read())
+        return output
 
     return asyncio.run(run())
 
@@ -581,9 +591,9 @@ def test_vectors_match_their_provenance() -> None:
 
 def test_every_client_vector_is_collected() -> None:
     # The Java clients run the same vectors: rpcv2Cbor has 29 request and 43
-    # response vectors, and rpcv2Json has 34 and 39. restJson1 has 244, less the 8
-    # of the streaming operations the client omits. awsJson1_0 has 67, awsJson1_1
+    # response vectors, and rpcv2Json has 34 and 39. restJson1 has 244, and its
+    # omitted event stream operations have none. awsJson1_0 has 67, awsJson1_1
     # has 118, and the query-compatible awsJson1_0 service has 3. restXml has
     # 178, and the restXml service with a namespace has 2. awsQuery has 77, and
     # ec2Query has 59.
-    assert len(list(_vectors())) == (72 + 73 + 236 + 67 + 118 + 3 + 178 + 2 + 77 + 59)
+    assert len(list(_vectors())) == (72 + 73 + 244 + 67 + 118 + 3 + 178 + 2 + 77 + 59)
